@@ -1,7 +1,10 @@
 name = "ParametrisedConvexApproximators"
 authors = ["JinraeKim"]
-[compat]
-julia = "1.6.2"
-DrWatson = "2.3.0"
+
 [deps]
 DrWatson = "634d3b9d-ee7a-5ddf-bec9-22491ea816e1"
+Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+
+[compat]
+DrWatson = "2.3.0"
+julia = "1.6.2"
