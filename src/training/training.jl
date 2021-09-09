@@ -1,5 +1,7 @@
-function train_approximator!(approximator, data_train, data_test)
-    dataloader = Flux.DataLoader(data_train; batchsize=64, shuffle=true)
+function train_approximator!(approximator, xufdata_train::xufData, xufdata_test::xufData)
+    xufflux_train = Data_to_Flux(xufdata_train)
+    xufflux_test = Data_to_Flux(xufdata_test)
+    dataloader = Flux.DataLoader(xufflux_train; batchsize=64, shuffle=true)
     epochs = 100
     opt = ADAM(1e-3)
     loss(x, u, f) = Flux.Losses.mse(approximator(x, u), f)
@@ -9,7 +11,7 @@ function train_approximator!(approximator, data_train, data_test)
         end
         # display result
         if epoch % 10 == 0
-            @show epoch, loss(data_train...), loss(data_test...)
+            @show epoch, loss(xufflux_train...), loss(xufflux_test...)
         end
     end
 end
