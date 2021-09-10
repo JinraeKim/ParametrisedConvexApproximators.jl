@@ -17,27 +17,11 @@ struct xufData <: AbstractDataStructure
 end
 
 
-"""
-Data structure for Flux.jl
-"""
-struct xufFlux <: AbstractDataStructure
-    x
-    u
-    f
-    d::Int  # no. of data
-    function xufFlux(x::Matrix, u::Matrix, f::Matrix)
-        @assert size(x)[2] == size(u)[2]
-        @assert size(x)[2] == size(f)[2]
-        d = size(x)[2]
-        new(x, u, f, d)
-    end
-end
-
 function Data_to_Flux(data::xufData)
-    xufFlux(hcat(data.x...), hcat(data.u...), hcat(data.f))
+    (; x=hcat(data.x...), u=hcat(data.u...), f=hcat(data.f...))  # NamedTuple
 end
 
-function Flux_to_Data(data::xufFlux)
+function Flux_to_Data(data::NamedTuple)
     xs = [data.x[:, i] for i in data.d]
     us = [data.u[:, i] for i in data.d]
     fs = [data.f[:, i] for i in data.d]

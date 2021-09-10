@@ -1,7 +1,8 @@
 function train_approximator!(approximator, xufdata_train::xufData, xufdata_test::xufData)
     xufflux_train = Data_to_Flux(xufdata_train)
     xufflux_test = Data_to_Flux(xufdata_test)
-    dataloader = Flux.DataLoader(xufflux_train; batchsize=64, shuffle=true)
+    dataloader = Flux.DataLoader(xufflux_train;
+                                 batchsize=64, shuffle=true)
     epochs = 100
     opt = ADAM(1e-3)
     loss(x, u, f) = Flux.Losses.mse(approximator(x, u), f)
