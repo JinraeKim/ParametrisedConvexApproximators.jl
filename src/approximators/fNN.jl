@@ -2,12 +2,12 @@ struct fNN <: AbstractApproximator
     n::Int
     m::Int
     NN::Flux.Chain
+    function fNN(n::Int, m::Int, h_array::Vector{Int}, act)
+        node_array = [n+m, h_array..., 1]
+        new(n, m, construct_layer_array(node_array, act))
+    end
 end
 
-function fNN(n::Int, m::Int, h_array::Array{Int, 1}, act)
-    node_array = [n+m, h_array..., 1]
-    fNN(n, m, construct_layer_array(node_array, act))
-end
 
 """
     (nn::fNN)(x, u)

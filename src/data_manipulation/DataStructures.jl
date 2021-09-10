@@ -16,14 +16,24 @@ struct xufData <: AbstractDataStructure
     end
 end
 
+"""
+Data structure for basic usage (e.g., Transducers.jl)
+"""
+struct xuData <: AbstractDataStructure
+    x
+    u
+    d  # no. of data
+    function xuData(xs::Vector, us::Vector)
+        @assert length(xs) == length(us)
+        d = length(xs)
+        new(xs, us, d)
+    end
+end
 
-function Data_to_Flux(data::xufData)
+function Data_to_NamedTuple(data::xufData)
     (; x=hcat(data.x...), u=hcat(data.u...), f=hcat(data.f...))  # NamedTuple
 end
 
-function Flux_to_Data(data::NamedTuple)
-    xs = [data.x[:, i] for i in data.d]
-    us = [data.u[:, i] for i in data.d]
-    fs = [data.f[:, i] for i in data.d]
-    xufData(xs, us, fs)
+function Data_to_NamedTuple(data::xuData)
+    (; x=hcat(data.x...), u=hcat(data.u...))  # NamedTuple
 end

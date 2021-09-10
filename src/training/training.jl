@@ -1,6 +1,6 @@
 function train_approximator!(approximator, xufdata_train::xufData, xufdata_test::xufData)
-    xufflux_train = Data_to_Flux(xufdata_train)
-    xufflux_test = Data_to_Flux(xufdata_test)
+    xufflux_train = Data_to_NamedTuple(xufdata_train)
+    xufflux_test = Data_to_NamedTuple(xufdata_test)
     dataloader = Flux.DataLoader(xufflux_train;
                                  batchsize=64, shuffle=true)
     epochs = 100
