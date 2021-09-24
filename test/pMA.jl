@@ -5,6 +5,7 @@ using Transducers
 using Flux
 using Random
 using Plots
+using LaTeXStrings
 
 
 function f(x, u)
@@ -40,21 +41,15 @@ function initialise(n, m, d)
     pma, xu_data
 end
 
-function plot_figures(pma, xu_data)
-    xs = xu_data.x
-    us = xu_data.u
-    fig = plot(;
-               xlim=(-1, 1),
-               ylim=(-1, 1),
-               zlim=1e-2.*(-1, 1),
-              )
-    @show hcat(xs...)' |> size
-    @show pma(xs[1], us[1])
-    @show f(xs[1], us[1])
+"""
+See this:
+https://stackoverflow.com/questions/66417677/3d-surface-plot-in-julia
+"""
+function plot_figures!(fig, func; kwargs...)
     plot!(fig,
-          hcat(xs...)'[:], hcat(us...)'[:], (x, u) -> f(x, u) - pma([x], [u]);  # to make it compatible with st=:surface
+          -1:0.1:1, -1:0.1:1, func;
           st=:surface,
-          label="approx",
+          kwargs...
          )
     display(fig)
     nothing
@@ -66,5 +61,23 @@ function main()
     m = 1
     d = 100
     pma, xu_data = initialise(n, m, d)
-    plot_figures(pma, xu_data)
+    fig_f = plot(;
+                 xlim=(-1, 1),
+                 ylim=(-1, 1),
+                 zlim=(-1, 1),
+                 aspect_ratio=:equal,
+                )
+    fig_diff = plot(;
+               xlim=(-1, 1),
+               ylim=(-1, 1),
+               zlim=1e-2.*(-1, 1),
+               aspect_ratio=:equal,
+              )
+    func_diff(x, u) = pma([x], [u]) - f(x, u)
+    plot_figures!(fig_diff, func_diff; title=L"\hat{f} - f")
+    plot_figures!(fig_f, f; title=L"f")
+    mkpath("figures")
+    fig = plot(fig_f, fig_diff; layout=(2, 1), size=(800, 800))
+    savefig(fig, "figures/vis.pdf")
+    nothing
 end
