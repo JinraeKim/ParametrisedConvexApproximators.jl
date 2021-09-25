@@ -1,6 +1,3 @@
-"""
-Testing approximators' basic functionality
-"""
 using ParametrisedConvexApproximators
 const PCA = ParametrisedConvexApproximators
 using Test
@@ -21,6 +18,12 @@ function f_partial_u(x, u)
     u
 end
 
+function supervised_learning!(approximator, xuf_data)
+    @show approximator |> typeof
+    xuf_data_train, xuf_data_test = PCA.partitionTrainTest(xuf_data)
+    PCA.train_approximator!(approximator, xuf_data_train, xuf_data_test)
+end
+
 function test(approximator, _xs, _us)
     @show approximator |> typeof
     @show Flux.params(approximator)
@@ -37,15 +40,22 @@ function test(approximator, _xs, _us)
     end
 end
 
+"""
+Testing approximators' functionality
+"""
 function main()
     # default
-    n, m, d = 2, 1, 10
+    n, m, d = 2, 1, 1000
     i_max = 5
     h_array = [1, 1]
     T = 1e-1
     act = Flux.relu
-    _xs = rand(n, d)
-    _us = rand(m, d)
+    xs = 1:d |> Map(i -> rand(n)) |> collect
+    us = 1:d |> Map(i -> rand(m)) |> collect
+    fs = zip(xs, us) |> MapSplat((x, u) -> f(x, u)) |> collect
+    xuf_data = PCA.xufData(xs, us, fs)
+    _xs = hcat(xs...)
+    _us = hcat(us...)
     u_is = range(-1, 1, length=i_max) |> Map(_u_i -> [_u_i]) |> collect  # to make it a matrix
     u_star_is = u_is |> Map(u_i -> (x -> f_partial_u(x, u_i))) |> collect
     α_is = 1:i_max |> Map(i -> rand(n+m)) |> collect
@@ -62,5 +72,10 @@ function main()
     push!(approximators, pma_basic)
     push!(approximators, pma_theoretical)
     push!(approximators, plse)
+    # test
+    print("Testing basic functionality...")
     approximators |> Map(approx -> test(approx, _xs, _us)) |> collect
+    # training
+    print("Testing supervised_learning...")
+    approximators |> Map(approx -> supervised_learning!(approx, xuf_data)) |> collect
 end

@@ -10,9 +10,7 @@ function f(x, u)  # true function
     0.5 * (-x'*x + u'*u)
 end
 
-function supervised_learning(approximator, xuf_data)
-    @show typeof(approximator)
-    ## training
+function supervised_learning!(approximator, xuf_data)
     xuf_data_train, xuf_data_test = PCApprox.partitionTrainTest(xuf_data)
     PCApprox.train_approximator!(approximator, xuf_data_train, xuf_data_test)
 end
@@ -32,5 +30,5 @@ function main(; seed=2021)
     act = Flux.leakyrelu
     approximator = PCApprox.fNN(n, m, h_array, act)
     # training
-    supervised_learning(approximator, xuf_data)
+    supervised_learning!(approximator, xuf_data)
 end
