@@ -1,3 +1,6 @@
+"""
+Testing approximators' basic functionality
+"""
 using ParametrisedConvexApproximators
 const PCA = ParametrisedConvexApproximators
 using Test
