@@ -83,12 +83,8 @@ function (nn::PMA)(x::Array, u::Array)
     @assert is_vector == (length(size(u)) == 1)
     x = is_vector ? reshape(x, :, 1) : x
     u = is_vector ? reshape(u, :, 1) : u
-    if size(x)[2] != size(u)[2]
-        error("Different numbers of data")
-    end
-    d = size(x)[2]
-    X = reshape(nn.NN(x), nn.i_max, nn.m+1, d)  # size(X1) = (i_max, m, d)
-    tmp = hcat([(X[:, 1:nn.m, i]*u[:, i] .+ X[:, end:end, i]) for i in 1:d]...)
+    @assert size(x)[2] == size(u)[2]
+    tmp = affine_map(nn, x, u)
     _res = maximum(tmp, dims=1)
     res = is_vector ? reshape(_res, 1) : _res
 end
@@ -97,11 +93,6 @@ end
 When receiving Convex.AbstractExpr input
 """
 function (nn::PMA)(x::Array, u::Convex.AbstractExpr)
-    X = reshape(nn.NN(x), nn.i_max, (nn.m+1))  # size(X1) = (i_max, m)
-    tmp = (
-           X[:, 1:end-1] * u + (X[:, 1:end-1]*zeros(size(u)) .+ X[:, end:end])
-          )  # X1*zeros(size(u)) is for compatibility with Convex.jl
+    tmp = affine_map(nn, x, u)
     res = maximum(tmp)
 end
-
-

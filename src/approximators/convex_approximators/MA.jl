@@ -1,5 +1,5 @@
 """
-Max-affine neural networks [1].
+Max-affine neural network [1].
 
 # Variables
 x ∈ ℝ^n
@@ -17,11 +17,7 @@ struct MA <: ConvexApproximator
     _α_is::Matrix
     _β_is::Matrix
     function MA(α_is::Vector, β_is::Vector)
-        l = length(α_is[1])
-        i_max = length(α_is)
-        @assert length(β_is) == i_max
-        _α_is = hcat(α_is...)'
-        _β_is = hcat(β_is...)'
+        l, i_max, _α_is, _β_is = _construct_convex_approximator(α_is, β_is)
         new(l, i_max, _α_is, _β_is)
     end
 end
@@ -29,18 +25,18 @@ Flux.@functor MA (_α_is, _β_is,)
 
 function (nn::MA)(z::Array)
     is_vector = length(size(z)) == 1
-    @unpack _α_is, _β_is = nn
-    _res = maximum(_α_is * z .+ _β_is; dims=1)
+    z_affine = affine_map(nn, z)
+    _res = maximum(z_affine; dims=1)
     res = is_vector ? reshape(_res, 1) : _res
 end
 
 function (nn::MA)(z::Convex.AbstractExpr)
-    @unpack _α_is, _β_is = nn
-    _res = maximum(_α_is * z + (_α_is*zeros(size(z)) .+ _β_is))
+    z_affine = affine_map(nn, z)
+    _res = maximum(z_affine)
 end
 
 """
-Considering two-variable cases
+Considering bivariate function approximator
 """
 function (nn::MA)(x::Array, u::Union{Array, Convex.AbstractExpr})
     nn(vcat(x, u))

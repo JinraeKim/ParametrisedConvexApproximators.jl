@@ -39,6 +39,7 @@ function main()
     n, m, d = 2, 1, 10
     i_max = 5
     h_array = [1, 1]
+    T = 1e-1
     act = Flux.relu
     _xs = rand(n, d)
     _us = rand(m, d)
@@ -47,12 +48,16 @@ function main()
     α_is = 1:i_max |> Map(i -> rand(n+m)) |> collect
     β_is = 1:i_max |> Map(i -> rand(1)) |> collect
     # test
+    ma = MA(α_is, β_is)
+    lse = LSE(α_is, β_is, T)
     pma_basic = PMA(n, m, i_max, h_array, act)
     pma_theoretical = PMA(n, m, u_is, u_star_is, f)
-    ma = MA(α_is, β_is)
+    plse = PLSE(n, m, i_max, T, h_array, act)
     approximators = []
+    push!(approximators, ma)
+    push!(approximators, lse)
     push!(approximators, pma_basic)
     push!(approximators, pma_theoretical)
-    push!(approximators, ma)
+    push!(approximators, plse)
     approximators |> Map(approx -> test(approx, _xs, _us)) |> collect
 end

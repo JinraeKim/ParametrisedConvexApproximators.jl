@@ -1,6 +1,4 @@
 abstract type AbstractApproximator end
-abstract type ParametrisedConvexApproximator <: AbstractApproximator end
-abstract type ConvexApproximator <: ParametrisedConvexApproximator end
 
 
 """
@@ -29,6 +27,6 @@ end
 
 # approximators
 include("FNN.jl")
-include("PMA.jl")
-include("MA.jl")
+include("parametrised_convex_approximators/parametrised_convex_approximators.jl")
+include("convex_approximators/convex_approximators.jl")
 include("flux_params.jl")

@@ -11,7 +11,9 @@ using UnPack
 export xufData
 export partitionTrainTest
 # approximators
-export FNN, PMA, MA
+export FNN
+export MA, LSE
+export PMA, PLSE
 # training
 export train_approximator!
 
