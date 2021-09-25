@@ -38,5 +38,5 @@ end
 function (nn::PLSE)(x::Array, u::Convex.AbstractExpr)
     @unpack T = nn
     tmp = affine_map(nn, x, u)
-    res = T * Convex.logsumexp((1/T)*tmp)
+    res = [T * Convex.logsumexp((1/T)*tmp)]
 end

@@ -10,12 +10,12 @@ function _construct_convex_approximator(α_is::Vector, β_is::Vector)
     l, i_max, _α_is, _β_is
 end
 
-function affine_map(nn::ConvexApproximator, z::Array)
-    @unpack _α_is, _β_is = nn
-    _α_is * z .+ _β_is
-end
+# function affine_map(nn::ConvexApproximator, z::Array)
+#     @unpack _α_is, _β_is = nn
+#     _α_is * z .+ _β_is
+# end
 
-function affine_map(nn::ConvexApproximator, z::Convex.AbstractExpr)
+function affine_map(nn::ConvexApproximator, z::Union{Array, Convex.AbstractExpr})
     @unpack _α_is, _β_is = nn
     _α_is * z + (_α_is*zeros(size(z)) .+ _β_is)
 end

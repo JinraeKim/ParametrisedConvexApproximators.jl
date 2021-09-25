@@ -38,7 +38,7 @@ end
 function (nn::LSE)(z::Convex.AbstractExpr)
     @unpack T = nn
     z_affine = affine_map(nn, z)
-    _res = T * Convex.logsumexp((1/T)*z_affine)
+    _res = [T * Convex.logsumexp((1/T)*z_affine)]
 end
 
 """

@@ -32,7 +32,7 @@ end
 
 function (nn::MA)(z::Convex.AbstractExpr)
     z_affine = affine_map(nn, z)
-    _res = maximum(z_affine)
+    _res = [maximum(z_affine)]
 end
 
 """

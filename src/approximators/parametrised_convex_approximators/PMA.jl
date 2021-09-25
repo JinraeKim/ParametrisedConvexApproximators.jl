@@ -94,5 +94,5 @@ When receiving Convex.AbstractExpr input
 """
 function (nn::PMA)(x::Array, u::Convex.AbstractExpr)
     tmp = affine_map(nn, x, u)
-    res = maximum(tmp)
+    res = [maximum(tmp)]
 end
