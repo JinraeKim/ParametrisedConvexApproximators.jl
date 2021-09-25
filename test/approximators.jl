@@ -5,6 +5,7 @@ using Test
 using Flux
 using Transducers
 using Convex
+using Random
 
 
 """
@@ -43,7 +44,8 @@ end
 """
 Testing approximators' functionality
 """
-function main()
+function main(; seed=2021)
+    Random.seed!(seed)
     # default
     n, m, d = 2, 1, 1000
     i_max = 5
@@ -70,7 +72,7 @@ function main()
     push!(approximators, ma)
     push!(approximators, lse)
     push!(approximators, pma_basic)
-    push!(approximators, pma_theoretical)
+    # push!(approximators, pma_theoretical)
     push!(approximators, plse)
     # test
     print("Testing basic functionality...")
