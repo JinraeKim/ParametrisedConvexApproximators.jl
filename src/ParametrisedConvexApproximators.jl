@@ -5,12 +5,13 @@ using Flux
 using Random
 using Transducers
 using Convex
+using UnPack
 
 # data structure
 export xufData
 export partitionTrainTest
 # approximators
-export pMA
+export FNN, PMA, MA
 # training
 export train_approximator!
 
