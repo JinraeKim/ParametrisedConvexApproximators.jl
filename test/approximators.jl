@@ -22,7 +22,7 @@ function supervised_learning!(approximator, xuf_data)
     PCA.train_approximator!(approximator, xuf_data_train, xuf_data_test;
                             epochs=300,
                            )
-    @show "No error while training the approximator"
+    println("No error while training the approximator")
 end
 
 function test(approximator, _xs, _us)
@@ -45,7 +45,7 @@ end
 
 function generate_approximators(n, m, d)
     i_max = 20
-    h_array = [64, 64]
+    h_array = [16, 16]
     T = 1e-1
     act = Flux.leakyrelu
     u_is = range(-1, 1, length=i_max) |> Map(_u_i -> [_u_i]) |> collect  # to make it a matrix
@@ -70,21 +70,21 @@ function generate_approximators(n, m, d)
     _approximators = Dict(zip(keys(approximators), values(approximators)))  # Dict
 end
 
-function generate_data(n, m, d)
-    xs = 1:d |> Map(i -> 5*(2*(rand(n) .- 0.5))) |> collect
-    us = 1:d |> Map(i -> 5*(2*(rand(m) .- 0.5))) |> collect
+function generate_data(n, m, d, xlim, ulim)
+    xs = 1:d |> Map(i -> xlim[1] .+ (xlim[2]-xlim[1]) .* rand(n)) |> collect
+    us = 1:d |> Map(i -> ulim[1] .+ (ulim[2]-ulim[1]) .* rand(m)) |> collect
     fs = zip(xs, us) |> MapSplat((x, u) -> f(x, u)) |> collect
     xuf_data = PCA.xufData(xs, us, fs)
 end
 
-function plot_figure!(fig, approx; kwargs...)
-    func(x, u) = approx([x], [u])[1]
-    plot!(fig,
-          -5:0.1:5, -5:0.1:5, func;
-          st=:surface,
-          kwargs...,
-         )
-end
+# function plot_figure!(fig, approx, xlim, ulim; Δx=0.1, Δu=0.1, kwargs...)
+#     func(x, u) = approx([x], [u])[1]
+#     plot!(fig,
+#           (xlim[1]):Δx:(xlim[2]), (ulim[1]):Δx:(ulim[2]), func;
+#           st=:surface,
+#           kwargs...,
+#          )
+# end
 
 @testset "approximators" begin
     dir_log = "figures/test"
@@ -92,7 +92,9 @@ end
     n, m, d = 1, 1, 1000
     _approximators = generate_approximators(n, m, d)
     approximators = (; _approximators...)  # NT
-    xuf_data = generate_data(n, m, d)
+    xlim = (-5, 5)
+    ulim = (-5, 5)
+    xuf_data = generate_data(n, m, d, xlim, ulim)
     _xs = hcat(xuf_data.x...)
     _us = hcat(xuf_data.u...)
     # test
@@ -102,17 +104,16 @@ end
     print("Testing supervised_learning...")
     approximators |> Map(approx -> supervised_learning!(approx, xuf_data)) |> collect
     # figures
-    figs_true = 1:length(approximators) |> Map(fig -> plot(-5:0.1:5, -5:0.1:5, f;
-                                                           xlim=(-5, 5), ylim=(-5, 5), zlim=(-25, 25),
-                                                           st=:surface,
-                                                          )) |> collect
+    figs_true = 1:length(approximators) |> Map(approx -> plot(;
+                                                                xlim=(-5, 5), ylim=(-5, 5), zlim=(-25, 25),
+                                                               )) |> collect
+    _ = zip(figs_true, approximators) |> MapSplat((fig, approx) -> plot_approx!(fig, (x, u) -> [f(x, u)], xlim, ulim)) |> collect
     figs_approx = 1:length(approximators) |> Map(approx -> plot(;
                                                                 xlim=(-5, 5), ylim=(-5, 5), zlim=(-25, 25),
                                                                )) |> collect
-    _ = zip(figs_approx, approximators) |> MapSplat((fig, approx) -> plot_figure!(fig, approx)) |> collect
+    _ = zip(figs_approx, approximators) |> MapSplat((fig, approx) -> plot_approx!(fig, approx, xlim, ulim)) |> collect
     # subplots
     figs = zip(figs_approx, figs_true) |> MapSplat((fig_approx, fig_true) -> plot(fig_approx, fig_true; layout=(2, 1),)) |> collect
     # save figs
     _ = zip(figs, _approximators) |> MapSplat((fig, _approx) -> savefig(fig, joinpath(dir_log, "$(_approx[1]).png"))) |> collect
-    nothing
 end

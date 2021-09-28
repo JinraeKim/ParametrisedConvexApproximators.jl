@@ -6,6 +6,7 @@ using Random
 using Transducers
 using Convex
 using UnPack
+using RecipesBase: AbstractPlot, plot!
 
 # data structure
 export xufData
@@ -16,6 +17,7 @@ export MA, LSE
 export PMA, PLSE
 # training
 export train_approximator!
+export plot_approx!
 
 
 include("approximators/approximators.jl")
