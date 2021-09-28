@@ -1,2 +1,3 @@
-Flux.params(nn::fNN) = Flux.params(nn.NN...)
-Flux.params(nn::pMA) = Flux.params(nn.NN...)
+Flux.params(nn::FNN) = Flux.params(nn.NN...)
+Flux.params(nn::PMA) = Flux.params(nn.NN...)
+Flux.params(nn::PLSE) = Flux.params(nn.NN...)

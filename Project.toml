@@ -7,12 +7,16 @@ version = "0.1.0"
 Convex = "f65535da-76fb-5f13-bab9-19810c17039a"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 Transducers = "28d57a85-8fef-5791-bfe6-a80928e7c999"
+UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 
 [compat]
 Convex = "0.14"
 Flux = "0.12"
+RecipesBase = "1.1"
 Transducers = "0.4"
+UnPack = "1.0"
 julia = "1"
 
 [extras]
