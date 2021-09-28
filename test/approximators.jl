@@ -6,6 +6,7 @@ using Flux
 using Transducers
 using Convex
 using Random
+using ForwardDiff
 
 
 """
@@ -15,43 +16,40 @@ function f(x, u)
     0.5 * (-x'*x + u'*u)
 end
 
-# TODO: use ForwardDiff to obtain partial derivative?
-function f_partial_u(x, u)
-    u
-end
-
 function supervised_learning!(approximator, xuf_data)
     @show approximator |> typeof
     xuf_data_train, xuf_data_test = PCA.partitionTrainTest(xuf_data)
-    PCA.train_approximator!(approximator, xuf_data_train, xuf_data_test)
+    PCA.train_approximator!(approximator, xuf_data_train, xuf_data_test;
+                            epochs=10,
+                           )
+    @show "No error while training the approximator"
 end
 
 function test(approximator, _xs, _us)
     @show approximator |> typeof
-    @show Flux.params(approximator)
     d = size(_xs)[2]
     m = size(_us)[1]
     _x = _xs[:, 1]
     _u = _us[:, 1]
     u_convex = Convex.Variable(length(_us[:, 1]))
     u_convex.value = _u
-    @testset "infer_test" begin
+    @testset "infer size check" begin
         @test approximator(_xs, _us) |> size == (1, d)
         @test approximator(_x, _u) |> size == (1,)
+    end
+    @testset "Convex.Variable evaluation check" begin
         @test approximator(_x, u_convex.value) ≈ approximator(_x, _u)
         @test evaluate.(approximator(_x, u_convex)) ≈ approximator(_x, _u)
     end
 end
 
-"""
-Testing approximators' functionality
-"""
-function main(; seed=2021)
+@testset "Apporixmators" begin
+    seed = 2021
     Random.seed!(seed)
     # default
-    n, m, d = 2, 1, 1000
-    i_max = 20
-    h_array = [64, 64]
+    n, m, d = 2, 1, 100
+    i_max = 10
+    h_array = [2, 2]
     T = 1e-1
     act = Flux.leakyrelu
     xs = 1:d |> Map(i -> 5*(2*(rand(n) .- 0.5))) |> collect
@@ -61,9 +59,11 @@ function main(; seed=2021)
     _xs = hcat(xs...)
     _us = hcat(us...)
     u_is = range(-1, 1, length=i_max) |> Map(_u_i -> [_u_i]) |> collect  # to make it a matrix
-    u_star_is = u_is |> Map(u_i -> (x -> f_partial_u(x, u_i))) |> collect
+    # u_star_is = u_is |> Map(u_i -> (x -> f_partial_u(x, u_i))) |> collect
+    u_star_is = u_is |> Map(u_i -> (x -> ForwardDiff.gradient(u -> f(x, u), u_i))) |> collect
     α_is = 1:i_max |> Map(i -> rand(n+m)) |> collect
     β_is = 1:i_max |> Map(i -> rand(1)) |> collect
+
     # test
     ma = MA(α_is, β_is)
     lse = LSE(α_is, β_is, T)
@@ -82,4 +82,5 @@ function main(; seed=2021)
     # training
     print("Testing supervised_learning...")
     approximators |> Map(approx -> supervised_learning!(approx, xuf_data)) |> collect
+    nothing
 end
