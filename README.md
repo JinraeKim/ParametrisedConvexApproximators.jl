@@ -15,6 +15,7 @@ This package provides the following approximators.
 
 
 # To-do list
+- [x] Add `solve!` test.
 - [ ] Add normalisation
 - [ ] Add Q-learning algorithm
 - [ ] Apply Q-learinng to optimal control with non-convex value function using PCAs.
