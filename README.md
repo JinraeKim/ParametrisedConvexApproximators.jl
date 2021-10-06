@@ -5,21 +5,21 @@
 ## Supported approximators
 
 This package provides the following approximators. 
-- **convex approximators**
+- **convex approximators (CAs)**
     - MA (max-affine) [1]
     - LSE (log-sum-exp) [1]
 
-- **parametrised convex approximators** (a generalised concept of convex approximators)
+- **parametrised convex approximators (PCAs)** (a generalised concept of convex approximators)
     - PMA (parametrised max-affine)
     - PLSE (parametrised log-sum-exp)
 
 
 # To-do list
+- [ ] Add Q-learning algorithm
+- [ ] Apply Q-learinng to optimal control with non-convex value function using PCAs.
+- [ ] quantitative study of supervised learning; accuracy, computation speed, etc.
+- [ ] quantitative study of Q-learning; performance index, etc.
 - [ ] Write academic papers!
-## Urgent
-- [ ] Normalise data, see Calafiore's work: https://ieeexplore.ieee.org/abstract/document/8715799?casa_token=ptHxee1NJ30AAAAA:etAIY0UkR0yg6YK7mgtEzCzHavM0d6Cos1VNzpn0cw5hbiEnFnAxNDm1rflWjDAOa-iO6xU5Lg.
-- [ ] ~~Extend G. C. Calafiore's work, i.e., finite-horizon Q-learning, see https://ieeexplore.ieee.org/document/9143765.~~ Apply Q-learning to optimal control with non-convex value.
-- [ ] Extend Tao Bian's work, i.e., Q-based value iteration of approximate DPs, see https://ieeexplore.ieee.org/abstract/document/7798777/.
 
 ## Not urgent
 - [ ] Flux-based AD (auto differentiation)-compatible construction for PMA. See 

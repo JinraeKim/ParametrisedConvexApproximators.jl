@@ -5,6 +5,7 @@ using Flux
 using Random
 using Transducers
 using Convex
+import Convex
 using UnPack
 using RecipesBase: AbstractPlot, plot!
 
@@ -12,12 +13,14 @@ using RecipesBase: AbstractPlot, plot!
 export xufData
 export partitionTrainTest
 # approximators
+export ParametrisedConvexApproximator, ConvexApproximator
 export FNN
 export MA, LSE
 export PMA, PLSE
 # training
 export train_approximator!
 export plot_approx!
+export solve!
 
 
 include("approximators/approximators.jl")

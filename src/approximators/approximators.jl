@@ -1,5 +1,9 @@
 abstract type AbstractApproximator end
 
+function infer!(approx::AbstractApproximator, x, u)
+    error("Define infer! for type $(typeof(approx))")
+end
+
 
 """
     construct_layer_array(node_array, act)

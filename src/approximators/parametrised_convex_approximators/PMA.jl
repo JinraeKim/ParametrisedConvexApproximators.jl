@@ -78,7 +78,7 @@ size(u) = (m, d)
 x and u should be arrays.
 For example, u = [1] for the one-element case.
 """
-function (nn::PMA)(x::Array, u::Array)
+function (nn::PMA)(x::AbstractArray, u::AbstractArray)
     is_vector = length(size(x)) == 1
     @assert is_vector == (length(size(u)) == 1)
     x = is_vector ? reshape(x, :, 1) : x
@@ -92,7 +92,7 @@ end
 """
 When receiving Convex.AbstractExpr input
 """
-function (nn::PMA)(x::Array, u::Convex.AbstractExpr)
+function (nn::PMA)(x::AbstractArray, u::Convex.AbstractExpr)
     tmp = affine_map(nn, x, u)
     res = [maximum(tmp)]
 end

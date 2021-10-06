@@ -8,7 +8,6 @@ struct FNN <: AbstractApproximator
     end
 end
 
-
 """
     (nn::FNN)(x, u)
 
