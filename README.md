@@ -15,6 +15,7 @@ This package provides the following approximators.
 
 
 # To-do list
+- [ ] Add normalisation
 - [ ] Add Q-learning algorithm
 - [ ] Apply Q-learinng to optimal control with non-convex value function using PCAs.
 - [ ] quantitative study of supervised learning; accuracy, computation speed, etc.

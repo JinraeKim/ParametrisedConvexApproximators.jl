@@ -7,6 +7,7 @@ using Transducers
 using Convex
 using ForwardDiff
 using Plots
+using UnPack
 
 
 """
@@ -25,7 +26,7 @@ function supervised_learning!(approximator, xuf_data)
     println("No error while training the approximator")
 end
 
-function test(approximator, _xs, _us)
+function basic_test(approximator, _xs, _us)
     @show approximator |> typeof
     d = size(_xs)[2]
     m = size(_us)[1]
@@ -45,7 +46,8 @@ end
 
 function generate_approximators(n, m, d)
     i_max = 20
-    h_array = [16, 16]
+    # h_array = [16, 16]
+    h_array = [64, 64]
     T = 1e-1
     act = Flux.leakyrelu
     u_is = range(-1, 1, length=i_max) |> Map(_u_i -> [_u_i]) |> collect  # to make it a matrix
@@ -61,11 +63,11 @@ function generate_approximators(n, m, d)
     pma_theoretical = PMA(n, m, u_is, u_star_is, f)
     plse = PLSE(n, m, i_max, T, h_array, act)
     approximators = (;
-                     ma=ma,
-                     lse=lse,
+                     # ma=ma,
+                     # lse=lse,
                      pma_basic=pma_basic,
                      # pma_theoretical=pma_theoretical,  # TODO
-                     plse=plse,
+                     # plse=plse,
                     )  # NT
     _approximators = Dict(zip(keys(approximators), values(approximators)))  # Dict
 end
@@ -77,14 +79,17 @@ function generate_data(n, m, d, xlim, ulim)
     xuf_data = PCA.xufData(xs, us, fs)
 end
 
-# function plot_figure!(fig, approx, xlim, ulim; Δx=0.1, Δu=0.1, kwargs...)
-#     func(x, u) = approx([x], [u])[1]
-#     plot!(fig,
-#           (xlim[1]):Δx:(xlim[2]), (ulim[1]):Δx:(ulim[2]), func;
-#           st=:surface,
-#           kwargs...,
-#          )
-# end
+function infer_test(approx, _xs)
+    @testset "infer_test" begin
+        @unpack m = approx
+        d = size(_xs)[2]
+        _minimiser_true = zeros(m, d)
+        _optval_true = hcat((1:d |> Map(i -> f(_xs[:, i], _minimiser_true[:, i])) |> collect)...)
+        _res = solve!(approx, _xs)
+        @show (abs.(_res.minimiser .- _minimiser_true) |> sum) / d
+        @show (abs.(_res.optval .- _optval_true) |> sum) / d
+    end
+end
 
 @testset "approximators" begin
     dir_log = "figures/test"
@@ -92,17 +97,20 @@ end
     n, m, d = 1, 1, 1000
     _approximators = generate_approximators(n, m, d)
     approximators = (; _approximators...)  # NT
-    xlim = (-5, 5)
-    ulim = (-5, 5)
+    xlim = (-1, 1)
+    ulim = (-1, 1)
     xuf_data = generate_data(n, m, d, xlim, ulim)
     _xs = hcat(xuf_data.x...)
     _us = hcat(xuf_data.u...)
     # test
     print("Testing basic functionality...")
-    approximators |> Map(approx -> test(approx, _xs, _us)) |> collect
+    approximators |> Map(approx -> basic_test(approx, _xs, _us)) |> collect
     # training
     print("Testing supervised_learning...")
     approximators |> Map(approx -> supervised_learning!(approx, xuf_data)) |> collect
+    # inference
+    print("Testing inference...")
+    approximators |> Map(approx -> infer_test(approx, _xs)) |> collect
     # figures
     figs_true = 1:length(approximators) |> Map(approx -> plot(;
                                                                 xlim=(-5, 5), ylim=(-5, 5), zlim=(-25, 25),

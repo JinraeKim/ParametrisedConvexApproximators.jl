@@ -15,6 +15,21 @@ function affine_map(nn::ParametrisedConvexApproximator, x::AbstractArray, u::Con
           )  # X1*zeros(size(u)) is for compatibility with Convex.jl
 end
 
+function Convex.solve!(approx::ParametrisedConvexApproximator, x::AbstractVector)
+    @unpack m = approx
+    u = Convex.Variable(m)
+    problem = minimize(approx(x, u)[1])
+    solve!(problem, Mosek.Optimizer(); silent_solver=true)
+    (; minimiser = u.value, optval = problem.optval)
+end
+
+function Convex.solve!(approx::ParametrisedConvexApproximator, x::AbstractMatrix)
+    d = size(x)[2]
+    ress = 1:d |> Map(i -> solve!(approx, x[:, i])) |> tcollect
+    minimiser_matrix = hcat((ress |> Map(res -> res.minimiser) |> collect)...)
+    optval_matrix = hcat((ress |> Map(res -> res.optval) |> collect)...)
+    (; minimiser = minimiser_matrix, optval = optval_matrix)
+end
 
 include("PMA.jl")
 include("PLSE.jl")

@@ -5,7 +5,8 @@ using Flux
 using Random
 using Transducers
 using Convex
-import Convex
+# import Convex
+using Mosek, MosekTools
 using UnPack
 using RecipesBase: AbstractPlot, plot!
 

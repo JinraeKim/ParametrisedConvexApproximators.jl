@@ -1,6 +1,8 @@
 function train_approximator!(approximator, xuf_data_train::xufData, xuf_data_test::xufData;
         loss=(x, u, f) -> Flux.Losses.mse(approximator(x, u), f),
         opt=ADAM(1e-3),
+        # opt=Flux.Optimiser(ADAM(), ExpDecay()),
+        # opt=Flux.Optimiser(ADAM(), ExpDecay()),
         epochs=300,
         batchsize=64,
         # λ=0e-3,
