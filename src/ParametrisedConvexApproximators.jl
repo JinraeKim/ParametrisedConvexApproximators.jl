@@ -17,7 +17,10 @@ export partitionTrainTest
 ## normaliser
 export IdentityNormaliser, MinMaxNormaliser, StandardNormalDistributionNormaliser
 # approximators
+<<<<<<< HEAD
 export NormalisedApproximator
+=======
+>>>>>>> cdaf55c (Refine scripts)
 export ParametrisedConvexApproximator, ConvexApproximator
 export FNN
 export MA, LSE
