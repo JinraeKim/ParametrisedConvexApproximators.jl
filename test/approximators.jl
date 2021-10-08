@@ -8,6 +8,7 @@ using Convex
 using ForwardDiff
 using Plots
 using UnPack
+using Statistics
 
 
 """
@@ -66,12 +67,10 @@ function generate_approximators(xuf_data)
     approximators = (;
                      # ma=ma,
                      # lse=lse,
-                     pma_basic=NormalisedApproximator(pma_basic, Normaliser(xuf_data)),
+                     pma_basic=NormalisedApproximator(pma_basic, MinMaxNormaliser(xuf_data)),
                      # pma_theoretical=pma_theoretical,  # TODO
                      # plse=plse,
                     )  # NT
-    # normaliser = Normaliser(xuf_data)
-    # normalised_approximators = approximators |> Map(approx -> NormalisedApproximator(approx, normaliser)) |> collect
     _approximators = Dict(zip(keys(approximators), values(approximators)))  # Dict
 end
 
@@ -90,8 +89,10 @@ function infer_test(normalised_approximator::NormalisedApproximator, _xs)
         _minimiser_true = zeros(m, d)
         _optval_true = hcat((1:d |> Map(i -> f(_xs[:, i], _minimiser_true[:, i])) |> collect)...)
         _res = solve!(approximator, _xs)
-        @show (abs.(_res.minimiser .- _minimiser_true) |> sum) / d
-        @show (abs.(_res.optval .- _optval_true) |> sum) / d
+        errors_minimiser = 1:d |> Map(i -> norm(_res.minimiser[:, i] - _minimiser_true)) |> collect
+        errors_optval = 1:d |> Map(i -> abs(_res.optval - _optval_true)) |> collect
+        @show mean(errors_minimiser)
+        @show mean(errors_optval)
     end
 end
 

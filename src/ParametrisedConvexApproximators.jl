@@ -14,7 +14,7 @@ using Statistics: mean, std
 # data structure
 export xufData
 export partitionTrainTest
-export Normaliser
+export MinMaxNormaliser, StandardNormalDistributionNormaliser
 # approximators
 export NormalisedApproximator
 export ParametrisedConvexApproximator, ConvexApproximator
