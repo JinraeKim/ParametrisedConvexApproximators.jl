@@ -49,7 +49,7 @@ function generate_approximators(xuf_data)
     n, m, d = length(xuf_data.x[1]), length(xuf_data.u[1]), xuf_data.d
     i_max = 20
     # h_array = [16, 16]
-    h_array = [64, 64]
+    h_array = [64, 64, 64]
     T = 1e-1
     act = Flux.leakyrelu
     u_is = range(-1, 1, length=i_max) |> Map(_u_i -> [_u_i]) |> collect  # to make it a matrix
@@ -67,7 +67,7 @@ function generate_approximators(xuf_data)
     approximators = (;
                      # ma=ma,
                      # lse=lse,
-                     pma_basic=NormalisedApproximator(pma_basic, MinMaxNormaliser(xuf_data)),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser
+                     # pma_basic=NormalisedApproximator(pma_basic, MinMaxNormaliser(xuf_data)),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser
                      # pma_basic=NormalisedApproximator(pma_basic, StandardNormalDistributionNormaliser(xuf_data)),
                      # pma_theoretical=pma_theoretical,  # TODO
                      plse=NormalisedApproximator(plse, MinMaxNormaliser(xuf_data)),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser
@@ -101,8 +101,8 @@ end
     dir_log = "figures/test"
     mkpath(dir_log)
     n, m, d = 1, 1, 1000
-    xlim = (-1, 1)
-    ulim = (-1, 1)
+    xlim = (-5, 5)
+    ulim = (-5, 5)
     xuf_data = generate_data(n, m, d, xlim, ulim)
     _approximators = generate_approximators(xuf_data)
     approximators = (; _approximators...)  # NT
