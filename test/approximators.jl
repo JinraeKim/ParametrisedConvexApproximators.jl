@@ -22,7 +22,7 @@ function supervised_learning!(approximator, xuf_data)
     @show approximator |> typeof
     xuf_data_train, xuf_data_test = PCA.partitionTrainTest(xuf_data)
     PCA.train_approximator!(approximator, xuf_data_train, xuf_data_test;
-                            epochs=300,
+                            epochs=100,
                            )
     println("No error while training the approximator")
 end
@@ -67,9 +67,11 @@ function generate_approximators(xuf_data)
     approximators = (;
                      # ma=ma,
                      # lse=lse,
-                     pma_basic=NormalisedApproximator(pma_basic, MinMaxNormaliser(xuf_data)),
+                     pma_basic=NormalisedApproximator(pma_basic, MinMaxNormaliser(xuf_data)),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser
+                     # pma_basic=NormalisedApproximator(pma_basic, StandardNormalDistributionNormaliser(xuf_data)),
                      # pma_theoretical=pma_theoretical,  # TODO
-                     # plse=plse,
+                     plse=NormalisedApproximator(plse, MinMaxNormaliser(xuf_data)),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser
+                     # plse=NormalisedApproximator(plse, StandardNormalDistributionNormaliser(xuf_data)),
                     )  # NT
     _approximators = Dict(zip(keys(approximators), values(approximators)))  # Dict
 end
@@ -82,16 +84,15 @@ function generate_data(n, m, d, xlim, ulim)
 end
 
 function infer_test(normalised_approximator::NormalisedApproximator, _xs)
-    @unpack approximator = normalised_approximator
     @testset "infer_test" begin
-        @unpack m = approximator
+        @unpack m = normalised_approximator.approximator
         d = size(_xs)[2]
         _minimiser_true = zeros(m, d)
         _optval_true = hcat((1:d |> Map(i -> f(_xs[:, i], _minimiser_true[:, i])) |> collect)...)
-        _res = solve!(approximator, _xs)
-        errors_minimiser = 1:d |> Map(i -> norm(_res.minimiser[:, i] - _minimiser_true)) |> collect
-        errors_optval = 1:d |> Map(i -> abs(_res.optval - _optval_true)) |> collect
+        _res = solve!(normalised_approximator, _xs)
+        errors_minimiser = 1:d |> Map(i -> norm(_res.minimiser[:, i] - _minimiser_true[:, i])) |> collect
         @show mean(errors_minimiser)
+        errors_optval = 1:d |> Map(i -> abs(_res.optval[i] - _optval_true[i])) |> collect
         @show mean(errors_optval)
     end
 end

@@ -32,13 +32,19 @@ function unnormalise(normaliser::StandardNormalDistributionNormaliser, z, name)
 end
 
 
+"""
+DO NOT USE `min.(x...)` instead of `minimum(_xs, dims=2)[:]`; horribly slow.
+"""
 struct MinMaxNormaliser <: AbstractNormaliser
     min_nt
     max_nt
     function MinMaxNormaliser(data::xufData)
         @unpack x, u, f = data
-        min_nt = (; x=min.(x...), u=min.(u...), f=min.(f...))
-        max_nt = (; x=max.(x...), u=max.(u...), f=max.(f...))
+        _xs = hcat(x...)
+        _us = hcat(u...)
+        _fs = hcat(f...)
+        min_nt = (; x=minimum(_xs, dims=2)[:], u=minimum(_us, dims=2)[:], f=minimum(_fs, dims=2)[:])  # vectorise
+        max_nt = (; x=maximum(_xs, dims=2)[:], u=maximum(_us, dims=2)[:], f=maximum(_fs, dims=2)[:])  # vectorise
         new(min_nt, max_nt)
     end
 end

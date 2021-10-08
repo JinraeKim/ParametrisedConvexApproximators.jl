@@ -1,8 +1,8 @@
 function train_approximator!(approximator, xuf_data_train::xufData, xuf_data_test::xufData;
         loss=SupervisedLearningLoss(approximator; loss=Flux.Losses.mse),
-        opt=ADAM(5e-4),
+        opt=ADAM(1e-3),
         epochs=300,
-        batchsize=64,
+        batchsize=16,
         # λ=0e-3,
     )
     xuf_nt_train = Data_to_NamedTuple(xuf_data_train)
