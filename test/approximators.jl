@@ -44,7 +44,8 @@ function basic_test(approximator, _xs, _us)
     end
 end
 
-function generate_approximators(n, m, d)
+function generate_approximators(xuf_data)
+    n, m, d = length(xuf_data.x[1]), length(xuf_data.u[1]), xuf_data.d
     i_max = 20
     # h_array = [16, 16]
     h_array = [64, 64]
@@ -65,10 +66,12 @@ function generate_approximators(n, m, d)
     approximators = (;
                      # ma=ma,
                      # lse=lse,
-                     pma_basic=pma_basic,
+                     pma_basic=NormalisedApproximator(pma_basic, Normaliser(xuf_data)),
                      # pma_theoretical=pma_theoretical,  # TODO
                      # plse=plse,
                     )  # NT
+    # normaliser = Normaliser(xuf_data)
+    # normalised_approximators = approximators |> Map(approx -> NormalisedApproximator(approx, normaliser)) |> collect
     _approximators = Dict(zip(keys(approximators), values(approximators)))  # Dict
 end
 
@@ -79,13 +82,14 @@ function generate_data(n, m, d, xlim, ulim)
     xuf_data = PCA.xufData(xs, us, fs)
 end
 
-function infer_test(approx, _xs)
+function infer_test(normalised_approximator::NormalisedApproximator, _xs)
+    @unpack approximator = normalised_approximator
     @testset "infer_test" begin
-        @unpack m = approx
+        @unpack m = approximator
         d = size(_xs)[2]
         _minimiser_true = zeros(m, d)
         _optval_true = hcat((1:d |> Map(i -> f(_xs[:, i], _minimiser_true[:, i])) |> collect)...)
-        _res = solve!(approx, _xs)
+        _res = solve!(approximator, _xs)
         @show (abs.(_res.minimiser .- _minimiser_true) |> sum) / d
         @show (abs.(_res.optval .- _optval_true) |> sum) / d
     end
@@ -95,11 +99,11 @@ end
     dir_log = "figures/test"
     mkpath(dir_log)
     n, m, d = 1, 1, 1000
-    _approximators = generate_approximators(n, m, d)
-    approximators = (; _approximators...)  # NT
     xlim = (-1, 1)
     ulim = (-1, 1)
     xuf_data = generate_data(n, m, d, xlim, ulim)
+    _approximators = generate_approximators(xuf_data)
+    approximators = (; _approximators...)  # NT
     _xs = hcat(xuf_data.x...)
     _us = hcat(xuf_data.u...)
     # test

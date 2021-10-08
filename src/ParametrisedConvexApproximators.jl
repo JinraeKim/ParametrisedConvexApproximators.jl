@@ -9,11 +9,14 @@ using Convex
 using Mosek, MosekTools
 using UnPack
 using RecipesBase: AbstractPlot, plot!
+using Statistics: mean, std
 
 # data structure
 export xufData
 export partitionTrainTest
+export Normaliser
 # approximators
+export NormalisedApproximator
 export ParametrisedConvexApproximator, ConvexApproximator
 export FNN
 export MA, LSE
@@ -24,8 +27,8 @@ export plot_approx!
 export solve!
 
 
-include("approximators/approximators.jl")
 include("data_manipulation/data_manipulation.jl")
+include("approximators/approximators.jl")
 include("training/training.jl")
 include("visualisation/visualisation.jl")
 
