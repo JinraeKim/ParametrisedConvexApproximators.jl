@@ -74,6 +74,8 @@ function generate_approximators(xuf_data)
                      # plse=NormalisedApproximator(plse, StandardNormalDistributionNormaliser(xuf_data)),
                      plse=NormalisedApproximator(plse, MinMaxNormaliser(xuf_data)),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser
                     )  # NT
+    # normaliser = Normaliser(xuf_data)
+    # normalised_approximators = approximators |> Map(approx -> NormalisedApproximator(approx, normaliser)) |> collect
     _approximators = Dict(zip(keys(approximators), values(approximators)))  # Dict
 end
 
