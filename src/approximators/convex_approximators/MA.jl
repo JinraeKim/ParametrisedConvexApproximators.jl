@@ -1,6 +1,9 @@
 """
 Max-affine neural network [1].
 
+# Note
+If you specify `n` or `m`, it can also be regarded as bivariate function.
+
 # Variables
 x ∈ ℝ^n
 u ∈ ℝ^m
@@ -13,12 +16,23 @@ z = [xᵀ, uᵀ]ᵀ ∈ ℝ^(n+m)  # l = n+m
 """
 struct MA <: ConvexApproximator
     l::Int  # n+m
+    n::Int  # the first variable for bivariate function
+    m::Int  # the second variable for bivariate function
     i_max::Int
     _α_is::Matrix
     _β_is::Matrix
-    function MA(α_is::Vector, β_is::Vector)
+    function MA(α_is::Vector, β_is::Vector; n=nothing, m=nothing)
         l, i_max, _α_is, _β_is = _construct_convex_approximator(α_is, β_is)
-        new(l, i_max, _α_is, _β_is)
+        if n != nothing && m != nothing
+            @assert l == n + m
+        elseif n != nothing
+            m = l - n
+            @assert m > 0
+        elseif m != nothing
+            n = l - m
+            @assert n > 0
+        end
+        new(l, n, m, i_max, _α_is, _β_is)
     end
 end
 Flux.@functor MA (_α_is, _β_is,)

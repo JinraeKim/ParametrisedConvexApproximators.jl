@@ -1,5 +1,9 @@
 abstract type AbstractApproximator end
 
+function infer!(approx::AbstractApproximator, x, u)
+    error("Define infer! for type $(typeof(approx))")
+end
+
 
 """
     construct_layer_array(node_array, act)
@@ -25,8 +29,32 @@ function construct_layer_array(node_array, act)
 end
 
 
+struct NormalisedApproximator <: AbstractApproximator
+    approximator::AbstractApproximator
+    normaliser::AbstractNormaliser
+end
+
+"""
+x ∈ ℝ^n or ℝ^(n×d)
+u ∈ ℝ^m or ℝ^(m×d)
+"""
+function (normalised_approximator::NormalisedApproximator)(x, u; output_normalisation=false)
+    @unpack approximator, normaliser = normalised_approximator
+    x_normal = normalise(normaliser, x, :x)
+    u_normal = normalise(normaliser, u, :u)
+    f_normal = approximator(x_normal, u_normal)
+    if output_normalisation
+        f = f_normal
+    else
+        f = unnormalise(normaliser, f_normal, :f)
+    end
+    f
+end
+
+
 # approximators
 include("FNN.jl")
 include("parametrised_convex_approximators/parametrised_convex_approximators.jl")
 include("convex_approximators/convex_approximators.jl")
 include("flux_params.jl")
+

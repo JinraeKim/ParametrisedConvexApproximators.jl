@@ -7,6 +7,8 @@ using Transducers
 using Convex
 using ForwardDiff
 using Plots
+using UnPack
+using Statistics
 
 
 """
@@ -20,12 +22,12 @@ function supervised_learning!(approximator, xuf_data)
     @show approximator |> typeof
     xuf_data_train, xuf_data_test = PCA.partitionTrainTest(xuf_data)
     PCA.train_approximator!(approximator, xuf_data_train, xuf_data_test;
-                            epochs=300,
+                            epochs=100,
                            )
     println("No error while training the approximator")
 end
 
-function test(approximator, _xs, _us)
+function basic_test(approximator, _xs, _us)
     @show approximator |> typeof
     d = size(_xs)[2]
     m = size(_us)[1]
@@ -43,9 +45,11 @@ function test(approximator, _xs, _us)
     end
 end
 
-function generate_approximators(n, m, d)
+function generate_approximators(xuf_data)
+    n, m, d = length(xuf_data.x[1]), length(xuf_data.u[1]), xuf_data.d
     i_max = 20
-    h_array = [16, 16]
+    # h_array = [16, 16]
+    h_array = [64, 64, 64]
     T = 1e-1
     act = Flux.leakyrelu
     u_is = range(-1, 1, length=i_max) |> Map(_u_i -> [_u_i]) |> collect  # to make it a matrix
@@ -55,17 +59,20 @@ function generate_approximators(n, m, d)
     β_is = 1:i_max |> Map(i -> rand(1)) |> collect
 
     # test
-    ma = MA(α_is, β_is)
-    lse = LSE(α_is, β_is, T)
+    ma = MA(α_is, β_is; n=n, m=m)
+    lse = LSE(α_is, β_is, T; n=n, m=m)
     pma_basic = PMA(n, m, i_max, h_array, act)
     pma_theoretical = PMA(n, m, u_is, u_star_is, f)
     plse = PLSE(n, m, i_max, T, h_array, act)
     approximators = (;
-                     ma=ma,
-                     lse=lse,
-                     pma_basic=pma_basic,
-                     # pma_theoretical=pma_theoretical,  # TODO
-                     plse=plse,
+                     # ma=NormalisedApproximator(ma, MinMaxNormaliser(xuf_data)),
+                     # lse=lse,
+                     # pma_basic=NormalisedApproximator(pma_basic, MinMaxNormaliser(xuf_data)),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser
+                     # pma_basic=NormalisedApproximator(pma_basic, StandardNormalDistributionNormaliser(xuf_data)),
+                     # pma_theoretical=pma_theoretical,  # TODO: make it compatible with Flux.jl's auto-diff
+                     # plse=NormalisedApproximator(plse, IdentityNormaliser()),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser
+                     # plse=NormalisedApproximator(plse, StandardNormalDistributionNormaliser(xuf_data)),
+                     plse=NormalisedApproximator(plse, MinMaxNormaliser(xuf_data)),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser
                     )  # NT
     _approximators = Dict(zip(keys(approximators), values(approximators)))  # Dict
 end
@@ -77,33 +84,41 @@ function generate_data(n, m, d, xlim, ulim)
     xuf_data = PCA.xufData(xs, us, fs)
 end
 
-# function plot_figure!(fig, approx, xlim, ulim; Δx=0.1, Δu=0.1, kwargs...)
-#     func(x, u) = approx([x], [u])[1]
-#     plot!(fig,
-#           (xlim[1]):Δx:(xlim[2]), (ulim[1]):Δx:(ulim[2]), func;
-#           st=:surface,
-#           kwargs...,
-#          )
-# end
+function infer_test(normalised_approximator::NormalisedApproximator, _xs, m)
+    @testset "infer_test" begin
+        d = size(_xs)[2]
+        _minimiser_true = zeros(m, d)
+        _optval_true = hcat((1:d |> Map(i -> f(_xs[:, i], _minimiser_true[:, i])) |> collect)...)
+        _res = solve!(normalised_approximator, _xs)
+        errors_minimiser = 1:d |> Map(i -> norm(_res.minimiser[:, i] - _minimiser_true[:, i])) |> collect
+        @show mean(errors_minimiser)
+        errors_optval = 1:d |> Map(i -> abs(_res.optval[i] - _optval_true[i])) |> collect
+        @show mean(errors_optval)
+    end
+end
 
 @testset "approximators" begin
     dir_log = "figures/test"
     mkpath(dir_log)
     n, m, d = 1, 1, 1000
-    _approximators = generate_approximators(n, m, d)
-    approximators = (; _approximators...)  # NT
     xlim = (-5, 5)
     ulim = (-5, 5)
     xuf_data = generate_data(n, m, d, xlim, ulim)
+    _approximators = generate_approximators(xuf_data)
+    approximators = (; _approximators...)  # NT
     _xs = hcat(xuf_data.x...)
     _us = hcat(xuf_data.u...)
     # test
     print("Testing basic functionality...")
-    approximators |> Map(approx -> test(approx, _xs, _us)) |> collect
+    approximators |> Map(approx -> basic_test(approx, _xs, _us)) |> collect
     # training
     print("Testing supervised_learning...")
     approximators |> Map(approx -> supervised_learning!(approx, xuf_data)) |> collect
+    # inference
+    print("Testing inference...")
+    approximators |> Map(approx -> infer_test(approx, _xs, m)) |> collect
     # figures
+    print("Printing figures...")
     figs_true = 1:length(approximators) |> Map(approx -> plot(;
                                                                 xlim=(-5, 5), ylim=(-5, 5), zlim=(-25, 25),
                                                                )) |> collect
