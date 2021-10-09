@@ -1,5 +1,6 @@
 function train_approximator!(approximator, xuf_data_train::xufData, xuf_data_test::xufData;
         loss=SupervisedLearningLoss(approximator; loss=Flux.Losses.mse),
+        # loss=error("Specify loss for your task, e.g., SupervisedLearningLoss(approximator)"),
         opt=ADAM(1e-3),
         epochs=300,
         batchsize=16,
