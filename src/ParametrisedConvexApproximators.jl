@@ -17,15 +17,16 @@ export partitionTrainTest
 ## normaliser
 export IdentityNormaliser, MinMaxNormaliser, StandardNormalDistributionNormaliser
 # approximators
-export NormalisedApproximator
 export ParametrisedConvexApproximator, ConvexApproximator
 export FNN
 export MA, LSE
 export PMA, PLSE
+export NormalisedApproximator
+export solve!
 # training
 export train_approximator!
 export plot_approx!
-export solve!
+export SupervisedLearningLoss
 
 
 include("data_manipulation/data_manipulation.jl")
