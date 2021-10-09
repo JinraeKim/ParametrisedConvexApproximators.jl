@@ -18,17 +18,17 @@ function f(x, u)
     0.5 * (-x'*x + u'*u)
 end
 
-function supervised_learning!(approximator, xuf_data)
-    @show approximator |> typeof
+function supervised_learning!(normalised_approximator, xuf_data)
+    @show normalised_approximator
     xuf_data_train, xuf_data_test = PCA.partitionTrainTest(xuf_data)
-    PCA.train_approximator!(approximator, xuf_data_train, xuf_data_test;
+    train_approximator!(normalised_approximator, xuf_data_train, xuf_data_test;
                             epochs=100,
                            )
-    println("No error while training the approximator")
+    println("No error while training the normalised_approximator")
 end
 
-function basic_test(approximator, _xs, _us)
-    @show approximator |> typeof
+function basic_test(normalised_approximator, _xs, _us)
+    @show normalised_approximator
     d = size(_xs)[2]
     m = size(_us)[1]
     _x = _xs[:, 1]
@@ -36,12 +36,12 @@ function basic_test(approximator, _xs, _us)
     u_convex = Convex.Variable(length(_us[:, 1]))
     u_convex.value = _u
     @testset "infer size check" begin
-        @test approximator(_xs, _us) |> size == (1, d)
-        @test approximator(_x, _u) |> size == (1,)
+        @test normalised_approximator(_xs, _us) |> size == (1, d)
+        @test normalised_approximator(_x, _u) |> size == (1,)
     end
     @testset "Convex.Variable evaluation check" begin
-        @test approximator(_x, u_convex.value) ≈ approximator(_x, _u)
-        @test evaluate.(approximator(_x, u_convex)) ≈ approximator(_x, _u)
+        @test normalised_approximator(_x, u_convex.value) ≈ normalised_approximator(_x, _u)
+        @test evaluate.(normalised_approximator(_x, u_convex)) ≈ normalised_approximator(_x, _u)
     end
 end
 
@@ -65,9 +65,9 @@ function generate_approximators(xuf_data)
     pma_theoretical = PMA(n, m, u_is, u_star_is, f)
     plse = PLSE(n, m, i_max, T, h_array, act)
     approximators = (;
-                     # ma=NormalisedApproximator(ma, MinMaxNormaliser(xuf_data)),
-                     # lse=lse,
-                     # pma_basic=NormalisedApproximator(pma_basic, MinMaxNormaliser(xuf_data)),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser
+                     ma=NormalisedApproximator(ma, MinMaxNormaliser(xuf_data)),
+                     lse=NormalisedApproximator(lse, MinMaxNormaliser(xuf_data)),
+                     pma_basic=NormalisedApproximator(pma_basic, MinMaxNormaliser(xuf_data)),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser
                      # pma_basic=NormalisedApproximator(pma_basic, StandardNormalDistributionNormaliser(xuf_data)),
                      # pma_theoretical=pma_theoretical,  # TODO: make it compatible with Flux.jl's auto-diff
                      # plse=NormalisedApproximator(plse, IdentityNormaliser()),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser
@@ -85,6 +85,7 @@ function generate_data(n, m, d, xlim, ulim)
 end
 
 function infer_test(normalised_approximator::NormalisedApproximator, _xs, m)
+    @show normalised_approximator
     @testset "infer_test" begin
         d = size(_xs)[2]
         _minimiser_true = zeros(m, d)
