@@ -22,6 +22,7 @@ function supervised_learning!(normalised_approximator, xuf_data)
     @show normalised_approximator
     xuf_data_train, xuf_data_test = PCA.partitionTrainTest(xuf_data)
     train_approximator!(normalised_approximator, xuf_data_train, xuf_data_test;
+                        loss=SupervisedLearningLoss(normalised_approximator),
                             epochs=100,
                            )
     println("No error while training the normalised_approximator")
