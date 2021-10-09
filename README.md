@@ -33,9 +33,12 @@ xuf_data = xufData(xs, us, fs)
 ## Approximator
 ### `AbstractApproximator`
 - Construct an `approximator::AbstractApproximator`.
-- It is NOT recommended to use `approximator::AbstractApproximator` directly. Instead, use `NormalisedApproximator` for better performance of training.
+    - It is NOT recommended to use `approximator::AbstractApproximator` directly. Instead, use `NormalisedApproximator` for better performance of training.
+- `AbstractApproximator` includes
+    - (`ConvexApproximator`) `MA`, `LSE`
+    - (`ParametrisedConvexApproximator`) `PMA`, `PLSE`
 
-## `NormalisedApproximator`
+### `NormalisedApproximator`
 - Construct a `normalised_approximator::NormalisedApproximator` instead of `approximator::AbstractApproximator`.
 It is recommended you to use normalised approximator due to the training performance; this will automatically normalise and unnormalise given mini-batch data. Normalisation usually gives a better result.
 For example, the following example constructs a `normalised_approximator::NormalisedApproximator` based on `approximator::PLSE` and `normaliser::MinMaxNormaliser`.
