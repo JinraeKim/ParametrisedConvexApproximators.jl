@@ -70,8 +70,9 @@ function generate_approximators(xuf_data)
                      # pma_basic=NormalisedApproximator(pma_basic, MinMaxNormaliser(xuf_data)),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser
                      # pma_basic=NormalisedApproximator(pma_basic, StandardNormalDistributionNormaliser(xuf_data)),
                      # pma_theoretical=pma_theoretical,  # TODO
-                     plse=NormalisedApproximator(plse, MinMaxNormaliser(xuf_data)),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser
+                     # plse=NormalisedApproximator(plse, IdentityNormaliser()),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser
                      # plse=NormalisedApproximator(plse, StandardNormalDistributionNormaliser(xuf_data)),
+                     plse=NormalisedApproximator(plse, MinMaxNormaliser(xuf_data)),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser
                     )  # NT
     _approximators = Dict(zip(keys(approximators), values(approximators)))  # Dict
 end
@@ -118,6 +119,7 @@ end
     print("Testing inference...")
     approximators |> Map(approx -> infer_test(approx, _xs)) |> collect
     # figures
+    print("Printing figures...")
     figs_true = 1:length(approximators) |> Map(approx -> plot(;
                                                                 xlim=(-5, 5), ylim=(-5, 5), zlim=(-25, 25),
                                                                )) |> collect

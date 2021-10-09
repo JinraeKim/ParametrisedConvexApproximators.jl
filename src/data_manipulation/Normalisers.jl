@@ -1,5 +1,29 @@
 abstract type AbstractNormaliser end
 
+function normalise(normaliser::AbstractNormaliser, z, name)
+    error("Define method `normalise` for $(typeof(normaliser))")
+end
+
+function unnormalise(normaliser::AbstractNormaliser, z, name)
+    error("Define method `unnormalise` for $(typeof(normaliser))")
+end
+
+
+"""
+Identity normaliser, i.e., does not affect at all.
+Usually used for debugging or comparison of the performance of normalisation.
+"""
+struct IdentityNormaliser <: AbstractNormaliser
+end
+
+function normalise(normaliser::IdentityNormaliser, z, name)
+    z
+end
+
+function unnormalise(normaliser::IdentityNormaliser, z, name)
+    z
+end
+
 
 struct StandardNormalDistributionNormaliser <: AbstractNormaliser
     mean_nt
