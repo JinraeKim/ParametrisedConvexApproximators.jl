@@ -33,6 +33,6 @@ end
 include("FNN.jl")
 include("parametrised_convex_approximators/parametrised_convex_approximators.jl")
 include("convex_approximators/convex_approximators.jl")
-include("flux_params.jl")
 include("normalised_approximators.jl")
+include("flux_params.jl")
 include("solve.jl")

@@ -12,7 +12,7 @@ using RecipesBase: AbstractPlot, plot!
 using Statistics: mean, std
 
 # data structure
-export xufData
+export xufData, xurx_nextData
 export partitionTrainTest
 ## normaliser
 export IdentityNormaliser, MinMaxNormaliser, StandardNormalDistributionNormaliser
