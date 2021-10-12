@@ -30,14 +30,20 @@ function FS.Dynamics!(env::Oscillator_ZOH_Input)
     end
 end
 
-function sample(lims)
-    @assert length(lims) == 2
-    l = length(lims[1])
-    @assert length(lims[2]) == l
-    rand(l) .* (lims[2]-lims[1]) .+ lims[1]
+function sample(lim)
+    @assert length(lim) == 2
+    l = length(lim[1])
+    @assert length(lim[2]) == l
+    rand(l) .* (lim[2]-lim[1]) .+ lim[1]
 end
 
-function run(x0; Δt=0.003, u_lims=(-5*ones(1), 5*ones(1)),)
+function is_out(x, lim)
+    any(x .>= lim[2]) || any(x .<= lim[1])
+end
+
+function run(x0, xlim;
+        Δt=0.003, ulim=(-5*ones(1), 5*ones(1)),
+    )
     # env
     oscillator = TwoDimensionalNonlinearOscillator()
     env = Oscillator_ZOH_Input(oscillator)
@@ -50,11 +56,16 @@ function run(x0; Δt=0.003, u_lims=(-5*ones(1), 5*ones(1)),)
     df = DataFrame()
     optimal_control = FSimZoo.OptimalControl(env.oscillator)
     for (i, t) in enumerate(t0:Δt:tf)
+        state = simulator.integrator.u
         if (i-1) % 1 == 0  # update input period
-            state = simulator.integrator.u
-            simulator.integrator.p = sample(u_lims)
+            simulator.integrator.p = sample(ulim)
         end
-        step_until!(simulator, t, df)
+        step_until!(simulator, t)
+        if is_out(state, xlim)
+            break
+        else
+            push!(simulator, df)
+        end
     end
     _states = df.sol |> Map(datum -> datum.state) |> collect
     _inputs = df.sol |> Map(datum -> datum.input) |> collect
@@ -68,10 +79,11 @@ end
 
 function main(; seed=2021)
     Random.seed!(seed)
-    n_scenario = 3
-    x_lim = (-1*ones(2), 1*ones(2))
-    x0s = 1:n_scenario |> Map(i -> sample(x_lim)) |> collect
-    @time data_scenarios = x0s |> Map(run) |> tcollect
+    n_scenario = 100
+    xlim = (-1*ones(2), 1*ones(2))
+    x0s = 1:n_scenario |> Map(i -> sample(xlim)) |> collect
+    @time data_scenarios = x0s |> Map(x0 -> run(x0, xlim)) |> tcollect
     data = cat(data_scenarios)
+    @show data.x
     nothing
 end
