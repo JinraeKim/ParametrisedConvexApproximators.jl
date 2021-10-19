@@ -16,15 +16,22 @@ end
 x ∈ ℝ^n or ℝ^(n×d)
 u ∈ ℝ^m or ℝ^(m×d)
 """
-function (normalised_approximator::NormalisedApproximator)(x, u; output_normalisation=false)
+function (normalised_approximator::NormalisedApproximator)(x, u)
     @unpack approximator, normaliser = normalised_approximator
     x_normal = normalise(normaliser, x, :x)
     u_normal = normalise(normaliser, u, :u)
-    f_normal = approximator(x_normal, u_normal)
-    if output_normalisation
-        f = f_normal
-    else
-        f = unnormalise(normaliser, f_normal, :f)
-    end
-    f
+    f = approximator(x_normal, u_normal)
 end
+
+# function (normalised_approximator::NormalisedApproximator)(x, u; output_normalisation=false)
+#     @unpack approximator, normaliser = normalised_approximator
+#     x_normal = normalise(normaliser, x, :x)
+#     u_normal = normalise(normaliser, u, :u)
+#     f_normal = approximator(x_normal, u_normal)
+#     if output_normalisation
+#         f = f_normal
+#     else
+#         f = unnormalise(normaliser, f_normal, :f)
+#     end
+#     f
+# end

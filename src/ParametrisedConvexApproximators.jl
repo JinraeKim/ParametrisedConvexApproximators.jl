@@ -2,6 +2,7 @@ module ParametrisedConvexApproximators
 
 # using Debugger  # tmp
 using Flux
+using Zygote
 using Random
 using Transducers
 using Convex
@@ -26,7 +27,7 @@ export solve!
 # training
 export train_approximator!
 export plot_approx!
-export SupervisedLearningLoss
+export SupervisedLearningLoss, QLearningLoss
 
 
 include("data_manipulation/data_manipulation.jl")
