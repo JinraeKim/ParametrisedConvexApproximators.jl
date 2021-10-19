@@ -1,13 +1,13 @@
-function train_approximator!(approximator, xuf_data_train::xufData, xuf_data_test::xufData;
+function train_approximator!(approximator, data_train::AbstractDataStructure, data_test::AbstractDataStructure;
         loss=error("Specify loss for your task, e.g., SupervisedLearningLoss(approximator)"),
         opt=ADAM(1e-3),
         epochs=300,
         batchsize=16,
         # λ=0e-3,
     )
-    xuf_nt_train = Data_to_NamedTuple(xuf_data_train)
-    xuf_nt_test = Data_to_NamedTuple(xuf_data_test)
-    dataloader = Flux.DataLoader(xuf_nt_train;
+    data_nt_train = Data_to_NamedTuple(data_train)
+    data_nt_test = Data_to_NamedTuple(data_test)
+    dataloader = Flux.DataLoader(data_nt_train;
                                  batchsize=batchsize, shuffle=true)
     # sqnorm(x) = sum(abs2, x)
     # loss_reg(args...) = loss(args...) + λ*sum(sqnorm, Flux.params(approximator))
@@ -18,8 +18,8 @@ function train_approximator!(approximator, xuf_data_train::xufData, xuf_data_tes
         end
         # display result
         if epoch % 10 == 0
-            @show epoch, loss(xuf_nt_train...), loss(xuf_nt_test...)
-            # @show epoch, loss(xuf_nt_train...), loss_reg(xuf_nt_train...), loss(xuf_nt_test...)
+            @show epoch, loss(data_nt_train), loss(data_nt_test)
+            # @show epoch, loss(data_nt_train...), loss_reg(data_nt_train...), loss(data_nt_test...)
         end
     end
 end
@@ -28,7 +28,7 @@ function _train!(loss, approximator::AbstractApproximator, data, opt)
     ps = Flux.params(approximator)
     for d in data
         gs = gradient(ps) do 
-            training_loss = loss(d.x, d.u, d.f)
+            training_loss = loss(d)
             training_loss
         end
         Flux.update!(opt, ps, gs)

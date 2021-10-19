@@ -23,7 +23,7 @@ size(u) = (m, d)
 x and u should be arrays.
 For example, u = [1] for the one-element case.
 """
-function (nn::PLSE)(x::Array, u::Array)
+function (nn::PLSE)(x::AbstractArray, u::AbstractArray)
     @unpack T = nn
     is_vector = length(size(x)) == 1
     @assert is_vector == (length(size(u)) == 1)
@@ -35,7 +35,7 @@ function (nn::PLSE)(x::Array, u::Array)
     res = is_vector ? reshape(_res, 1) : _res
 end
 
-function (nn::PLSE)(x::Array, u::Convex.AbstractExpr)
+function (nn::PLSE)(x::AbstractArray, u::Convex.AbstractExpr)
     @unpack T = nn
     tmp = affine_map(nn, x, u)
     res = [T * Convex.logsumexp((1/T)*tmp)]
