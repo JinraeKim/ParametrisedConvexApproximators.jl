@@ -66,9 +66,9 @@ function generate_approximators(xuf_data)
     pma_theoretical = PMA(n, m, u_is, u_star_is, f)
     plse = PLSE(n, m, i_max, T, h_array, act)
     approximators = (;
-                     ma=NormalisedApproximator(ma, MinMaxNormaliser(xuf_data)),
-                     lse=NormalisedApproximator(lse, MinMaxNormaliser(xuf_data)),
-                     pma_basic=NormalisedApproximator(pma_basic, MinMaxNormaliser(xuf_data)),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser
+                     # ma=NormalisedApproximator(ma, MinMaxNormaliser(xuf_data)),
+                     # lse=NormalisedApproximator(lse, MinMaxNormaliser(xuf_data)),
+                     # pma_basic=NormalisedApproximator(pma_basic, MinMaxNormaliser(xuf_data)),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser
                      # pma_basic=NormalisedApproximator(pma_basic, StandardNormalDistributionNormaliser(xuf_data)),
                      # pma_theoretical=pma_theoretical,  # TODO: make it compatible with Flux.jl's auto-diff
                      # plse=NormalisedApproximator(plse, IdentityNormaliser()),  # Note: MinMaxNormaliser is better than StandardNormalDistributionNormaliser

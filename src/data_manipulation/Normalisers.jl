@@ -77,8 +77,11 @@ struct MinMaxNormaliser <: AbstractNormaliser
         _us = hcat(u...)
         _rs = hcat(r...)
         _x_nexts = hcat(x_next...)
-        min_nt = (; x=minimum(_xs, dims=2)[:], u=minimum(_us, dims=2)[:], r=minimum(_rs, dims=2)[:], x_next=minimum(_x_nexts, dims=2)[:])  # vectorise
-        max_nt = (; x=maximum(_xs, dims=2)[:], u=maximum(_us, dims=2)[:], r=maximum(_rs, dims=2)[:], x_next=maximum(_x_nexts, dims=2)[:])  # vectorise
+        # min_nt = (; x=minimum(_xs, dims=2)[:], u=minimum(_us, dims=2)[:], r=minimum(_rs, dims=2)[:], x_next=minimum(_x_nexts, dims=2)[:])  # vectorise
+        # max_nt = (; x=maximum(_xs, dims=2)[:], u=maximum(_us, dims=2)[:], r=maximum(_rs, dims=2)[:], x_next=maximum(_x_nexts, dims=2)[:])  # vectorise
+        # TODO: f should be normalised by r...?
+        min_nt = (; x=minimum(_xs, dims=2)[:], u=minimum(_us, dims=2)[:], f=minimum(_rs, dims=2)[:])  # vectorise
+        max_nt = (; x=maximum(_xs, dims=2)[:], u=maximum(_us, dims=2)[:], f=maximum(_rs, dims=2)[:])  # vectorise
         new(min_nt, max_nt)
     end
 end

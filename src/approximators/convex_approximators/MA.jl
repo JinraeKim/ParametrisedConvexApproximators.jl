@@ -52,6 +52,10 @@ end
 """
 Considering bivariate function approximator
 """
-function (nn::MA)(x::Array, u::Union{Array, Convex.AbstractExpr})
+function (nn::MA)(x::AbstractArray, u::AbstractArray)
     nn(vcat(x, u))
+end
+
+function (nn::MA)(x::AbstractArray, u::Convex.AbstractExpr)
+    nn(vcat(Convex.Constant(x), u))
 end
