@@ -3,22 +3,29 @@ function train_approximator!(approximator, data_train::AbstractDataStructure, da
         opt=ADAM(1e-3),
         epochs=300,
         batchsize=16,
+        # batchsize=7*30,
         # λ=0e-3,
     )
     data_nt_train = Data_to_NamedTuple(data_train)
     data_nt_test = Data_to_NamedTuple(data_test)
     dataloader = Flux.DataLoader(data_nt_train;
-                                 batchsize=batchsize, shuffle=true)
+                                 batchsize=batchsize,
+                                 shuffle=true,
+                                 partial=false,
+                                )
     # sqnorm(x) = sum(abs2, x)
     # loss_reg(args...) = loss(args...) + λ*sum(sqnorm, Flux.params(approximator))
     for epoch in 0:epochs
+        # println("epoch: $(epoch) / $(epochs)")
         if epoch != 0
             _train!(loss, approximator, dataloader, opt)
             # _train!(loss_reg, approximator, dataloader, opt)
         end
         # display result
         if epoch % 10 == 0
-            @show epoch, loss(data_nt_train), loss(data_nt_test)
+            loss_train = loss(data_nt_train)
+            loss_test = loss(data_nt_test)
+            @time @show epoch, loss_train, loss_test
             # @show epoch, loss(data_nt_train...), loss_reg(data_nt_train...), loss(data_nt_test...)
         end
     end

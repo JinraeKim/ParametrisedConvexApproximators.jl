@@ -13,8 +13,8 @@ using RecipesBase: AbstractPlot, plot!
 using Statistics: mean, std
 
 # data structure
-export xufData, xurx_nextData
-export partitionTrainTest
+export xufData, xurx_nextData, txurx_nextData
+export partitionTrainTest, vectorise
 ## normaliser
 export IdentityNormaliser, MinMaxNormaliser, StandardNormalDistributionNormaliser
 # approximators
