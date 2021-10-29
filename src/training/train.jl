@@ -25,7 +25,7 @@ function train_approximator!(approximator, data_train::AbstractDataStructure, da
         if epoch % 10 == 0
             loss_train = loss(data_nt_train)
             loss_test = loss(data_nt_test)
-            @time @show epoch, loss_train, loss_test
+            @show epoch, loss_train, loss_test
             # @show epoch, loss(data_nt_train...), loss_reg(data_nt_train...), loss(data_nt_test...)
         end
     end

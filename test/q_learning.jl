@@ -126,8 +126,8 @@ function generate_approximator(n, m, xlim, ulim; flim=(-1.0, 1.0))
     act = Flux.leakyrelu
     # pma = PMA(n, m, i_max, h_array, act)
     # TODO: fair parameter number?
-    α_is = 1:i_max*30 |> Map(i -> rand(n+m)) |> collect
-    β_is = 1:i_max*30 |> Map(i -> rand(1)) |> collect
+    α_is = 1:i_max*30 |> Map(i -> Flux.glorot_uniform(n+m)) |> collect
+    β_is = 1:i_max*30 |> Map(i -> Flux.glorot_uniform(1)) |> collect
     min_nt = (; x=xlim[1], u=ulim[1], f=flim[1])
     max_nt = (; x=xlim[2], u=ulim[2], f=flim[2])
     # normalised_approximator = NormalisedApproximator(LSE(α_is, β_is, T; n=n, m=m),
@@ -149,11 +149,11 @@ end
 
 function main(; seed=2021)
     Random.seed!(seed)
-    n_scenario = 3_000
+    n_scenario = 1_000
     env = TwoDimensionalNonlinearDTSystem()
     terminal_value_func = FSimZoo.OptimalValue(env)
     n, m = 2, 1
-    t0, tf = 0, 10  # time horizon
+    t0, tf = 0, 2  # time horizon
     xlim = 1.0 .* (-1*ones(n), 1*ones(n))
     ulim = 1.0 .* (-1*ones(m), 1*ones(m))
     control_sample(state, t) = sample(ulim)
@@ -167,10 +167,12 @@ function main(; seed=2021)
     finite_horizon_q_learning!(normalised_approximators, data_t, ulim, terminal_value_func)
     control_trained(x, t) = t < tf ? [solve!(normalised_approximators[Int(begin+t)], x; lim=ulim).minimiser] : zeros(m)  # zero input at terminal time; meaningless
     x0_test = 0.50 .* [1, 1]
+    data_random = run(env, x0_test, xlim, control_sample, t0, tf)
     data_optimal = run(env, x0_test, xlim, (x, t) -> FSimZoo.OptimalControl(env)(x), t0, tf)
-    data_test = run(env, x0_test, xlim, control_trained, t0, tf)
+    data_trained = run(env, x0_test, xlim, control_trained, t0, tf)
+    @show evaluate(data_random, terminal_value_func)
     @show evaluate(data_optimal, terminal_value_func)
-    @show evaluate(data_test, terminal_value_func)
+    @show evaluate(data_trained, terminal_value_func)
     fig_x = plot()
     fig_u = plot()
     plot!(fig_x,
@@ -184,7 +186,7 @@ function main(; seed=2021)
           label=[L"x_{1}^{*}" L"x_{2}^{*}"],
          )
     plot!(fig_x,
-          hcat(data_test.t...)', hcat(data_test.x...)';
+          hcat(data_trained.t...)', hcat(data_trained.x...)';
           ylim=(-1, 1),
           st=:scatter,
           markersize=12,
@@ -203,7 +205,7 @@ function main(; seed=2021)
           label=L"u^{*}",
          )
     plot!(fig_u,
-          hcat(data_test.t...)', hcat(data_test.u...)';
+          hcat(data_trained.t...)', hcat(data_trained.u...)';
           ylim=(ulim[1][1], ulim[2][1]),
           st=:scatter,
           markersize=12,
