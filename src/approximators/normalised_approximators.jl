@@ -28,6 +28,7 @@ function (normalised_approximator::NormalisedApproximator)(x, u; output_normalis
     x_normal = normalise(normaliser, x, :x)
     u_normal = normalise(normaliser, u, :u)
     f_normal = approximator(x_normal, u_normal)
+    # f = f_normal
     if output_normalisation
         f = f_normal
     else
