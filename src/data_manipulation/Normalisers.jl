@@ -84,6 +84,9 @@ struct MinMaxNormaliser <: AbstractNormaliser
         max_nt = (; x=maximum(_xs, dims=2)[:], u=maximum(_us, dims=2)[:], f=maximum(_rs, dims=2)[:])  # vectorise
         new(min_nt, max_nt)
     end
+    function MinMaxNormaliser(min_nt, max_nt)
+        new(min_nt, max_nt)
+    end
 end
 
 """

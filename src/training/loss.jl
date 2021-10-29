@@ -4,9 +4,9 @@ function SupervisedLearningLoss(normalised_approximator::NormalisedApproximator;
     @unpack normaliser = normalised_approximator
     return function (d)
         @unpack x, u, f = d
-        f_normal = normalise(normaliser, f, :f)
-        loss(normalised_approximator(x, u; output_normalisation=true), f_normal)
-        # loss(normalised_approximator(x, u), f)
+        # f_normal = normalise(normaliser, f, :f)
+        # loss(normalised_approximator(x, u; output_normalisation=true), f_normal)
+        loss(normalised_approximator(x, u), f)
     end
 end
 
