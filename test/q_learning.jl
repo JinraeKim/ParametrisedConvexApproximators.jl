@@ -137,10 +137,10 @@ function generate_approximator(n, m, xlim, ulim; flim=(-1.0, 1.0))
     β_is = 1:i_max*30 |> Map(i -> Flux.glorot_uniform(1)) |> collect
     min_nt = (; x=xlim[1], u=ulim[1], f=flim[1])
     max_nt = (; x=xlim[2], u=ulim[2], f=flim[2])
-    # normalised_approximator = NormalisedApproximator(LSE(α_is, β_is, T; n=n, m=m),
-    #                                                  MinMaxNormaliser(min_nt, max_nt))  # meaningless normaliser
-    normalised_approximator = NormalisedApproximator(PLSE(n, m, i_max, T, h_array, act),
+    normalised_approximator = NormalisedApproximator(LSE(α_is, β_is, T; n=n, m=m),
                                                      MinMaxNormaliser(min_nt, max_nt))  # meaningless normaliser
+    # normalised_approximator = NormalisedApproximator(PLSE(n, m, i_max, T, h_array, act),
+    #                                                  MinMaxNormaliser(min_nt, max_nt))  # meaningless normaliser
 end
 
 function split_and_merge(data, t_index)
@@ -182,8 +182,12 @@ function main(; seed=2021)
     @show evaluate(data_random, terminal_value_func)
     @show evaluate(data_optimal, terminal_value_func)
     @show evaluate(data_trained, terminal_value_func)
-    fig_x = plot()
-    fig_u = plot()
+    fig_x = plot(;
+                 legend=:bottomleft,
+                )
+    fig_u = plot(;
+                 legend=:topleft,
+                )
     plot!(fig_x,
           hcat(data_optimal.t...)', hcat(data_optimal.x...)';
           ylim=(-1, 1),
@@ -211,7 +215,6 @@ function main(; seed=2021)
           markersize=12,
           markeralpha = 0.6,
           color=:blue,
-          legend=:bottomleft,
           label=L"u^{*}",
          )
     plot!(fig_u,
@@ -221,7 +224,6 @@ function main(; seed=2021)
           markersize=12,
           markeralpha = 0.6,
           color=:red,
-          legend=:topleft,
           label=L"u",
          )
     fig_traj = plot(fig_x, fig_u; layout=(2, 1))
