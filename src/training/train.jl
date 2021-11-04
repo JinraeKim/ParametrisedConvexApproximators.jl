@@ -3,6 +3,8 @@ function train_approximator!(approximator, data_train::AbstractDataStructure, da
         opt=ADAM(1e-3),
         epochs=300,
         batchsize=16,
+        threshold=1e-3,
+        display_period=10,
         # batchsize=7*30,
         # λ=0e-3,
     )
@@ -21,12 +23,15 @@ function train_approximator!(approximator, data_train::AbstractDataStructure, da
             _train!(loss, approximator, dataloader, opt)
             # _train!(loss_reg, approximator, dataloader, opt)
         end
+        loss_train = loss(data_nt_train)
+        loss_test = loss(data_nt_test)
         # display result
-        if epoch % 10 == 0
-            loss_train = loss(data_nt_train)
-            loss_test = loss(data_nt_test)
+        if epoch % display_period == 0
             @show epoch, loss_train, loss_test
-            # @show epoch, loss(data_nt_train...), loss_reg(data_nt_train...), loss(data_nt_test...)
+        end
+        if loss_test < threshold
+            println("terminated training loop at epoch = $(epoch); loss_test = $(loss_test) < $(threshold)")
+            break
         end
     end
 end

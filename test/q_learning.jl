@@ -106,6 +106,7 @@ function finite_horizon_q_learning!(normalised_approximators, txurx_next_data_t,
             # TODO: ulim?
             @time optvals = x_nexts |> Map(x_next -> solve!(normalised_approximators[begin+t+1], x_next).optval) |> tcollect
             # @time optvals = x_nexts |> Map(x_next -> solve!(normalised_approximators[begin+t+1], x_next; lim=ulim).optval) |> tcollect
+            Flux.loadparams!(normalised_approximators[begin+t], params(normalised_approximators[begin+t+1]))  # warm start
         end
         fs = zip(rs, optvals) |> MapSplat((r, optval) -> r+optval) |> collect
         xuf_data = xufData(xs, us, fs)
@@ -114,16 +115,20 @@ function finite_horizon_q_learning!(normalised_approximators, txurx_next_data_t,
                             loss=SupervisedLearningLoss(normalised_approximators[begin+t]),  # limit while training
                             epochs=500,
                             opt=ADAM(1e-3),
+                            threshold=1e-6,
                            )
     end
 end
 
 function generate_approximator(n, m, xlim, ulim; flim=(-1.0, 1.0))
-    i_max = 10
+    # i_max = 10
+    i_max = 20
     # i_max = 50
     h_array = [64, 64, 64]
+    # h_array = [256, 256]
     T = 1e-1
     act = Flux.leakyrelu
+    # act = Flux.hardsigmoid
     # pma = PMA(n, m, i_max, h_array, act)
     # TODO: fair parameter number?
     α_is = 1:i_max*30 |> Map(i -> Flux.glorot_uniform(n+m)) |> collect
@@ -149,13 +154,15 @@ end
 
 function main(; seed=2021)
     Random.seed!(seed)
-    n_scenario = 1_000
+    n_scenario = 10_000
     env = TwoDimensionalNonlinearDTSystem()
     terminal_value_func = FSimZoo.OptimalValue(env)
     n, m = 2, 1
     t0, tf = 0, 2  # time horizon
     xlim = 1.0 .* (-1*ones(n), 1*ones(n))
     ulim = 1.0 .* (-1*ones(m), 1*ones(m))
+    control_sample_for_test_list = Int(t0):Int(tf) |> Map(t -> sample(ulim)) |> collect
+    control_sample_for_test(state, t) = control_sample_for_test_list[begin+Int(t)]
     control_sample(state, t) = sample(ulim)
     x0s = 1:n_scenario |> Map(i -> sample(xlim)) |> collect
     @time data_scenarios = x0s |> Map(x0 -> run(env, x0, xlim, control_sample, t0, tf; out_of_bound_criterion=true)) |> collect
@@ -167,7 +174,7 @@ function main(; seed=2021)
     finite_horizon_q_learning!(normalised_approximators, data_t, ulim, terminal_value_func)
     control_trained(x, t) = t < tf ? [solve!(normalised_approximators[Int(begin+t)], x; lim=ulim).minimiser] : zeros(m)  # zero input at terminal time; meaningless
     x0_test = 0.50 .* [1, 1]
-    data_random = run(env, x0_test, xlim, control_sample, t0, tf)
+    data_random = run(env, x0_test, xlim, control_sample_for_test, t0, tf)
     data_optimal = run(env, x0_test, xlim, (x, t) -> FSimZoo.OptimalControl(env)(x), t0, tf)
     data_trained = run(env, x0_test, xlim, control_trained, t0, tf)
     @show evaluate(data_random, terminal_value_func)
@@ -215,6 +222,7 @@ function main(; seed=2021)
          )
     fig_traj = plot(fig_x, fig_u; layout=(2, 1))
     dir_log = "figures/q_learning"
+    mkpath(dir_log)
     savefig(fig_traj, joinpath(dir_log, "traj.png"))
     fig_v_true = plot(
                       xlim[1][1] : 0.1 : xlim[2][1],
