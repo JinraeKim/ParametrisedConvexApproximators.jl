@@ -3,7 +3,7 @@ function train_approximator!(approximator, data_train::AbstractDataStructure, da
         opt=ADAM(1e-3),
         epochs=300,
         batchsize=16,
-        threshold=1e-3,
+        threshold=1e-5,
         display_period=10,
         # batchsize=7*30,
         # λ=0e-3,

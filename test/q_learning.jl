@@ -8,6 +8,7 @@ using DataFrames
 # using FSimZoo
 using Transducers
 using Plots
+ENV["GKSwstype"]="nul"
 using Convex
 using Mosek, MosekTools
 using Flux
@@ -96,6 +97,7 @@ function finite_horizon_q_learning!(normalised_approximators, txurx_next_data_t,
         println("Training Q function for time $(t)... (total: $(length(txurx_next_data_t)-2) to 0)")
         data = txurx_next_data_t[begin+t]
         xs = data.x
+        println("# of total training data for t = $(t): $(xs |> length)")
         us = data.u
         rs = data.r
         x_nexts = data.x_next
@@ -113,17 +115,17 @@ function finite_horizon_q_learning!(normalised_approximators, txurx_next_data_t,
         xuf_data_train, xuf_data_test = partitionTrainTest(xuf_data)
         train_approximator!(normalised_approximators[begin+t], xuf_data_train, xuf_data_test;
                             loss=SupervisedLearningLoss(normalised_approximators[begin+t]),  # limit while training
-                            epochs=500,
+                            epochs=300,
                             opt=ADAM(1e-3),
-                            threshold=1e-6,
+                            threshold=1e-3,
                            )
     end
 end
 
 function generate_approximator(n, m, xlim, ulim; flim=(-1.0, 1.0))
     # i_max = 10
+    # i_max = 20
     i_max = 20
-    # i_max = 50
     h_array = [64, 64, 64]
     # h_array = [256, 256]
     T = 1e-1
@@ -158,7 +160,7 @@ function main(; seed=2021)
     env = TwoDimensionalNonlinearDTSystem()
     terminal_value_func = FSimZoo.OptimalValue(env)
     n, m = 2, 1
-    t0, tf = 0, 2  # time horizon
+    t0, tf = 0, 8  # time horizon
     xlim = 1.0 .* (-1*ones(n), 1*ones(n))
     ulim = 1.0 .* (-1*ones(m), 1*ones(m))
     control_sample_for_test_list = Int(t0):Int(tf) |> Map(t -> sample(ulim)) |> collect
@@ -209,6 +211,7 @@ function main(; seed=2021)
           markersize=12,
           markeralpha = 0.6,
           color=:blue,
+          legend=:bottomleft,
           label=L"u^{*}",
          )
     plot!(fig_u,
@@ -218,6 +221,7 @@ function main(; seed=2021)
           markersize=12,
           markeralpha = 0.6,
           color=:red,
+          legend=:topleft,
           label=L"u",
          )
     fig_traj = plot(fig_x, fig_u; layout=(2, 1))
@@ -298,6 +302,7 @@ function main(; seed=2021)
                           xlim[1][1] : 0.01 : xlim[2][1],
                           xlim[1][2] : 0.01 : xlim[2][2],
                           (x1, x2) -> FSimZoo.OptimalQValue(env)(State(env)(x1, x2), u_for_q);
+                          zlim=(0, 5),
                           st=:surface,
                           title="Q_func at u=$(u_for_q[1]) (true)",
                          )

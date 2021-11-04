@@ -3,13 +3,18 @@ struct PLSE <: ParametrisedConvexApproximator
     m::Int
     i_max::Int
     T::Real
-    NN::Flux.Chain
+    # NN::Flux.Chain
+    NN1::Flux.Chain
+    NN2::Flux.Chain
 end
 
 function PLSE(n::Int, m::Int, i_max::Int, T::Real, h_array::Vector{Int}, act)
     @assert T > 0
-    node_array = [n, h_array..., i_max*(m+1)]
-    PLSE(n, m, i_max, T, construct_layer_array(node_array, act))
+    # node_array = [n, h_array..., i_max*(m+1)]
+    node_array1 = [n, h_array..., i_max*m]
+    node_array2 = [n, h_array..., i_max*1]
+    # PLSE(n, m, i_max, T, construct_layer_array(node_array, act))
+    PLSE(n, m, i_max, T, construct_layer_array(node_array1, act), construct_layer_array(node_array2, act))
 end
 
 """

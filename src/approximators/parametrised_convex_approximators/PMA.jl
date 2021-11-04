@@ -2,15 +2,20 @@ struct PMA <: ParametrisedConvexApproximator
     n::Int
     m::Int
     i_max::Int
-    NN::Flux.Chain
+    # NN::Flux.Chain
+    NN1::Flux.Chain
+    NN2::Flux.Chain
 end
 
 """
 Basic constructor PMA based on Flux.Chain.
 """
 function PMA(n::Int, m::Int, i_max::Int, h_array::Vector{Int}, act)
-    node_array = [n, h_array..., i_max*(m+1)]
-    PMA(n, m, i_max, construct_layer_array(node_array, act))
+    # node_array = [n, h_array..., i_max*(m+1)]
+    # PMA(n, m, i_max, construct_layer_array(node_array, act))
+    node_array1 = [n, h_array..., i_max*m]
+    node_array2 = [n, h_array..., i_max*1]
+    PMA(n, m, i_max, construct_layer_array(node_array1, act), construct_layer_array(node_array2, act))
 end
 
 
