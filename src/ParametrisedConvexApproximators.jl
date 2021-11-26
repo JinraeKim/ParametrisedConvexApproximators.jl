@@ -6,11 +6,12 @@ using Zygote
 using Random
 using Transducers
 using Convex
-# import Convex
 using Mosek, MosekTools
+using Optim
 using UnPack
 using RecipesBase: AbstractPlot, plot!
 using Statistics: mean, std
+using BenchmarkTools
 
 # data structure
 export xufData, xurx_nextData, txurx_nextData
@@ -24,6 +25,7 @@ export MA, LSE
 export PMA, PLSE
 export NormalisedApproximator
 export solve!
+export number_of_params
 # training
 export train_approximator!
 export plot_approx!

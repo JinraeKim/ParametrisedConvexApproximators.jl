@@ -99,7 +99,19 @@ function normalise(normaliser::MinMaxNormaliser, z::Convex.AbstractExpr, name)
     (z - getproperty(min_nt, name)) ./ (getproperty(max_nt, name) - getproperty(min_nt, name))
 end
 
-function normalise(normaliser::MinMaxNormaliser, z, name)
+"""
+# Note
+`normalise` has two methods for AbstractArray and AbstractMatrix;
+if you adopt only one method with broadcasting (e.g., `.-`),
+when `z`'s dimension is one, it gives a result even if
+the normaliser is defined for `m`-dimensional data (`m > 1`).
+"""
+function normalise(normaliser::MinMaxNormaliser, z::AbstractArray, name)
+    @unpack min_nt, max_nt = normaliser
+    (z - getproperty(min_nt, name)) ./ (getproperty(max_nt, name) - getproperty(min_nt, name))
+end
+
+function normalise(normaliser::MinMaxNormaliser, z::AbstractMatrix, name)
     @unpack min_nt, max_nt = normaliser
     (z .- getproperty(min_nt, name)) ./ (getproperty(max_nt, name) - getproperty(min_nt, name))
 end

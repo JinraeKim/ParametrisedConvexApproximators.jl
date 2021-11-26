@@ -62,6 +62,7 @@ Construct PMA theoretically.
 `f` denotes the true function with two arguments of parameter `x` and decision variable `u`, i.e., f(x, u).
 """
 function PMA(n::Int, m::Int, u_is::Vector, u_star_is::Vector, f::Function)
+    error("Theoretical construction of PMA has been deprecated")
     i_max = length(u_is)
     @assert length(u_star_is) == i_max
     @assert all(length.(u_is) .== m)

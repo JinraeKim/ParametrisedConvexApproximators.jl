@@ -6,11 +6,11 @@ function train_approximator!(approximator, data_train::AbstractDataStructure, da
         threshold=1e-5,
         display_period=10,
         # batchsize=7*30,
-        # λ=0e-3,
     )
     data_nt_train = Data_to_NamedTuple(data_train)
     data_nt_test = Data_to_NamedTuple(data_test)
-    dataloader = Flux.DataLoader(data_nt_train;
+    dataloader = Flux.DataLoader(
+                                 data_nt_train;
                                  batchsize=batchsize,
                                  shuffle=true,
                                  partial=false,

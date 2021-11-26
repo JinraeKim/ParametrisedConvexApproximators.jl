@@ -23,18 +23,17 @@ u ∈ ℝ^m or ℝ^(m×d)
 #     f = approximator(x_normal, u_normal)
 # end
 
-# function (normalised_approximator::NormalisedApproximator)(x, u; output_normalisation=false)
-function (normalised_approximator::NormalisedApproximator)(x, u)
+# function (normalised_approximator::NormalisedApproximator)(x, u)
+function (normalised_approximator::NormalisedApproximator)(x, u; output_normalisation=false)
     @unpack approximator, normaliser = normalised_approximator
     x_normal = normalise(normaliser, x, :x)
     u_normal = normalise(normaliser, u, :u)
     f_normal = approximator(x_normal, u_normal)
-    f = f_normal
-    # if output_normalisation
-    #     f = f_normal
-    # else
-    #     f = unnormalise(normaliser, f_normal, :f)
-    #     # f = unnormalise(normaliser, f_normal, :r)
-    # end
+    # f = f_normal
+    if output_normalisation
+        f = f_normal
+    else
+        f = unnormalise(normaliser, f_normal, :f)
+    end
     f
 end
