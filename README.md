@@ -2,9 +2,30 @@
 
 [ParametrisedConvexApproximators.jl](https://github.com/JinraeKim/ParametrisedConvexApproximators.jl) is a package providing (pararmetrised) convex approximators.
 
-# !!!NOTICE!!! This package is being rewritten, see branch `rewrite-code`.
+## NOTICE: the source code will be rewritten. 
+## To-do list
+- [x] 최적화 방식 결정
+    - `test/solver.jl` 참고
+    - convex 솔버는 Convex.jl + Mosek
+    - non-convex 솔버는 IPNewton in Optim.jl
+    - opt variable, opt problem 등은 기존과 같이 내부적으로 매번 새로 생성
+- [ ] Deprecated code 는 한데 모으기
+- [ ] FNN 구현
+- [ ] 테스트 목록 만들기
+    - 기본 기능 체크 (네트워크 생성, inference dimension, etc.)
+    - Inference speed
+    - 최적화 속도
+- [ ] LSE 구현
+- [ ] PLSE 구현
+- [ ] 함수 근사 학습 코드 작성
+    - 일단은 최대한 normalisation 등 없이 pure 하게
+    - [-1, 1]^n 에서 샘플링
+- [ ] Finite-horizon Q-learning 코드 작성
 
 
+
+
+# !The followings are deprecated!
 ## Supported approximators
 This package provides the following approximators. 
 - **convex approximators (CAs)**

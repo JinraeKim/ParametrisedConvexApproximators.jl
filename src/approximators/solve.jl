@@ -14,30 +14,39 @@ would be a wrong result due to the absence of normalisation.
 """
 function Convex.solve!(normalised_approximator::NormalisedApproximator, x::AbstractVector; lim=(nothing, nothing))
     approx_type = typeof(normalised_approximator.approximator)
+    @unpack m = normalised_approximator.approximator
+    u_min = lim[1] == nothing ? Float64[] : lim[1]  # passing empty arrays for no constraint
+    u_max = lim[2] == nothing ? Float64[] : lim[2]  # passing empty arrays for no constraint
+    u_guess = randn(m)
+    if u_min != Float64[]
+        u_guess = maximum(hcat(u_min, u_guess); dims=2)[:] + 2*eps()*ones(m)  # make it an interior point
+    end
+    if u_max != Float64[]
+        u_guess = minimum(hcat(u_max, u_guess); dims=2)[:] - eps()*ones(m)  # make it an interior point
+    end
     if approx_type == ParametrisedConvexApproximator
-        @unpack m = normalised_approximator.approximator
         u = Convex.Variable(m)
+        u.value = u_guess
         problem = minimize(normalised_approximator(x, u)[1])
-        if lim[1] != nothing
-            problem.constraints += [u >= lim[1]]
-        end
-        if lim[2] != nothing
-            problem.constraints += [u <= lim[2]]
-        end
-        solve!(problem, Mosek.Optimizer(); silent_solver=true)
-        result = (; minimiser = u.value, optval = problem.optval)
-    else approx_type == ParametrisedConvexApproximator
-        @unpack m = normalised_approximator.approximator
-        obj(u) = normalised_approximator(x, u)[1]
-        u_min = lim[1] == nothing ? Float64[] : lim[1]  # passing empty arrays for no constraint
-        u_max = lim[2] == nothing ? Float64[] : lim[2]  # passing empty arrays for no constraint
-        u_guess = randn(m)
         if u_min != Float64[]
-            u_guess = maximum(hcat(u_min, u_guess); dims=2)[:] + 2*eps()*ones(m)  # make it an interior point
+            problem.constraints += [u >= u_min]
         end
         if u_max != Float64[]
-            u_guess = minimum(hcat(u_max, u_guess); dims=2)[:] - eps()*ones(m)  # make it an interior point
+            problem.constraints += [u <= u_max]
         end
+        solve!(problem, Mosek.Optimizer(); silent_solver=true)
+        result = (; minimiser = deepcopy(u.value), optval = deepcopy(problem.optval))
+    else approx_type == ParametrisedConvexApproximator
+        obj(u) = normalised_approximator(x, u)[1]
+        # u_min = lim[1] == nothing ? Float64[] : lim[1]  # passing empty arrays for no constraint
+        # u_max = lim[2] == nothing ? Float64[] : lim[2]  # passing empty arrays for no constraint
+        # u_guess = randn(m)
+        # if u_min != Float64[]
+        #     u_guess = maximum(hcat(u_min, u_guess); dims=2)[:] + 2*eps()*ones(m)  # make it an interior point
+        # end
+        # if u_max != Float64[]
+        #     u_guess = minimum(hcat(u_max, u_guess); dims=2)[:] - eps()*ones(m)  # make it an interior point
+        # end
         dfc = TwiceDifferentiableConstraints(u_min, u_max)
         res = Optim.optimize(obj, dfc, u_guess, IPNewton())
         minimiser = prod(size(u_guess)) == 1 ? deepcopy(res.minimizer[1]) : deepcopy(res.minimizer)
