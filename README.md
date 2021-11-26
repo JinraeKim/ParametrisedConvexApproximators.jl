@@ -47,6 +47,8 @@ which is opposite to previously presentation in lab seminar, FDCL, SNU by Jinrae
     - 최적화 속도
 - [ ] LSE 구현
 - [ ] PLSE 구현
+    - NN 을 하나 넣는 것과 두 개 넣는 것, 두 버전을 고려해야할수도 있다.
+    - 일단 하나 넣는거로 구현하고, 이후 수정이 필요하다 생각되면 "변경이 가능하게" 하자.
 - [ ] 함수 근사 학습 코드 작성
     - 일단은 최대한 normalisation 등 없이 pure 하게
     - [-1, 1]^n 에서 샘플링
