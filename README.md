@@ -2,14 +2,44 @@
 
 [ParametrisedConvexApproximators.jl](https://github.com/JinraeKim/ParametrisedConvexApproximators.jl) is a package providing (pararmetrised) convex approximators.
 
-## NOTICE: the source code will be rewritten. 
+## NOTICE: the source code will be rewritten.
+### Why...?
+The previous code is outdated, and too complicated to be modified.
+For example, I have no idea why convex solvers take much longer time than non-convex solvers,
+which is opposite to previously presentation in lab seminar, FDCL, SNU by Jinrae Kim.
+
 ## To-do list
-- [x] 최적화 방식 결정
-    - `test/solver.jl` 참고
-    - convex 솔버는 Convex.jl + Mosek
-    - non-convex 솔버는 IPNewton in Optim.jl
-    - opt variable, opt problem 등은 기존과 같이 내부적으로 매번 새로 생성
-- [ ] Deprecated code 는 한데 모으기
+- [x] 최적화 방식 결정 (decide how to write optimisation code)
+    - `test/solver.jl` 참고 (see the file)
+    - convex 솔버는 Convex.jl + Mosek (convex solver is...)
+    - non-convex 솔버는 IPNewton in Optim.jl (non-convex solver is...)
+    - opt variable, opt problem 등은 기존과 같이 내부적으로 매번 새로 생성 (opt. variable and opt. problem will be re-created every time the optimisation problem is solved.)
+    <details>
+    <summary>차원이 증가함에 따라 convex 솔버가 scalable 함을 확인 (convex solver is scalable)</summary>
+
+    ```julia
+    (n, m) = (N, N) = (1, 1)
+    convex solver
+      690.750 μs (4145 allocations: 253.30 KiB)
+    non-convex solver (ipnewton)
+      200.917 μs (3817 allocations: 245.88 KiB)
+    (n, m) = (N, N) = (10, 10)
+    convex solver
+      1.202 ms (8788 allocations: 588.77 KiB)
+    non-convex solver (ipnewton)
+      956.000 μs (14722 allocations: 2.12 MiB)
+    (n, m) = (N, N) = (100, 100)
+    convex solver
+      5.885 ms (54237 allocations: 3.92 MiB)
+    non-convex solver (ipnewton)
+      198.712 ms (983575 allocations: 856.71 MiB)
+    ```
+
+    </details>
+    - Note: 솔버가 서로 달라서, 절대적인 시간도 중요하지만 차원의 증가에 따른 소요 시간의 변화가 더 중요
+    ('cause the solvers are different, we need to focus on "how much the elapsed time increases as the dimension gets higher")
+- [x] Deprecated code 는 한데 모으기
+    - See `./deprecated`.
 - [ ] FNN 구현
 - [ ] 테스트 목록 만들기
     - 기본 기능 체크 (네트워크 생성, inference dimension, etc.)
