@@ -36,7 +36,7 @@ function Convex.solve!(normalised_approximator::NormalisedApproximator, x::Abstr
         end
         solve!(problem, Mosek.Optimizer(); silent_solver=true)
         result = (; minimiser = deepcopy(u.value), optval = deepcopy(problem.optval))
-    else approx_type == ParametrisedConvexApproximator
+    else approx_type == ParametrisedConvexApproximator  # it seems... a typo?
         obj(u) = normalised_approximator(x, u)[1]
         # u_min = lim[1] == nothing ? Float64[] : lim[1]  # passing empty arrays for no constraint
         # u_max = lim[2] == nothing ? Float64[] : lim[2]  # passing empty arrays for no constraint

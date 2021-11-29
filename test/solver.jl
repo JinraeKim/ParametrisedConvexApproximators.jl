@@ -10,25 +10,6 @@ function f(x, u)
     0.5 * (-x'*x + sum(dot(^)(u,2)))
 end
 
-function main()
-    for N in [1, 10, 100]
-        @show n, m = N, N
-        d = 100
-        xs = 1:d |> Map(i -> rand(n)) |> collect
-        us = 1:d |> Map(i -> rand(m)) |> collect
-        ulim = (-2*ones(m), 2*ones(m))
-        # case 1: convex solver
-        println("convex solver")
-        @btime convex_solver(rand($n), rand($m), $ulim)
-        println("non-convex solver (ipnewton)")
-        @btime ipnewton_solver(rand($n), rand($m), $ulim)
-        # @time zip(xs, us) |> MapSplat((x, u) -> convex_solver(x, u, ulim)) |> collect
-        # case 2: ipnewton solver
-        # @time zip(xs, us) |> MapSplat((x, u) -> ipnewton_solver(x, u, ulim)) |> collect
-    end
-    nothing
-end
-
 function convex_solver(x, u_guess, ulim)
     m = length(u_guess)
     u = Convex.Variable(m)
@@ -46,4 +27,18 @@ function ipnewton_solver(x, u_guess, ulim)
     res.minimizer, res.minimum
 end
 
-main()
+@testset "solver" begin
+    for N in [1, 10, 100]
+        @show n, m = N, N
+        d = 100
+        xs = 1:d |> Map(i -> rand(n)) |> collect
+        us = 1:d |> Map(i -> rand(m)) |> collect
+        ulim = (-2*ones(m), 2*ones(m))
+        # case 1: convex solver
+        println("convex solver")
+        @btime convex_solver(rand($n), rand($m), $ulim)
+        println("non-convex solver (ipnewton)")
+        @btime ipnewton_solver(rand($n), rand($m), $ulim)
+    end
+    nothing
+end

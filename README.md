@@ -2,6 +2,10 @@
 
 [ParametrisedConvexApproximators.jl](https://github.com/JinraeKim/ParametrisedConvexApproximators.jl) is a package providing (pararmetrised) convex approximators.
 
+## Quick Start
+- Activate multi-threading if available, e.g., `julia -t 7`.
+It will reduce computation time for minimising networks w.r.t. multiple points.
+
 ## NOTICE: the source code will be rewritten.
 ### Why...?
 The previous code is outdated, and too complicated to be modified.
