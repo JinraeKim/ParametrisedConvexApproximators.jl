@@ -1,12 +1,42 @@
 # ParametrisedConvexApproximators
 
-[ParametrisedConvexApproximators.jl](https://github.com/JinraeKim/ParametrisedConvexApproximators.jl) is a package providing (pararmetrised) convex approximators.
+[ParametrisedConvexApproximators.jl](https://github.com/JinraeKim/ParametrisedConvexApproximators.jl) is a Julia package providing predefined pararmetrised convex approximators and related functionalities.
+
+## Installation
+To install ParametrisedConvexApproximator,
+please open Julia's interactive session (known as REPL) and press `]` key
+in the REPL to use the package mode, then type the following command
+
+```julia
+pkg> add ParametrisedConvexApproximator
+```
 
 ## Quick Start
-- Activate multi-threading if available, e.g., `julia -t 7`.
+- Activate multi-threading if available, e.g., `julia -t 7` enabling `7` threads.
 It will reduce computation time for minimising networks w.r.t. multiple points.
+- [ ] To-do: add quick start
 
-## NOTICE: the source code will be rewritten.
+## Documentation
+- [ ] To-do: complete docs
+### Types
+- `AbstractApproximator` is an abstract type of approximator.
+- `ParametrisedConvexApproximator <: AbstractApproximator` is an abstract type of parametrised convex approximator.
+- `ConvexApproximator <: ParametrisedConvexApproximator` is an abstract type of convex approximator.
+
+### Approximators
+- `FNN::AbstractApproximator`: feedforward neural network
+- `MA::ConvexApproximator`: max-affine (MA) network [1]
+- `LSE::ConvexApproximator`: log-sum-exp (LSE) network [1]
+- `PMA::ParametrisedConvexApproximator`: parametrised MA network
+- `PLSE::ParametrisedConvexApproximator`: parametrised LSE network
+
+### Utilities
+- `(nn::approximator)(x, u)` gives an inference (approximate function value).
+- `res = optimise(approximator, x; u_min=nothing, u_max=nothing)` provides
+minimiser and optimal value (optval) for given `x` as `res.minimiser` and `res.optval`.
+
+
+## NOTICE: the source code is currently being rewritten.
 ### Why...?
 The previous code is outdated, and too complicated to be modified.
 For example, I have no idea why convex solvers take much longer time than non-convex solvers,
@@ -44,13 +74,13 @@ which is opposite to previously presentation in lab seminar, FDCL, SNU by Jinrae
     ('cause the solvers are different, we need to focus on "how much the elapsed time increases as the dimension gets higher")
 - [x] Deprecated code 는 한데 모으기
     - See `./deprecated`.
-- [ ] FNN 구현
-- [ ] 테스트 목록 만들기
+- [x] FNN 구현
+- [x] 테스트 목록 만들기
     - 기본 기능 체크 (네트워크 생성, inference dimension, etc.)
-    - Inference speed
+    - Inference speed -> x
     - 최적화 속도
 - [ ] LSE 구현
-- [ ] PLSE 구현
+- [x] PLSE 구현
     - NN 을 하나 넣는 것과 두 개 넣는 것, 두 버전을 고려해야할수도 있다.
     - 일단 하나 넣는거로 구현하고, 이후 수정이 필요하다 생각되면 "변경이 가능하게" 하자.
 - [ ] 함수 근사 학습 코드 작성
