@@ -56,19 +56,28 @@ end
 @testset "basic" begin
     # ns = [1, 10, 100]
     # ms = [1, 10, 100]
-    ns = [1]  # TODO: change it
-    ms = [1]  # TODO: change it
+    println("TODO: change ns and ms")
+    ns = [1]
+    ms = [1]
     for (n, m) in zip(ns, ms)
         println("n = $(n), m = $(m)")
         i_max = 20
         T = 1e-1
         h_array = [64, 64, 64]
         act = Flux.leakyrelu
+        α_is = 1:i_max |> Map(i -> Flux.glorot_uniform(n+m)) |> collect
+        β_is = 1:i_max |> Map(i -> Flux.glorot_uniform(1)) |> collect
         # generate approximators
         fnn = FNN(n, m, h_array, act)
+        ma = MA(α_is, β_is; n=n, m=m)
+        lse = LSE(α_is, β_is, T; n=n, m=m)
+        pma = PMA(n, m, i_max, h_array, act)
         plse = PLSE(n, m, i_max, T, h_array, act)
         approximators = (;
                          fnn=fnn,
+                         ma=ma,
+                         lse=lse,
+                         pma=pma,
                          plse=plse,
                         )
         approximators |> Map(test_all) |> collect

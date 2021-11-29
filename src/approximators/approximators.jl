@@ -1,5 +1,4 @@
 abstract type AbstractApproximator end
-abstract type ParametrisedConvexApproximator <: AbstractApproximator end
 
 
 function construct_layer_array(node_array, act::AbstractVector)

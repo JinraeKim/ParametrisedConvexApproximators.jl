@@ -9,7 +9,8 @@ using Transducers
 
 # approximators
 export AbstractApproximator, FNN
-export ParametrisedConvexApproximator, PLSE
+export ConvexApproximator, MA, LSE
+export ParametrisedConvexApproximator, PMA, PLSE
 export optimise
 
 

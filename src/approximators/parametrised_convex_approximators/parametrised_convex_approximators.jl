@@ -1,3 +1,6 @@
+abstract type ParametrisedConvexApproximator <: AbstractApproximator end
+
+
 function affine_map(nn::ParametrisedConvexApproximator, x::AbstractArray, u::AbstractArray)
     @unpack NN, i_max, m = nn
     # @unpack NN1, NN2, i_max, m = nn
@@ -24,4 +27,6 @@ function affine_map(nn::ParametrisedConvexApproximator, x::AbstractArray, u::Con
 end
 
 
+include("PMA.jl")
 include("PLSE.jl")
+include("convex_approximators/convex_approximators.jl")
