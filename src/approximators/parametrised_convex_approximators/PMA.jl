@@ -102,3 +102,5 @@ function (nn::PMA)(x::AbstractArray, u::Convex.AbstractExpr)
     tmp = affine_map(nn, x, u)
     res = [maximum(tmp)]
 end
+
+Flux.params(approximator::PMA) = Flux.params(approximator.NN)

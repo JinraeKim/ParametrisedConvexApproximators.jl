@@ -39,3 +39,5 @@ function (nn::PLSE)(x::AbstractArray, u::Convex.AbstractExpr)
     tmp = affine_map(nn, x, u)
     res = [T * Convex.logsumexp((1/T)*tmp)]
 end
+
+Flux.params(approximator::PLSE) = Flux.params(approximator.NN)

@@ -85,9 +85,12 @@ which is opposite to previously presentation in lab seminar, FDCL, SNU by Jinrae
 - [x] LSE 구현
 - [x] PMA 구현
 - [x] MA 구현
-- [ ] 함수 근사 학습 코드 작성
+- [x] 함수 근사 학습 코드 작성
     - 일단은 최대한 normalisation 등 없이 pure 하게
     - [-1, 1]^n 에서 샘플링
+- [x] Convex opt. solver 결정
+    - SCS.jl 로 결정; open source
+- [ ] 최적화 정확도 체크 (minimiser, optval)
 - [ ] Finite-horizon Q-learning 코드 작성
 - [ ] (future works) network converter from Julia to Python and vice versa;
 for differentiable convex programming

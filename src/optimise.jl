@@ -5,12 +5,15 @@
 
 Find a minimiser and optimal value (optval) of `approximator::ParametrisedConvexApproximator` for given
 data point `x::AbstractVector`.
-Default solver is Mosek with Convex.jl [1].
+Default solver is SCS [1] with Convex.jl [2].
+Available solvers include Mosek.
 # Refs.
-[1] https://github.com/jump-dev/Convex.jl
+[1] https://github.com/jump-dev/SCS.jl
+[2] https://github.com/jump-dev/Convex.jl
 """
 function optimise(approximator::ParametrisedConvexApproximator, x::AbstractVector;
         u_min=nothing, u_max=nothing,
+        solver=Mosek,
     )
     @unpack m = approximator
     u = Convex.Variable(m)
@@ -21,7 +24,7 @@ function optimise(approximator::ParametrisedConvexApproximator, x::AbstractVecto
     if u_max != nothing
         problem.constraints += [u <= u_max]
     end
-    solve!(problem, Mosek.Optimizer(); silent_solver=true)
+    solve!(problem, solver.Optimizer(); verbose=false, silent_solver=true)
     result = (; minimiser=u.value, optval=problem.optval)
 end
 

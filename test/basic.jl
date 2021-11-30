@@ -1,12 +1,13 @@
 using Test
 using Flux
+using Flux: DataLoader
 using ParametrisedConvexApproximators
 const PCA = ParametrisedConvexApproximators
 using UnPack
 using Transducers
 using Convex
 using BenchmarkTools
-using Mosek, MosekTools
+using Random
 
 
 function infer_test(approximator)
@@ -22,15 +23,15 @@ function infer_test(approximator)
     @test approximator(_xs, _us) |> size  == (1, d)
 end
 
-function optimise_test(approximator)
+function optimise_test(approximator, data)
     @unpack n, m = approximator
-    d = 100
+    d = data.x |> length
     if typeof(approximator) <: ParametrisedConvexApproximator
         x = rand(n)
         u = Convex.Variable(m)
         @test approximator(x, u) |> size == (1,)  # inference with Convex.jl
     end
-    _xs = rand(n, d)
+    _xs = hcat(data.x...)
     println("Optimise a single point")
     @time res = optimise(approximator, rand(n))
     # TODO: change to BenchmarkTools...?
@@ -42,24 +43,64 @@ function optimise_test(approximator)
     @test res.optval |> size == (1, d)  # optimise; optval
 end
 
-function training_test(approximator)
-    error("TODO")
+function training_test(approximator, data)
+    xs_us_fs = zip(data.x, data.u, data.f) |> collect
+    xs_us_fs_train, xs_us_fs_test = partitionTrainTest(xs_us_fs, 0.8)  # 80:20
+    data_train = (;
+                  x=hcat((xs_us_fs_train |> Map(xuf -> xuf[1]) |> collect)...),
+                  u=hcat((xs_us_fs_train |> Map(xuf -> xuf[2]) |> collect)...),
+                  f=hcat((xs_us_fs_train |> Map(xuf -> xuf[3]) |> collect)...),
+                 )
+    data_test = (;
+                 x=hcat((xs_us_fs_test |> Map(xuf -> xuf[1]) |> collect)...),
+                 u=hcat((xs_us_fs_test |> Map(xuf -> xuf[2]) |> collect)...),
+                 f=hcat((xs_us_fs_test |> Map(xuf -> xuf[3]) |> collect)...),
+                )
+    loss(d) = Flux.Losses.mse(approximator(d.x, d.u), d.f)
+    opt = ADAM(1e-3)
+    ps = Flux.params(approximator)
+    dataloader = DataLoader(data_train; batchsize=16, shuffle=true, partial=false)
+    epochs = 10
+    println("Training $(epochs) epoch...")
+    for epoch in 0:epochs
+        println("epoch: $(epoch) / $(epochs)")
+        if epoch != 0
+            for d in dataloader
+                train_loss, back = Flux.Zygote.pullback(() -> loss(d), ps)
+                gs = back(one(train_loss))
+                Flux.update!(opt, ps, gs)
+            end
+        end
+        @show loss(data_test)
+    end
 end
 
-function test_all(approximator)
+function test_all(approximator, data)
     @show typeof(approximator)
     infer_test(approximator)
-    optimise_test(approximator)
-    # training_test(approximator)
+    training_test(approximator, data)
+    optimise_test(approximator, data)
 end
 
 @testset "basic" begin
+    sample(min, max) = min + (max - max) .* rand(size(min))
+    # tests
     # ns = [1, 10, 100]
     # ms = [1, 10, 100]
     println("TODO: change ns and ms")
     ns = [1]
     ms = [1]
     for (n, m) in zip(ns, ms)
+        Random.seed!(2021)
+        # training data
+        d = 1_000
+        min = (; x=-1*ones(n), u = -1*ones(m))
+        max = (; x=1*ones(n), u = 1*ones(m))
+        xs = 1:d |> Map(i -> sample(min.x, max.x)) |> collect
+        us = 1:d |> Map(i -> sample(min.u, max.u)) |> collect
+        f(x, u) = -0.5 * (x'*x + u'*u)  # target function
+        fs = zip(xs, us) |> MapSplat((x, u) -> f(x, u)) |> collect
+        data = (; x=xs, u=us, f=fs)
         println("n = $(n), m = $(m)")
         i_max = 20
         T = 1e-1
@@ -80,6 +121,6 @@ end
                          pma=pma,
                          plse=plse,
                         )
-        approximators |> Map(test_all) |> collect
+        approximators |> Map(approximator -> test_all(approximator, data)) |> collect
     end
 end
