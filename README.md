@@ -89,6 +89,9 @@ which is opposite to previously presentation in lab seminar, FDCL, SNU by Jinrae
     - 일단은 최대한 normalisation 등 없이 pure 하게
     - [-1, 1]^n 에서 샘플링
 - [ ] Finite-horizon Q-learning 코드 작성
+- [ ] (future works) network converter from Julia to Python and vice versa;
+for differentiable convex programming
+- [ ] (future works) add infinite-horizon Q-learning examples via differentiable convex programming
 
 
 # References
