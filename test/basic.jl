@@ -10,6 +10,10 @@ using BenchmarkTools
 using Random
 
 
+function target_function(x, u)
+    -0.5 * (x'*x + u'*u)  # target function
+end
+
 function infer_test(approximator)
     @unpack n, m = approximator
     # single data inference
@@ -26,6 +30,7 @@ end
 function optimise_test(approximator, data)
     @unpack n, m = approximator
     d = data.x |> length
+    println("optimise test; with $(d) test data")
     if typeof(approximator) <: ParametrisedConvexApproximator
         x = rand(n)
         u = Convex.Variable(m)
@@ -40,22 +45,11 @@ function optimise_test(approximator, data)
     println("Optimise $(d) points (using parallel computing)")
     @time res = optimise(approximator, _xs)
     @test res.minimiser |> size == (m, d)  # optimise; minimiser
+    error("TODO: add comparison between true minimiser and estimated minimiser")
     @test res.optval |> size == (1, d)  # optimise; optval
 end
 
-function training_test(approximator, data)
-    xs_us_fs = zip(data.x, data.u, data.f) |> collect
-    xs_us_fs_train, xs_us_fs_test = partitionTrainTest(xs_us_fs, 0.8)  # 80:20
-    data_train = (;
-                  x=hcat((xs_us_fs_train |> Map(xuf -> xuf[1]) |> collect)...),
-                  u=hcat((xs_us_fs_train |> Map(xuf -> xuf[2]) |> collect)...),
-                  f=hcat((xs_us_fs_train |> Map(xuf -> xuf[3]) |> collect)...),
-                 )
-    data_test = (;
-                 x=hcat((xs_us_fs_test |> Map(xuf -> xuf[1]) |> collect)...),
-                 u=hcat((xs_us_fs_test |> Map(xuf -> xuf[2]) |> collect)...),
-                 f=hcat((xs_us_fs_test |> Map(xuf -> xuf[3]) |> collect)...),
-                )
+function training_test(approximator, data_train, data_test)
     loss(d) = Flux.Losses.mse(approximator(d.x, d.u), d.f)
     opt = ADAM(1e-3)
     ps = Flux.params(approximator)
@@ -76,10 +70,23 @@ function training_test(approximator, data)
 end
 
 function test_all(approximator, data)
+    # split data
+    xs_us_fs = zip(data.x, data.u, data.f) |> collect
+    xs_us_fs_train, xs_us_fs_test = partitionTrainTest(xs_us_fs, 0.8)  # 80:20
+    data_train = (;
+                  x=hcat((xs_us_fs_train |> Map(xuf -> xuf[1]) |> collect)...),
+                  u=hcat((xs_us_fs_train |> Map(xuf -> xuf[2]) |> collect)...),
+                  f=hcat((xs_us_fs_train |> Map(xuf -> xuf[3]) |> collect)...),
+                 )
+    data_test = (;
+                 x=hcat((xs_us_fs_test |> Map(xuf -> xuf[1]) |> collect)...),
+                 u=hcat((xs_us_fs_test |> Map(xuf -> xuf[2]) |> collect)...),
+                 f=hcat((xs_us_fs_test |> Map(xuf -> xuf[3]) |> collect)...),
+                )
     @show typeof(approximator)
     infer_test(approximator)
-    training_test(approximator, data)
-    optimise_test(approximator, data)
+    training_test(approximator, data_train, data_test)
+    optimise_test(approximator, data_test)
 end
 
 @testset "basic" begin
@@ -98,8 +105,7 @@ end
         max = (; x=1*ones(n), u = 1*ones(m))
         xs = 1:d |> Map(i -> sample(min.x, max.x)) |> collect
         us = 1:d |> Map(i -> sample(min.u, max.u)) |> collect
-        f(x, u) = -0.5 * (x'*x + u'*u)  # target function
-        fs = zip(xs, us) |> MapSplat((x, u) -> f(x, u)) |> collect
+        fs = zip(xs, us) |> MapSplat((x, u) -> target_function(x, u)) |> collect
         data = (; x=xs, u=us, f=fs)
         println("n = $(n), m = $(m)")
         i_max = 20
