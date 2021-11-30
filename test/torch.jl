@@ -3,7 +3,16 @@ using PyCall
 torch = pyimport("torch")
 np = pyimport("numpy")
 
+"""
+Note: the below code is a minimal test of using `cvxpylayers` and `torch` to
+incorporate "differentiable convex programming".
+Unfortunately, differentiable convex programming seems not realised in pure Julia packages.
+"""
 
+
+"""
+Test for cvxpylayers
+"""
 function main()
     py"""
     import cvxpy as cp
@@ -42,6 +51,9 @@ function main()
     """
 end
 
+"""
+Test for network construction and inference
+"""
 function main2(n)
     py"""
     import torch
