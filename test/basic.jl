@@ -8,6 +8,7 @@ using Transducers
 using Convex
 using BenchmarkTools
 using Random
+using Plots
 
 
 function target_function(x, u)
@@ -67,12 +68,11 @@ function optimise_test(approximator, data)
     println("norm(estimated optval - true minimiser)'s mean: $(mean(optvals_diff_norm))")
 end
 
-function training_test(approximator, data_train, data_test)
+function training_test(approximator, data_train, data_test, epochs)
     loss(d) = Flux.Losses.mse(approximator(d.x, d.u), d.f)
     opt = ADAM(1e-3)
     ps = Flux.params(approximator)
     dataloader = DataLoader(data_train; batchsize=16, shuffle=true, partial=false)
-    epochs = 100
     println("Training $(epochs) epoch...")
     for epoch in 0:epochs
         println("epoch: $(epoch) / $(epochs)")
@@ -87,7 +87,7 @@ function training_test(approximator, data_train, data_test)
     end
 end
 
-function test_all(approximator, data)
+function test_all(approximator, data, epochs)
     # split data
     xs_us_fs = zip(data.x, data.u, data.f) |> collect
     xs_us_fs_train, xs_us_fs_test = partitionTrainTest(xs_us_fs, 0.8)  # 80:20
@@ -103,8 +103,13 @@ function test_all(approximator, data)
                 )
     @show typeof(approximator)
     infer_test(approximator)
-    training_test(approximator, data_train, data_test)
+    training_test(approximator, data_train, data_test, epochs)
     optimise_test(approximator, data_test)
+end
+
+function plot_figures(approximator, min, max)
+    fig = plot()
+    # error("TODO")
 end
 
 @testset "basic" begin
@@ -112,9 +117,10 @@ end
     # tests
     # ns = [1, 10, 100]
     # ms = [1, 10, 100]
-    println("TODO: change ns and ms")
+    println("TODO: change ns and ms, epochs, etc.")
     ns = [1]
     ms = [1]
+    epochs = 1
     for (n, m) in zip(ns, ms)
         Random.seed!(2021)
         # training data
@@ -145,6 +151,9 @@ end
                          pma=pma,
                          plse=plse,
                         )
-        approximators |> Map(approximator -> test_all(approximator, data)) |> collect
+        approximators |> Map(approximator -> test_all(approximator, data, epochs)) |> collect
+        if n == 1 && m == 1
+            approximators |> Map(approximator -> plot_figures(approximator, min, max)) |> collect
+        end
     end
 end

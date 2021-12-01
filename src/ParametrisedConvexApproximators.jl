@@ -2,8 +2,9 @@ module ParametrisedConvexApproximators
 
 using Flux
 using UnPack
-using Convex, Mosek, MosekTools
-using SCS
+using Convex
+using COSMO
+# using SCS
 using Optim
 using Transducers
 using Random
