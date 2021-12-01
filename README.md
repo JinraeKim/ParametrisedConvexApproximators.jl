@@ -91,7 +91,7 @@ which is opposite to previously presentation in lab seminar, FDCL, SNU by Jinrae
 - [x] Convex opt. solver 결정
     - SCS.jl 로 결정; open source
 - [x] 최적화 정확도 체크 (minimiser, optval)
-- [ ] 최적화 솔버 재결정 (Julia 1.7 과 SCS 가 호환 안 됨; Mosek 은 M1 native 로 안 돌아가는듯)
+- [ ] 최적화 솔버 재결정 (Julia 1.7 과 SCS.jl 가 호환 안 됨; Mosek 은 M1 native 로 안 돌아가는듯; 현재는 COSMO.jl 임)
 - [ ] PICNN 구현
     - [ ] gradient projection 주의
 - [ ] Finite-horizon Q-learning 코드 작성
