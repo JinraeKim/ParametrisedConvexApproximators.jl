@@ -109,7 +109,7 @@ end
 
 function plot_figures(approximator, min, max)
     fig = plot()
-    # error("TODO")
+    error("TODO")
 end
 
 @testset "basic" begin
