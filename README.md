@@ -90,7 +90,9 @@ which is opposite to previously presentation in lab seminar, FDCL, SNU by Jinrae
     - [-1, 1]^n 에서 샘플링
 - [x] Convex opt. solver 결정
     - SCS.jl 로 결정; open source
-- [ ] 최적화 정확도 체크 (minimiser, optval)
+- [x] 최적화 정확도 체크 (minimiser, optval)
+- [ ] PICNN 구현
+    - [ ] gradient projection 주의
 - [ ] Finite-horizon Q-learning 코드 작성
 - [ ] (future works) network converter from Julia to Python and vice versa;
 for differentiable convex programming

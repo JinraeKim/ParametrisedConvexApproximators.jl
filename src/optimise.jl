@@ -13,7 +13,7 @@ Available solvers include Mosek.
 """
 function optimise(approximator::ParametrisedConvexApproximator, x::AbstractVector;
         u_min=nothing, u_max=nothing,
-        solver=Mosek,
+        solver=SCS,
     )
     @unpack m = approximator
     u = Convex.Variable(m)

@@ -11,7 +11,15 @@ using Random
 
 
 function target_function(x, u)
-    -0.5 * (x'*x + u'*u)  # target function
+    _g = zeros(size(x)...)
+    for (i, _x) in enumerate(x)
+        if _x > 0
+            _g[i] = (_x)^(1/4)
+        else
+            _g[i] = (_x)^(4)
+        end
+    end
+    [sum(_g) + 0.5*u'*u]
 end
 
 function infer_test(approximator)
@@ -38,15 +46,25 @@ function optimise_test(approximator, data)
     end
     _xs = hcat(data.x...)
     println("Optimise a single point")
-    @time res = optimise(approximator, rand(n))
+    @time _ = optimise(approximator, rand(n))
     # TODO: change to BenchmarkTools...?
     # println("Optimise a single point (analysing the result using BenchmarkTools...)")
     # @btime res = optimise($approximator, rand($n))
     println("Optimise $(d) points (using parallel computing)")
     @time res = optimise(approximator, _xs)
+    # @time res = optimise(approximator, _xs; u_min=u_min, u_max=u_max)  # with box constraints
     @test res.minimiser |> size == (m, d)  # optimise; minimiser
-    error("TODO: add comparison between true minimiser and estimated minimiser")
     @test res.optval |> size == (1, d)  # optimise; optval
+    # compare true and estimated minimisers and optvals
+    @warn("If you change the target function, you may have to change the true minimisers manually.")
+    minimisers_true = 1:d |> Map(i -> zeros(m)) |> collect
+    optvals_true = 1:d |> Map(i -> target_function(data.x[i], minimisers_true[i])) |> collect
+    minimisers_estimated = 1:d |> Map(i -> res.minimiser[:, i]) |> collect
+    optvals_estimated = 1:d |> Map(i -> res.optval[:, i]) |> collect
+    minimisers_diff_norm = 1:d |> Map(i -> norm(minimisers_estimated[i] - minimisers_true[i])) |> collect
+    optvals_diff_norm = 1:d |> Map(i -> norm(optvals_estimated[i] - optvals_true[i])) |> collect
+    println("norm(estimated minimiser - true minimiser)'s mean: $(mean(minimisers_diff_norm))")
+    println("norm(estimated optval - true minimiser)'s mean: $(mean(optvals_diff_norm))")
 end
 
 function training_test(approximator, data_train, data_test)
@@ -54,7 +72,7 @@ function training_test(approximator, data_train, data_test)
     opt = ADAM(1e-3)
     ps = Flux.params(approximator)
     dataloader = DataLoader(data_train; batchsize=16, shuffle=true, partial=false)
-    epochs = 10
+    epochs = 100
     println("Training $(epochs) epoch...")
     for epoch in 0:epochs
         println("epoch: $(epoch) / $(epochs)")
@@ -90,7 +108,7 @@ function test_all(approximator, data)
 end
 
 @testset "basic" begin
-    sample(min, max) = min + (max - max) .* rand(size(min))
+    sample(min, max) = min + (max - min) .* rand(size(min)...)
     # tests
     # ns = [1, 10, 100]
     # ms = [1, 10, 100]
@@ -101,8 +119,8 @@ end
         Random.seed!(2021)
         # training data
         d = 1_000
-        min = (; x=-1*ones(n), u = -1*ones(m))
-        max = (; x=1*ones(n), u = 1*ones(m))
+        min = (; x = -1*ones(n), u = -1*ones(m))
+        max = (; x = 1*ones(n), u = 1*ones(m))
         xs = 1:d |> Map(i -> sample(min.x, max.x)) |> collect
         us = 1:d |> Map(i -> sample(min.u, max.u)) |> collect
         fs = zip(xs, us) |> MapSplat((x, u) -> target_function(x, u)) |> collect
@@ -110,7 +128,7 @@ end
         println("n = $(n), m = $(m)")
         i_max = 20
         T = 1e-1
-        h_array = [64, 64, 64]
+        h_array = [512, 512]
         act = Flux.leakyrelu
         α_is = 1:i_max |> Map(i -> Flux.glorot_uniform(n+m)) |> collect
         β_is = 1:i_max |> Map(i -> Flux.glorot_uniform(1)) |> collect
