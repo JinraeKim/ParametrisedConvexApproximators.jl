@@ -98,6 +98,7 @@ which is opposite to previously presentation in lab seminar, FDCL, SNU by Jinrae
 - Visualisation
     - [x] minimiser diff norm and optval diff abs (histogram)
     - [x] surface (for n = 1, m = 1)
+- [ ] 지금까지의 결과로 논문 시뮬파트 작성
 - [ ] Finite-horizon Q-learning 코드 작성
 - [ ] (future works) network converter from Julia to Python and vice versa;
 for differentiable convex programming

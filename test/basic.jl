@@ -9,24 +9,38 @@ using Convex
 using BenchmarkTools
 using Random
 using Plots
+using DataFrames
 
 
 __dir_save = "test/basic"
 
 
 function target_function(x, u)
-    # case 1
-    # _g = zeros(size(x)...)
-    # for (i, _x) in enumerate(x)
-    #     if _x > 0
-    #         _g[i] = (_x)^(1/4)
-    #     else
-    #         _g[i] = (_x)^(4)
-    #     end
-    # end
-    # [sum(_g) + 0.5*u'*u]
-    # case 2
     [-0.5*x'*x + 0.5*u'*u]
+end
+
+function sample(min, max)
+    sampled = min + (max - min) .* rand(size(min)...)
+end
+
+function approximator_type(approximator)
+    approx_type = nothing
+    if typeof(approximator) == FNN
+        approx_type = "FNN"
+    elseif typeof(approximator) == MA
+        approx_type = "MA"
+    elseif typeof(approximator) == LSE
+        approx_type = "LSE"
+    elseif typeof(approximator) == PMA
+        approx_type = "PMA"
+    elseif typeof(approximator) == PLSE
+        approx_type = "PLSE"
+    elseif typeof(approximator) == PICNN
+        approx_type = "PICNN"
+    else
+        error("Specify save directory")
+    end
+    approx_type
 end
 
 function infer_test(approximator)
@@ -42,9 +56,11 @@ function infer_test(approximator)
     @test approximator(_xs, _us) |> size  == (1, d)
 end
 
-function optimise_test(approximator, data)
+function optimise_test(approximator, data, min_nt, max_nt)
     @unpack n, m = approximator
     d = data.x |> length
+    BenchmarkTools.DEFAULT_PARAMETERS.samples = d  # number of samples
+    BenchmarkTools.DEFAULT_PARAMETERS.seconds = 5  # maximum times
     println("optimise test; with $(d) test data")
     if typeof(approximator) <: ParametrisedConvexApproximator
         x = rand(n)
@@ -52,14 +68,14 @@ function optimise_test(approximator, data)
         @test approximator(x, u) |> size == (1,)  # inference with Convex.jl
     end
     _xs = hcat(data.x...)
-    println("Optimise a single point")
-    @time _ = optimise(approximator, rand(n))
+    println("Optimise a single point (evaluating via BenchmarkTools)")
+    bchmkr = @benchmark optimise($approximator, sample($(min_nt.u), $(max_nt.u)))
     # TODO: change to BenchmarkTools...?
     # println("Optimise a single point (analysing the result using BenchmarkTools...)")
     # @btime res = optimise($approximator, rand($n))
     println("Optimise $(d) points (using parallel computing)")
     # @time res = optimise(approximator, _xs)
-    @time res = optimise(approximator, _xs)  # with box constraints
+    res = optimise(approximator, _xs)  # with box constraints
     @test res.minimiser |> size == (m, d)  # optimise; minimiser
     @test res.optval |> size == (1, d)  # optimise; optval
     # compare true and estimated minimisers and optvals
@@ -74,15 +90,15 @@ function optimise_test(approximator, data)
               # of minimiser failure cases (nothing): ($(length(minimiser_failure_cases)) / $(d)),
               # of optval failure cases (-Inf or Inf): ($(length(optval_failure_cases)) / $(d))",
              )
-        return nothing, nothing
+        return nothing
     else
         minimisers_diff_norm = 1:d |> Map(i -> norm(minimisers_estimated[i] - minimisers_true[i])) |> collect
         optvals_diff = 1:d |> Map(i -> abs(optvals_estimated[i][1] - optvals_true[i][1])) |> collect
-        println("norm(estimated minimiser - true minimiser)'s mean: $(mean(minimisers_diff_norm))")
-        println("norm(estimated optval - true optval)'s mean: $(mean(optvals_diff))")
+        # println("norm(estimated minimiser - true minimiser)'s mean: $(mean(minimisers_diff_norm))")
+        # println("norm(estimated optval - true optval)'s mean: $(mean(optvals_diff))")
         fig_minimiser_diff_norm = histogram(minimisers_diff_norm; label=nothing)
         fig_optval_diff = histogram(optvals_diff; label=nothing)
-        return fig_minimiser_diff_norm, fig_optval_diff
+        return fig_minimiser_diff_norm, fig_optval_diff, bchmkr, minimisers_diff_norm, optvals_diff
     end
 end
 
@@ -143,8 +159,8 @@ function test_all(approximator, data, epochs, min_nt, max_nt)
     @show typeof(approximator)
     # tests
     infer_test(approximator)
-    @time training_test(approximator, data_train, data_test, epochs)
-    fig_minimiser_diff_norm, fig_optval_diff_abs = optimise_test(approximator, data_test)
+    training_test(approximator, data_train, data_test, epochs)
+    fig_minimiser_diff_norm, fig_optval_diff_abs, bchmkr, minimisers_diff_norm, optvals_diff_abs = optimise_test(approximator, data_test, min_nt, max_nt)
     # figures
     fig_surface = nothing
     @unpack n, m = approximator
@@ -154,29 +170,17 @@ function test_all(approximator, data, epochs, min_nt, max_nt)
         println("plotting surface is ignored for high-dimensional cases")
     end
     # postprocessing of figures
-    approx_type = nothing
-    if typeof(approximator) == FNN
-        approx_type = "FNN"
-    elseif typeof(approximator) == MA
-        approx_type = "MA"
-    elseif typeof(approximator) == LSE
-        approx_type = "LSE"
-    elseif typeof(approximator) == PMA
-        approx_type = "PMA"
-    elseif typeof(approximator) == PLSE
-        approx_type = "PLSE"
-    elseif typeof(approximator) == PICNN
-        approx_type = "PICNN"
-    else
-        error("Specify save directory")
-    end
+    approx_type = approximator_type(approximator)
     title!(fig_surface, approx_type)
     title!(fig_minimiser_diff_norm, approx_type)
     title!(fig_optval_diff_abs, approx_type)
     (;
-     surface=fig_surface,
-     minimiser_diff_norm=fig_minimiser_diff_norm,
-     optval_diff_abs=fig_optval_diff_abs,
+     fig_surface=fig_surface,
+     fig_minimiser_diff_norm=fig_minimiser_diff_norm,
+     fig_optval_diff_abs=fig_optval_diff_abs,
+     minimisers_diff_norm=minimisers_diff_norm,
+     optvals_diff_abs=optvals_diff_abs,
+     benchmark=bchmkr,
     )
 end
 
@@ -200,16 +204,16 @@ end
 
 @testset "basic" begin
     @warn("Note: if you change the target function, you may have to change the true minimisers manually (in the function `optimise_test`).")
-    sample(min, max) = min + (max - min) .* rand(size(min)...)
+    df = DataFrame()
     # tests
     println("TODO: change ns and ms, epochs_list, etc.")
-    ns = [1]
-    ms = [1]
-    # ns = [1, 10, 100]
-    # ms = [1, 10, 100]
+    ns = [1, 10, 100]
+    ms = [1, 10, 100]
+    # ns = [1]
+    # ms = [1]
     for (n, m) in zip(ns, ms)
-        epochs_list = [20]
-        # epochs_list = [10, 50]
+        # epochs_list = [20]
+        epochs_list = [20, 50, 100]
         for epochs in epochs_list
             Random.seed!(2021)
             # training data
@@ -246,7 +250,18 @@ end
                             )
             _dir_save = joinpath(__dir_save, "n=$(n)_m=$(m)_epochs=$(epochs)")
             mkpath(_dir_save)
-            figs = approximators |> Map(approximator -> test_all(approximator, data, epochs, min_nt, max_nt)) |> collect
+            results = approximators |> Map(approximator -> test_all(approximator, data, epochs, min_nt, max_nt)) |> collect
+            for (approximator, result) in zip(approximators, results)
+                push!(df, (
+                           n=n, m=m, epochs=epochs,
+                           approximator=approximator_type(approximator),
+                           optimise_time_mean=mean(result.benchmark).time*1e-9,  # unit: 1 ns
+                           no_of_optimise_points=length(result.benchmark),
+                           minimisers_diff_norm_mean=mean(result.minimisers_diff_norm),
+                           optvals_diff_abs_mean=mean(result.optvals_diff_abs),
+                          ),
+                     )
+            end
             # plotting
             if n == 1 && m == 1
                 title_surface = plot(title="Trained approximators",
@@ -257,7 +272,7 @@ end
                 savefig(fig_surface_true, joinpath(_dir_save, "surface_true.png"))
                 fig_surface = plot(title_surface,
                                    # fig_surface_true,
-                                   ((figs |> Map(fig -> fig.surface) |> collect)...);
+                                   ((results |> Map(result -> result.fig_surface) |> collect)...);
                                    layout=@layout[a{0.01h}; grid(3, 2)],
                                    size=(800, 900),
                                    # layout=@layout[a{0.01h}; [b grid(3, 2)]],
@@ -269,7 +284,7 @@ end
                                              framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px,
                                             )
             fig_minimiser_diff_norm = plot(title_minimiser_diff_norm,
-                                           (figs |> Map(fig -> fig.minimiser_diff_norm) |> collect)...;
+                                           (results |> Map(result -> result.fig_minimiser_diff_norm) |> collect)...;
                                            # layout=@layout[a{0.01h}; grid(1, length(approximators))],
                                            layout=@layout[a{0.01h}; grid(3, 2)],
                                            size=(800, 900),
@@ -279,7 +294,7 @@ end
                                          framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px,
                                         )
             fig_optval_diff_abs = plot(title_optval_diff_abs,
-                                       (figs |> Map(fig -> fig.optval_diff_abs) |> collect)...;
+                                       (results |> Map(result -> result.fig_optval_diff_abs) |> collect)...;
                                        # layout=@layout[a{0.01h}; grid(1, length(approximators))],
                                        layout=@layout[a{0.01h}; grid(3, 2)],
                                        size=(800, 900),
@@ -287,4 +302,5 @@ end
             savefig(fig_optval_diff_abs, joinpath(_dir_save, "optval_diff_abs.png"))
         end
     end
+    @show df
 end
