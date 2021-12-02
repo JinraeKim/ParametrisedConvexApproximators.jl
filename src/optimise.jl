@@ -1,5 +1,5 @@
 """
-    optimise(approximator::ParametrisedConvexApproximator, x::AbstractVector;
+    _optimise(approximator::ParametrisedConvexApproximator, x::AbstractVector;
         u_min=nothing, u_max=nothing,
     )
 
@@ -12,8 +12,7 @@ Available solvers include Mosek.
 [2] https://github.com/jump-dev/Convex.jl
 [3] https://github.com/oxfordcontrol/COSMO.jl
 """
-function optimise(approximator::ParametrisedConvexApproximator, x::AbstractVector;
-        u_min=nothing, u_max=nothing,
+function _optimise(approximator::ParametrisedConvexApproximator, x::AbstractVector, u_min, u_max;
         solver=COSMO,
     )
     @unpack m = approximator
@@ -26,11 +25,13 @@ function optimise(approximator::ParametrisedConvexApproximator, x::AbstractVecto
         problem.constraints += [u <= u_max]
     end
     solve!(problem, solver.Optimizer(); verbose=false, silent_solver=true)
-    result = (; minimiser=u.value, optval=problem.optval)
+    minimiser = u.value
+    optval = problem.optval
+    minimiser, optval
 end
 
 """
-    optimise(approximator::AbstractApproximator, x::AbstractVector;
+    _optimise(approximator::AbstractApproximator, x::AbstractVector;
         u_min=nothing, u_max=nothing,
     )
 
@@ -40,9 +41,7 @@ Default solver is `IPNewton` in Optim.jl for box constraints [1].
 # Refs.
 [1] https://julianlsolvers.github.io/Optim.jl/stable/#examples/generated/ipnewton_basics/#box-minimzation
 """
-function optimise(approximator::AbstractApproximator, x::AbstractVector;
-        u_min=nothing, u_max=nothing,
-    )
+function _optimise(approximator::AbstractApproximator, x::AbstractVector, u_min, u_max)
     @unpack m = approximator
     obj(u) = approximator(x, u)[1]
     if u_min == nothing
@@ -63,7 +62,18 @@ function optimise(approximator::AbstractApproximator, x::AbstractVector;
     res = Optim.optimize(obj, dfc, u_guess, IPNewton())
     minimiser = prod(size(u_guess)) == 1 ? res.minimizer[1] : res.minimizer
     optval = res.minimum
-    result = (; minimiser=minimiser, optval=optval)  # NamedTuple
+    minimiser, optval
+end
+
+function optimise(approximator::AbstractApproximator, x::AbstractVector;
+        u_min=nothing, u_max=nothing,
+    )
+    minimiser, optval = _optimise(approximator, x, u_min, u_max)
+    if minimiser == nothing
+        @unpack m = approximator
+        minimiser = repeat([nothing], m)
+    end
+    result = (; minimiser=minimiser, optval=optval)
 end
 
 """

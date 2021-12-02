@@ -91,9 +91,13 @@ which is opposite to previously presentation in lab seminar, FDCL, SNU by Jinrae
 - [x] Convex opt. solver 결정
     - SCS.jl 로 결정; open source
 - [x] 최적화 정확도 체크 (minimiser, optval)
-- [ ] 최적화 솔버 재결정 (Julia 1.7 과 SCS.jl 가 호환 안 됨; Mosek 은 M1 native 로 안 돌아가는듯; 현재는 COSMO.jl 임)
-- [ ] PICNN 구현
-    - [ ] gradient projection 주의
+- [x] 최적화 솔버 재결정 (Julia 1.7 과 SCS.jl 가 호환 안 됨; Mosek 은 M1 native 로 안 돌아가는듯; 현재는 COSMO.jl 임)
+    - 일단 COSMO.jl 로 결정함
+- [x] PICNN 구현
+    - [x] gradient projection 주의
+- [ ] visualisation
+    - [x] minimiser diff norm and optval diff abs (histogram)
+    - [ ] surface (for n = 1, m = 1)
 - [ ] Finite-horizon Q-learning 코드 작성
 - [ ] (future works) network converter from Julia to Python and vice versa;
 for differentiable convex programming

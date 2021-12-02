@@ -4,7 +4,7 @@ using Flux
 using UnPack
 using Convex
 using COSMO
-# using SCS
+# using SCS  # currently not compatible with apple silicon
 using Optim
 using Transducers
 using Random
@@ -14,6 +14,7 @@ using Random
 export AbstractApproximator, FNN
 export ConvexApproximator, MA, LSE
 export ParametrisedConvexApproximator, PMA, PLSE
+export PICNN, project_nonnegative!
 export optimise
 # data manipulation
 export partitionTrainTest

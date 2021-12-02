@@ -29,4 +29,5 @@ end
 
 include("PMA.jl")
 include("PLSE.jl")
+include("PICNN.jl")
 include("convex_approximators/convex_approximators.jl")
