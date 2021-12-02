@@ -40,6 +40,7 @@ res = optimise(plse, x; u_min=u_min, u_max=u_max)  # minimsation
 res = (minimiser = [-0.2523565154854893, -0.9999967116995178, 0.09150518836473269], optval = [0.2943142110436148])
 ```
 - The approximators can be trained via [Flux.jl](https://github.com/FluxML/Flux.jl), an ML library of Julia.
+    - [ ] To-do; add a Flux.jl example
 
 ## Documentation
 ### Types
@@ -60,8 +61,8 @@ res = (minimiser = [-0.2523565154854893, -0.9999967116995178, 0.0915051883647326
 - `res = optimise(approximator, x; u_min=nothing, u_max=nothing)` provides
 minimiser and optimal value (optval) for given `x` as `res.minimiser` and `res.optval`
 considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
-The condition variable `x` can be a vector, i.e., `size(x) = (n,)`,
-or a matrix for parallel solve (via multi-threading), i.e., `size(x) = (n, d)`.
+    - The condition variable `x` can be a vector, i.e., `size(x) = (n,)`,
+    or a matrix for parallel solve (via multi-threading), i.e., `size(x) = (n, d)`.
 
 
 ## To-do list
