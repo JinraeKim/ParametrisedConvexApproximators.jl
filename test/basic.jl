@@ -123,7 +123,7 @@ function training_test(approximator, data_train, data_test, epochs)
     end
 end
 
-function test_all(approximator, data, epochs, _dir_save)
+function test_all(approximator, data, epochs, min_nt, max_nt, _dir_save)
     # split data
     xs_us_fs = zip(data.x, data.u, data.f) |> collect
     xs_us_fs_train, xs_us_fs_test = partitionTrainTest(xs_us_fs, 0.8)  # 80:20
@@ -138,7 +138,6 @@ function test_all(approximator, data, epochs, _dir_save)
                   f=xs_us_fs_test |> Map(xuf -> xuf[3]) |> collect,
                 )
     @show typeof(approximator)
-    @unpack n, m = approximator
     dir_save = nothing
     if typeof(approximator) == FNN
         dir_save = joinpath(_dir_save, "FNN")
@@ -160,14 +159,24 @@ function test_all(approximator, data, epochs, _dir_save)
     infer_test(approximator)
     @time training_test(approximator, data_train, data_test, epochs)
     optimise_test(approximator, data_test, dir_save)
+    # figures
+    fig = nothing
+    @unpack n, m = approximator
     if n == 1 && m == 1
-        plot_surface(approximator, min, max)
+        fig = plot_surface(approximator, min_nt, max_nt)
+    else
+        println("plotting surface is ignored for high-dimensional cases")
     end
+    fig
 end
 
-function plot_surface(approximator, min, max)
-    fig = plot()
-    error("TODO")
+function plot_surface(approximator, min_nt, max_nt)
+    l = 100
+    _xs = range(min_nt.x[1], stop=max_nt.x[1], length=l)
+    _us = range(min_nt.u[1], stop=max_nt.u[1], length=l)
+    _f(x, u) = approximator([x], [u])[1]
+    fig = plot(_xs, _us, _f; st=:surface)
+    fig
 end
 
 @testset "basic" begin
@@ -186,10 +195,10 @@ end
             Random.seed!(2021)
             # training data
             d = 1_000
-            min = (; x = -1*ones(n), u = -1*ones(m))
-            max = (; x = 1*ones(n), u = 1*ones(m))
-            xs = 1:d |> Map(i -> sample(min.x, max.x)) |> collect
-            us = 1:d |> Map(i -> sample(min.u, max.u)) |> collect
+            min_nt = (; x = -1*ones(n), u = -1*ones(m))
+            max_nt = (; x = 1*ones(n), u = 1*ones(m))
+            xs = 1:d |> Map(i -> sample(min_nt.x, max_nt.x)) |> collect
+            us = 1:d |> Map(i -> sample(min_nt.u, max_nt.u)) |> collect
             fs = zip(xs, us) |> MapSplat((x, u) -> target_function(x, u)) |> collect
             data = (; x=xs, u=us, f=fs)
             println("n = $(n), m = $(m), epochs = $(epochs)")
@@ -209,15 +218,20 @@ end
             plse = PLSE(n, m, i_max, T, h_array, act)
             picnn = PICNN(n, m, u_array, z_array, act, act)
             approximators = (;
-                             # fnn=fnn,
-                             # ma=ma,
-                             # lse=lse,
-                             # pma=pma,
-                             # plse=plse,
+                             fnn=fnn,
+                             ma=ma,
+                             lse=lse,
+                             pma=pma,
+                             plse=plse,
                              picnn=picnn,
                             )
             _dir_save = joinpath(__dir_save, "n=$(n)_m=$(m)_epochs=$(epochs)")
-            approximators |> Map(approximator -> test_all(approximator, data, epochs, __dir_save)) |> collect
+            figs_surface = approximators |> Map(approximator -> test_all(approximator, data, epochs, min_nt, max_nt, __dir_save)) |> collect
+            if n == 1 && m == 1
+                fig_surface_true = plot_surface(target_function, min_nt, max_nt)
+                fig_surface = plot(fig_surface_true, figs_surface...)
+                savefig(fig_surface, joinpath(__dir_save, "surface.png"))
+            end
         end
     end
 end
