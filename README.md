@@ -130,10 +130,9 @@ considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
 - Visualisation
     - [x] minimiser diff norm and optval diff abs (histogram)
     - [x] surface (for n = 1, m = 1)
-- [x] 최적화 실패 처리 개선
+- [ ] 최적화 실패 처리 개선
     - 현재는 실패한 경우가 하나만 있어도 아예 데이터에서 제외함
     - 실패한 경우의 케이스 수를 받고, 성공한 녀석들로 평균값을 구하자
-    - **실패한 경우가 발생하지 않아 넘어감 (see Benchmark)**
 - [ ] 지금까지의 결과로 논문 시뮬파트 작성
 - [ ] Finite-horizon Q-learning 코드 작성
 - [ ] (future works) network converter from Julia to Python and vice versa;
