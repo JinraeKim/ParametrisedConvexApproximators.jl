@@ -25,8 +25,8 @@ function _optimise(approximator::ParametrisedConvexApproximator, x::AbstractVect
         problem.constraints += [u <= u_max]
     end
     solve!(problem, solver.Optimizer(); verbose=false, silent_solver=true)
-    minimiser = u.value
-    optval = problem.optval
+    minimiser = u.value[:]  # to make it a vector
+    optval = [problem.optval]  # to make it a vector
     minimiser, optval
 end
 

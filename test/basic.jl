@@ -92,7 +92,7 @@ function optimise_test(approximator, data, min_nt, max_nt)
               # of minimiser failure cases (nothing): ($(length(minimiser_failure_cases)) / $(d)),
               # of optval failure cases (-Inf or Inf): ($(length(optval_failure_cases)) / $(d))",
              )
-        return repeat([nothing], 5)
+        return nothing, nothing, missing, missing, nothing
     else
         minimisers_diff_norm = 1:d |> Map(i -> norm(minimisers_estimated[i] - minimisers_true[i])) |> collect
         optvals_diff = 1:d |> Map(i -> abs(optvals_estimated[i][1] - optvals_true[i][1])) |> collect
@@ -261,13 +261,27 @@ end
             mkpath(_dir_save)
             results = approximators |> Map(approximator -> test_all(approximator, data, epochs, min_nt, max_nt)) |> collect
             for (approximator, result) in zip(approximators, results)
-                @run push!(df, (;
+                @show result
+                optimise_time_mean = missing
+                no_of_optimise_points = missing
+                minimisers_diff_norm_mean = missing
+                optvals_diff_abs_mean = missing
+                optimisation_failure = true
+                if result.benchmark != nothing
+                    optimise_time_mean = mean(result.benchmark).time*1e-9  # unit: 1 ns
+                    no_of_optimise_points = length(result.benchmark)
+                    minimisers_diff_norm_mean = mean(result.minimisers_diff_norm)
+                    optvals_diff_abs_mean = mean(result.optvals_diff_abs)
+                    optimisation_failure = false
+                end
+                push!(df, (;
                            n=n, m=m, epochs=epochs,
                            approximator=approximator_type(approximator),
-                           optimise_time_mean=mean(result.benchmark).time*1e-9,  # unit: 1 ns
-                           no_of_optimise_points=length(result.benchmark),
-                           minimisers_diff_norm_mean=mean(result.minimisers_diff_norm),
-                           optvals_diff_abs_mean=mean(result.optvals_diff_abs),
+                           optimise_time_mean=optimise_time_mean,
+                           no_of_optimise_points=no_of_optimise_points,
+                           minimisers_diff_norm_mean=minimisers_diff_norm_mean,
+                           optvals_diff_abs_mean=optvals_diff_abs_mean,
+                           optimisation_failure=optimisation_failure,
                           ),
                      )
             end

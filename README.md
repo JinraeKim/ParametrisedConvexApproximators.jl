@@ -14,10 +14,34 @@ pkg> add ParametrisedConvexApproximator
 ## Quick Start
 - Activate multi-threading if available, e.g., `julia -t 7` enabling `7` threads.
 It will reduce computation time for minimising networks w.r.t. multiple points.
-- [ ] To-do: add quick start
+- ParametrisedConvexApproximators.jl focuses on providing predefined approximators including parametrised convex approximators.
+Note that when approximators receive two arguments, the first and second arguments correspond to
+condition and decision vectors, usually denoted by `x` and `u`.
+- Construction and optimisation of parametrised log-sum-exp (PLSE) approximator:
+```julia
+using ParametrisedConvexApproximators
+using Flux
+
+# construction
+n, m = 2, 3
+i_max = 20
+T = 1e-1
+h_array = [128, 128]
+act = Flux.leakyrelu
+plse = PLSE(n, m, i_max, T, h_array, act)
+# optimisation
+x = rand(n)
+u_min, u_max = -1*ones(m), 1*ones(m)
+res = optimise(plse, x; u_min=u_min, u_max=u_max)  # minimsation
+@show res  # NamedTuple
+```
+
+```julia
+res = (minimiser = [-0.2523565154854893, -0.9999967116995178, 0.09150518836473269], optval = [0.2943142110436148])
+```
+- The approximators can be trained via [Flux.jl](https://github.com/FluxML/Flux.jl), an ML library of Julia.
 
 ## Documentation
-- [ ] To-do: complete docs
 ### Types
 - `AbstractApproximator` is an abstract type of approximator.
 - `ParametrisedConvexApproximator <: AbstractApproximator` is an abstract type of parametrised convex approximator.
@@ -29,18 +53,16 @@ It will reduce computation time for minimising networks w.r.t. multiple points.
 - `LSE::ConvexApproximator`: log-sum-exp (LSE) network [1]
 - `PMA::ParametrisedConvexApproximator`: parametrised MA network
 - `PLSE::ParametrisedConvexApproximator`: parametrised LSE network
+- `PICNN::ParametrisedConvexApproximator`: partially input-convex neural network
 
 ### Utilities
 - `(nn::approximator)(x, u)` gives an inference (approximate function value).
 - `res = optimise(approximator, x; u_min=nothing, u_max=nothing)` provides
-minimiser and optimal value (optval) for given `x` as `res.minimiser` and `res.optval`.
+minimiser and optimal value (optval) for given `x` as `res.minimiser` and `res.optval`
+considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
+The condition variable `x` can be a vector, i.e., `size(x) = (n,)`,
+or a matrix for parallel solve (via multi-threading), i.e., `size(x) = (n, d)`.
 
-
-## NOTICE: the source code is currently being rewritten.
-### Why...?
-The previous code is outdated, and too complicated to be modified.
-For example, I have no idea why convex solvers take much longer time than non-convex solvers,
-which is opposite to previously presentation in lab seminar, FDCL, SNU by Jinrae Kim.
 
 ## To-do list
 - [x] 최적화 방식 결정 (decide how to write optimisation code)
