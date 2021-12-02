@@ -213,7 +213,12 @@ end
 
 @testset "basic" begin
     @warn("Note: if you change the target function, you may have to change the true minimisers manually (in the function `optimise_test`).")
-    df = DataFrame()
+    df = DataFrame(
+                   optimise_time_mean=Union{Missing, Float64}[],
+                   no_of_optimise_points=Union{Missing, Int64}[],
+                   minimisers_diff_norm_mean=Union{Missing, Float64}[],
+                   optvals_diff_abs_mean=Union{Missing, Float64}[],
+                  )  # allow missing
     # tests
     println("TODO: change ns and ms, epochs_list, etc.")
     # ns = [100]
@@ -282,6 +287,7 @@ end
                            optvals_diff_abs_mean=optvals_diff_abs_mean,
                            optimisation_failure=optimisation_failure,
                           ),
+                      cols=:union,
                      )
             end
             # plotting
@@ -292,15 +298,16 @@ end
                 fig_surface_true = plot_surface(target_function, min_nt, max_nt; xlabel="x", ylabel="u")
                 title!(fig_surface_true, "target function")
                 savefig(fig_surface_true, joinpath(_dir_save, "surface_true.png"))
+                savefig(fig_surface_true, joinpath(_dir_save, "surface_true.pdf"))
                 fig_surface = plot(title_surface,
-                                   # fig_surface_true,
-                                   ((results |> Map(result -> result.fig_surface) |> collect)...);
-                                   layout=@layout[a{0.01h}; grid(3, 2)],
-                                   size=(800, 900),
-                                   # layout=@layout[a{0.01h}; [b grid(3, 2)]],
-                                   # size=(2500, 900),
+                                   fig_surface_true,
+                                   ((results |> Map(result -> result.fig_surface) |> collect)...),
+                                   plot();  # dummy
+                                   layout=@layout[a{0.01h}; grid(4, 2)],
+                                   size=(800, 1200),
                                   )
                 savefig(fig_surface, joinpath(_dir_save, "surface.png"))
+                savefig(fig_surface, joinpath(_dir_save, "surface.pdf"))
             end
             title_minimiser_diff_norm = plot(title="2-norm of minimiser errors",
                                              framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px,
@@ -312,6 +319,7 @@ end
                                            size=(800, 900),
                                           )
             savefig(fig_minimiser_diff_norm, joinpath(_dir_save, "minimiser_diff_norm.png"))
+            savefig(fig_minimiser_diff_norm, joinpath(_dir_save, "minimiser_diff_norm.pdf"))
             title_optval_diff_abs = plot(title="Absolute value of optval errors",
                                          framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px,
                                         )
@@ -322,6 +330,7 @@ end
                                        size=(800, 900),
                                       )
             savefig(fig_optval_diff_abs, joinpath(_dir_save, "optval_diff_abs.png"))
+            savefig(fig_optval_diff_abs, joinpath(_dir_save, "optval_diff_abs.pdf"))
         end
     end
     @show df

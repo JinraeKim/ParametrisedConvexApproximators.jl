@@ -73,7 +73,8 @@ considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
     or a matrix for parallel solve (via multi-threading), i.e., `size(x) = (n, d)`.
 
 
-## To-do list
+## Notes
+### To-do list
 - [x] 최적화 방식 결정 (decide how to write optimisation code)
     - `test/solver.jl` 참고 (see the file)
     - convex 솔버는 Convex.jl + Mosek (convex solver is...)
@@ -129,6 +130,10 @@ considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
 - Visualisation
     - [x] minimiser diff norm and optval diff abs (histogram)
     - [x] surface (for n = 1, m = 1)
+- [x] 최적화 실패 처리 개선
+    - 현재는 실패한 경우가 하나만 있어도 아예 데이터에서 제외함
+    - 실패한 경우의 케이스 수를 받고, 성공한 녀석들로 평균값을 구하자
+    - **실패한 경우가 발생하지 않아 넘어감 (see Benchmark)**
 - [ ] 지금까지의 결과로 논문 시뮬파트 작성
 - [ ] Finite-horizon Q-learning 코드 작성
 - [ ] (future works) network converter from Julia to Python and vice versa;
@@ -136,5 +141,39 @@ for differentiable convex programming
 - [ ] (future works) add infinite-horizon Q-learning examples via differentiable convex programming
 
 
-# References
+### Benchmark
+The following result is from `test/basic.jl`.
+- `n`: dimension of condition variable `x`
+- `m`: dimension of decision variable `u`
+- `epochs`: training epochs
+- `optimisation_failure`: if there is at least one failure case in optimisation, `true`
+- `minimisers_diff_norm_mean`: the mean value of 2-norm of the difference between true and estimated minimisers
+- `optvals_diff_abs_mean`: the mean value of absolute of the difference between true and estimated optimal values
+- `optimise_time_mean`: average time for optimisation
+- `no_of_optimise_points`: number of optimisation points to obtain benchmark results, using [BenchmarkTools.jl](https://github.com/JuliaCI/BenchmarkTools.jl) (can be truncated for too slow optimisation)
+```julia
+ Row │ optimise_time_mean  no_of_optimise_points  minimisers_diff_norm_mean  optvals_diff_abs_mean  n      m      epochs  approximator  optimisation_failure
+     │ Float64?            Union{Missing, Int64}  Float64?                   Float64?               Int64  Int64  Int64   String        Bool
+─────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   1 │         0.00215083                    200                 0.0307585              0.00891506      1      1     100  FNN                          false
+   2 │         0.00171477                    200                 0.337122               0.125028        1      1     100  MA                           false
+   3 │         0.0336831                     200                 0.0607105              0.126509        1      1     100  LSE                          false
+   4 │         0.134263                      200                 0.0512199              0.0904881       1      1     100  PICNN                        false
+   5 │         0.0015151                     200                 0.321775               0.0125168       1      1     100  PMA                          false
+   6 │         0.00870789                    200                 0.00837253             0.00732863      1      1     100  PLSE                         false
+   7 │         0.102924                      200                 2.1967                 0.593645       10     10     100  FNN                          false
+   8 │         0.0264953                     200                 2.65532                0.318628       10     10     100  MA                           false
+   9 │         0.042978                      200                 2.35952                0.263024       10     10     100  LSE                          false
+  10 │         0.375921                       80                 2.77599                0.178636       10     10     100  PICNN                        false
+  11 │         0.00569223                    200                 1.7945                 0.173026       10     10     100  PMA                          false
+  12 │         0.0130083                     200                 1.58341                0.264676       10     10     100  PLSE                         false
+  13 │         1.18958                        26                 7.16768                1.66083       100    100     100  FNN                          false
+  14 │         0.145114                      200                 9.60918                0.197156      100    100     100  MA                           false
+  15 │         0.0653175                     200                 9.64556                0.167201      100    100     100  LSE                          false
+  16 │         3.3229                         10                 9.94982                0.917935      100    100     100  PICNN                        false
+  17 │         0.116434                      200                 9.55993                0.265828      100    100     100  PMA                          false
+  18 │         0.0670418                     200                 9.62691                0.431962      100    100     100  PLSE                         false
+```
+
+## References
 - [1] [G. C. Calafiore, S. Gaubert, and C. Possieri, “Log-Sum-Exp Neural Networks and Posynomial Models for Convex and Log-Log-Convex Data,” IEEE Transactions on Neural Networks and Learning Systems, vol. 31, no. 3, pp. 827–838, Mar. 2020, doi: 10.1109/TNNLS.2019.2910417.](https://ieeexplore.ieee.org/abstract/document/8715799?casa_token=ptHxee1NJ30AAAAA:etAIY0UkR0yg6YK7mgtEzCzHavM0d6Cos1VNzpn0cw5hbiEnFnAxNDm1rflWjDAOa-iO6xU5Lg)
