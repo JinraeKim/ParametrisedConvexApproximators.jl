@@ -49,12 +49,20 @@ res = (minimiser = [-0.2523565154854893, -0.9999967116995178, 0.0915051883647326
 - `ConvexApproximator <: ParametrisedConvexApproximator` is an abstract type of convex approximator.
 
 ### Approximators
-- `FNN::AbstractApproximator`: feedforward neural network
-- `MA::ConvexApproximator`: max-affine (MA) network [1]
-- `LSE::ConvexApproximator`: log-sum-exp (LSE) network [1]
-- `PMA::ParametrisedConvexApproximator`: parametrised MA network
-- `PLSE::ParametrisedConvexApproximator`: parametrised LSE network
-- `PICNN::ParametrisedConvexApproximator`: partially input-convex neural network
+- All approximators in ParametrisedConvexApproximators.jl receive two arguments, namely, `x` and `u`.
+When `x` and `u` are vectors whose lengths are `n` and `m`, respectively,
+the output of an approximator is **one-length vector**.
+    - Note that `x` and `u` can be matrices, whose sizes are `(n, d)` and `(m, d)`,
+    for evaluations of `d` pairs of `x`'s and `u`'s.
+    In this case, the output's size is `(1, d)`.
+
+- The list of predefined approximators
+    - `FNN::AbstractApproximator`: feedforward neural network
+    - `MA::ConvexApproximator`: max-affine (MA) network [1]
+    - `LSE::ConvexApproximator`: log-sum-exp (LSE) network [1]
+    - `PMA::ParametrisedConvexApproximator`: parametrised MA network
+    - `PLSE::ParametrisedConvexApproximator`: parametrised LSE network
+    - `PICNN::ParametrisedConvexApproximator`: partially input-convex neural network
 
 ### Utilities
 - `(nn::approximator)(x, u)` gives an inference (approximate function value).

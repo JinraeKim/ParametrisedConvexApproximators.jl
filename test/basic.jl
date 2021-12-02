@@ -261,7 +261,6 @@ end
             mkpath(_dir_save)
             results = approximators |> Map(approximator -> test_all(approximator, data, epochs, min_nt, max_nt)) |> collect
             for (approximator, result) in zip(approximators, results)
-                @show result
                 optimise_time_mean = missing
                 no_of_optimise_points = missing
                 minimisers_diff_norm_mean = missing
