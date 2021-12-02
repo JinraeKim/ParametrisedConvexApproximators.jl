@@ -4,7 +4,6 @@ authors = ["JinraeKim <kjl950403@gmail.com> and contributors"]
 version = "0.1.0"
 
 [deps]
-COSMO = "1e616198-aa4e-51ec-90a2-23f7fbd31d8d"
 Convex = "f65535da-76fb-5f13-bab9-19810c17039a"
 FSimZoo = "e2d5807d-1594-43f7-91a6-54c6eef5a9d2"
 FlightSims = "a4c2f6ca-3fbe-4430-8ede-32935de4c069"
@@ -12,6 +11,7 @@ Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
+SCS = "c946c3f1-0d1f-5ce8-9dea-7daa1f7e2d13"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Transducers = "28d57a85-8fef-5791-bfe6-a80928e7c999"
 UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"

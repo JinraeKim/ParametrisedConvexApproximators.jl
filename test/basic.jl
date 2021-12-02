@@ -42,7 +42,7 @@ function infer_test(approximator)
     @test approximator(_xs, _us) |> size  == (1, d)
 end
 
-function optimise_test(approximator, data, dir_save)
+function optimise_test(approximator, data)
     @unpack n, m = approximator
     d = data.x |> length
     println("optimise test; with $(d) test data")
@@ -67,19 +67,22 @@ function optimise_test(approximator, data, dir_save)
     optvals_true = 1:d |> Map(i -> target_function(data.x[i], minimisers_true[i])) |> collect
     minimisers_estimated = 1:d |> Map(i -> res.minimiser[:, i]) |> collect
     optvals_estimated = 1:d |> Map(i -> res.optval[:, i]) |> collect
-    failure_cases = findall(x -> x == repeat([nothing], m), minimisers_estimated)
-    if length(failure_cases) > 0
+    minimiser_failure_cases = findall(x -> x == repeat([nothing], m), minimisers_estimated)
+    optval_failure_cases = findall(x -> x == [Inf] || x == [-Inf], optvals_estimated)
+    if length(minimiser_failure_cases) > 0 || length(optval_failure_cases) > 0
         @warn("(optimisaiton failure) there is at least one failure case to solve the optimisation;
-                # of failure cases: ($(length(failure_cases)) / $(d))")
+              # of minimiser failure cases (nothing): ($(length(minimiser_failure_cases)) / $(d)),
+              # of optval failure cases (-Inf or Inf): ($(length(optval_failure_cases)) / $(d))",
+             )
+        return nothing, nothing
     else
         minimisers_diff_norm = 1:d |> Map(i -> norm(minimisers_estimated[i] - minimisers_true[i])) |> collect
         optvals_diff = 1:d |> Map(i -> abs(optvals_estimated[i][1] - optvals_true[i][1])) |> collect
         println("norm(estimated minimiser - true minimiser)'s mean: $(mean(minimisers_diff_norm))")
         println("norm(estimated optval - true optval)'s mean: $(mean(optvals_diff))")
-        fig_minimiser_diff_norm = histogram(minimisers_diff_norm)
-        fig_optval_diff = histogram(optvals_diff)
-        savefig(fig_minimiser_diff_norm, joinpath(dir_save, "minimiser_diff_norm.png"))
-        savefig(fig_optval_diff, joinpath(dir_save, "optval_diff.png"))
+        fig_minimiser_diff_norm = histogram(minimisers_diff_norm; label=nothing)
+        fig_optval_diff = histogram(optvals_diff; label=nothing)
+        return fig_minimiser_diff_norm, fig_optval_diff
     end
 end
 
@@ -123,7 +126,7 @@ function training_test(approximator, data_train, data_test, epochs)
     end
 end
 
-function test_all(approximator, data, epochs, min_nt, max_nt, _dir_save)
+function test_all(approximator, data, epochs, min_nt, max_nt)
     # split data
     xs_us_fs = zip(data.x, data.u, data.f) |> collect
     xs_us_fs_train, xs_us_fs_test = partitionTrainTest(xs_us_fs, 0.8)  # 80:20
@@ -138,44 +141,60 @@ function test_all(approximator, data, epochs, min_nt, max_nt, _dir_save)
                   f=xs_us_fs_test |> Map(xuf -> xuf[3]) |> collect,
                 )
     @show typeof(approximator)
-    dir_save = nothing
-    if typeof(approximator) == FNN
-        dir_save = joinpath(_dir_save, "FNN")
-    elseif typeof(approximator) == MA
-        dir_save = joinpath(_dir_save, "MA")
-    elseif typeof(approximator) == LSE
-        dir_save = joinpath(_dir_save, "LSE")
-    elseif typeof(approximator) == PMA
-        dir_save = joinpath(_dir_save, "PMA")
-    elseif typeof(approximator) == PLSE
-        dir_save = joinpath(_dir_save, "PLSE")
-    elseif typeof(approximator) == PICNN
-        dir_save = joinpath(_dir_save, "PICNN")
-    else
-        error("Specify save directory")
-    end
-    mkpath(dir_save)
     # tests
     infer_test(approximator)
     @time training_test(approximator, data_train, data_test, epochs)
-    optimise_test(approximator, data_test, dir_save)
+    fig_minimiser_diff_norm, fig_optval_diff_abs = optimise_test(approximator, data_test)
     # figures
-    fig = nothing
+    fig_surface = nothing
     @unpack n, m = approximator
     if n == 1 && m == 1
-        fig = plot_surface(approximator, min_nt, max_nt)
+        fig_surface = plot_surface(approximator, min_nt, max_nt)
     else
         println("plotting surface is ignored for high-dimensional cases")
     end
-    fig
+    # postprocessing of figures
+    approx_type = nothing
+    if typeof(approximator) == FNN
+        approx_type = "FNN"
+    elseif typeof(approximator) == MA
+        approx_type = "MA"
+    elseif typeof(approximator) == LSE
+        approx_type = "LSE"
+    elseif typeof(approximator) == PMA
+        approx_type = "PMA"
+    elseif typeof(approximator) == PLSE
+        approx_type = "PLSE"
+    elseif typeof(approximator) == PICNN
+        approx_type = "PICNN"
+    else
+        error("Specify save directory")
+    end
+    title!(fig_surface, approx_type)
+    title!(fig_minimiser_diff_norm, approx_type)
+    title!(fig_optval_diff_abs, approx_type)
+    (;
+     surface=fig_surface,
+     minimiser_diff_norm=fig_minimiser_diff_norm,
+     optval_diff_abs=fig_optval_diff_abs,
+    )
 end
 
-function plot_surface(approximator, min_nt, max_nt)
+function plot_surface(approximator, min_nt, max_nt; kwargs...)
     l = 100
     _xs = range(min_nt.x[1], stop=max_nt.x[1], length=l)
     _us = range(min_nt.u[1], stop=max_nt.u[1], length=l)
     _f(x, u) = approximator([x], [u])[1]
-    fig = plot(_xs, _us, _f; st=:surface)
+    fig = plot(_xs, _us, _f;
+               st=:surface,
+               xlim=(min_nt.x[1], max_nt.x[1]),
+               ylim=(min_nt.u[1], max_nt.u[1]),
+               zlim=(-1.0, 1.0),
+               camera=(30, 45),
+               xlabel="x",
+               ylabel="u",
+               kwargs...
+              )
     fig
 end
 
@@ -189,7 +208,7 @@ end
     # ns = [1, 10, 100]
     # ms = [1, 10, 100]
     for (n, m) in zip(ns, ms)
-        epochs_list = [10]
+        epochs_list = [20]
         # epochs_list = [10, 50]
         for epochs in epochs_list
             Random.seed!(2021)
@@ -204,9 +223,9 @@ end
             println("n = $(n), m = $(m), epochs = $(epochs)")
             i_max = 20
             T = 1e-1
-            h_array = [64, 64]
+            h_array = [16, 16]
             z_array = h_array  # for PICNN
-            u_array = vcat(64, z_array...)  # for PICNN; length(u_array) != length(z_array) + 1
+            u_array = vcat(16, z_array...)  # for PICNN; length(u_array) != length(z_array) + 1
             act = Flux.leakyrelu
             α_is = 1:i_max |> Map(i -> Flux.glorot_uniform(n+m)) |> collect
             β_is = 1:i_max |> Map(i -> Flux.glorot_uniform(1)) |> collect
@@ -226,12 +245,46 @@ end
                              picnn=picnn,
                             )
             _dir_save = joinpath(__dir_save, "n=$(n)_m=$(m)_epochs=$(epochs)")
-            figs_surface = approximators |> Map(approximator -> test_all(approximator, data, epochs, min_nt, max_nt, __dir_save)) |> collect
+            mkpath(_dir_save)
+            figs = approximators |> Map(approximator -> test_all(approximator, data, epochs, min_nt, max_nt)) |> collect
+            # plotting
             if n == 1 && m == 1
-                fig_surface_true = plot_surface(target_function, min_nt, max_nt)
-                fig_surface = plot(fig_surface_true, figs_surface...)
-                savefig(fig_surface, joinpath(__dir_save, "surface.png"))
+                title_surface = plot(title="Trained approximators",
+                                     framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px,
+                                    )
+                fig_surface_true = plot_surface(target_function, min_nt, max_nt; xlabel="x", ylabel="u")
+                title!(fig_surface_true, "target function")
+                savefig(fig_surface_true, joinpath(_dir_save, "surface_true.png"))
+                fig_surface = plot(title_surface,
+                                   # fig_surface_true,
+                                   ((figs |> Map(fig -> fig.surface) |> collect)...);
+                                   layout=@layout[a{0.01h}; grid(3, 2)],
+                                   size=(800, 900),
+                                   # layout=@layout[a{0.01h}; [b grid(3, 2)]],
+                                   # size=(2500, 900),
+                                  )
+                savefig(fig_surface, joinpath(_dir_save, "surface.png"))
             end
+            title_minimiser_diff_norm = plot(title="2-norm of minimiser errors",
+                                             framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px,
+                                            )
+            fig_minimiser_diff_norm = plot(title_minimiser_diff_norm,
+                                           (figs |> Map(fig -> fig.minimiser_diff_norm) |> collect)...;
+                                           # layout=@layout[a{0.01h}; grid(1, length(approximators))],
+                                           layout=@layout[a{0.01h}; grid(3, 2)],
+                                           size=(800, 900),
+                                          )
+            savefig(fig_minimiser_diff_norm, joinpath(_dir_save, "minimiser_diff_norm.png"))
+            title_optval_diff_abs = plot(title="Absolute value of optval errors",
+                                         framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px,
+                                        )
+            fig_optval_diff_abs = plot(title_optval_diff_abs,
+                                       (figs |> Map(fig -> fig.optval_diff_abs) |> collect)...;
+                                       # layout=@layout[a{0.01h}; grid(1, length(approximators))],
+                                       layout=@layout[a{0.01h}; grid(3, 2)],
+                                       size=(800, 900),
+                                      )
+            savefig(fig_optval_diff_abs, joinpath(_dir_save, "optval_diff_abs.png"))
         end
     end
 end

@@ -95,9 +95,9 @@ which is opposite to previously presentation in lab seminar, FDCL, SNU by Jinrae
     - 일단 COSMO.jl 로 결정함
 - [x] PICNN 구현
     - [x] gradient projection 주의
-- [ ] visualisation
+- Visualisation
     - [x] minimiser diff norm and optval diff abs (histogram)
-    - [ ] surface (for n = 1, m = 1)
+    - [x] surface (for n = 1, m = 1)
 - [ ] Finite-horizon Q-learning 코드 작성
 - [ ] (future works) network converter from Julia to Python and vice versa;
 for differentiable convex programming
