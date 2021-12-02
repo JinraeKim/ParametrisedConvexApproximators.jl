@@ -92,7 +92,7 @@ function optimise_test(approximator, data, min_nt, max_nt)
               # of minimiser failure cases (nothing): ($(length(minimiser_failure_cases)) / $(d)),
               # of optval failure cases (-Inf or Inf): ($(length(optval_failure_cases)) / $(d))",
              )
-        return nothing, nothing, missing, missing, nothing
+        return nothing, nothing, nothing, missing, missing
     else
         minimisers_diff_norm = 1:d |> Map(i -> norm(minimisers_estimated[i] - minimisers_true[i])) |> collect
         optvals_diff = 1:d |> Map(i -> abs(optvals_estimated[i][1] - optvals_true[i][1])) |> collect
