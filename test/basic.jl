@@ -246,16 +246,16 @@ end
             fnn = FNN(n, m, h_array, act)
             ma = MA(α_is, β_is; n=n, m=m)
             lse = LSE(α_is, β_is, T; n=n, m=m)
+            picnn = PICNN(n, m, u_array, z_array, act, act)
             pma = PMA(n, m, i_max, h_array, act)
             plse = PLSE(n, m, i_max, T, h_array, act)
-            picnn = PICNN(n, m, u_array, z_array, act, act)
             approximators = (;
                              fnn=fnn,
                              ma=ma,
                              lse=lse,
+                             picnn=picnn,
                              pma=pma,
                              plse=plse,
-                             picnn=picnn,
                             )
             _dir_save = joinpath(__dir_save, "n=$(n)_m=$(m)_epochs=$(epochs)")
             mkpath(_dir_save)
