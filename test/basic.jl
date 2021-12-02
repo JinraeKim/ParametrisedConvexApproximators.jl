@@ -16,7 +16,9 @@ __dir_save = "test/basic"
 
 
 function target_function(x, u)
-    [-0.5*x'*x + 0.5*u'*u]
+    n_x = length(x)
+    n_u = length(u)
+    [0.5 * ( -(1/sqrt(n_x))*x'*x + (1/sqrt(n_u))*u'*u )]
 end
 
 function sample(min, max)
@@ -60,7 +62,7 @@ function optimise_test(approximator, data, min_nt, max_nt)
     @unpack n, m = approximator
     d = data.x |> length
     BenchmarkTools.DEFAULT_PARAMETERS.samples = d  # number of samples
-    BenchmarkTools.DEFAULT_PARAMETERS.seconds = 5  # maximum times
+    BenchmarkTools.DEFAULT_PARAMETERS.seconds = 30  # maximum times
     println("optimise test; with $(d) test data")
     if typeof(approximator) <: ParametrisedConvexApproximator
         x = rand(n)
@@ -69,13 +71,13 @@ function optimise_test(approximator, data, min_nt, max_nt)
     end
     _xs = hcat(data.x...)
     println("Optimise a single point (evaluating via BenchmarkTools)")
-    bchmkr = @benchmark optimise($approximator, sample($(min_nt.u), $(max_nt.u)))
+    bchmkr = @benchmark optimise($approximator, sample($(min_nt.u), $(max_nt.u)); u_min=$(min_nt.u), u_max=$(max_nt.u))
     # TODO: change to BenchmarkTools...?
     # println("Optimise a single point (analysing the result using BenchmarkTools...)")
     # @btime res = optimise($approximator, rand($n))
-    println("Optimise $(d) points (using parallel computing)")
+    println("Optimise $(d) points (using multi-threading)")
     # @time res = optimise(approximator, _xs)
-    res = optimise(approximator, _xs)  # with box constraints
+    @time res = optimise(approximator, _xs; u_min=min_nt.u, u_max=max_nt.u)  # with box constraints
     @test res.minimiser |> size == (m, d)  # optimise; minimiser
     @test res.optval |> size == (1, d)  # optimise; optval
     # compare true and estimated minimisers and optvals
@@ -90,7 +92,7 @@ function optimise_test(approximator, data, min_nt, max_nt)
               # of minimiser failure cases (nothing): ($(length(minimiser_failure_cases)) / $(d)),
               # of optval failure cases (-Inf or Inf): ($(length(optval_failure_cases)) / $(d))",
              )
-        return nothing
+        return repeat([nothing], 5)
     else
         minimisers_diff_norm = 1:d |> Map(i -> norm(minimisers_estimated[i] - minimisers_true[i])) |> collect
         optvals_diff = 1:d |> Map(i -> abs(optvals_estimated[i][1] - optvals_true[i][1])) |> collect
@@ -119,7 +121,7 @@ function training_test(approximator, data_train, data_test, epochs)
     dataloader = DataLoader(_data_train; batchsize=16, shuffle=true, partial=false)
     println("Training $(epochs) epoch...")
     for epoch in 0:epochs
-        println("epoch: $(epoch) / $(epochs)")
+        # println("epoch: $(epoch) / $(epochs)")
         if epoch != 0
             for d in dataloader
                 train_loss, back = Flux.Zygote.pullback(() -> loss(d), ps)
@@ -138,7 +140,7 @@ function training_test(approximator, data_train, data_test, epochs)
                 end
             end
         end
-        @show loss(_data_test)
+        # @show loss(_data_test)
     end
 end
 
@@ -164,14 +166,21 @@ function test_all(approximator, data, epochs, min_nt, max_nt)
     # figures
     fig_surface = nothing
     @unpack n, m = approximator
+    approx_type = approximator_type(approximator)
     if n == 1 && m == 1
         fig_surface = plot_surface(approximator, min_nt, max_nt)
+        title!(fig_surface, approx_type)
     else
         println("plotting surface is ignored for high-dimensional cases")
+        fig_surface = plot()
     end
     # postprocessing of figures
-    approx_type = approximator_type(approximator)
-    title!(fig_surface, approx_type)
+    if fig_minimiser_diff_norm == nothing
+        fig_minimiser_diff_norm = plot()
+    end
+    if fig_optval_diff_abs == nothing
+        fig_optval_diff_abs = plot()
+    end
     title!(fig_minimiser_diff_norm, approx_type)
     title!(fig_optval_diff_abs, approx_type)
     (;
@@ -207,13 +216,13 @@ end
     df = DataFrame()
     # tests
     println("TODO: change ns and ms, epochs_list, etc.")
+    # ns = [100]
+    # ms = [100]
     ns = [1, 10, 100]
     ms = [1, 10, 100]
-    # ns = [1]
-    # ms = [1]
     for (n, m) in zip(ns, ms)
         # epochs_list = [20]
-        epochs_list = [20, 50, 100]
+        epochs_list = [100]
         for epochs in epochs_list
             Random.seed!(2021)
             # training data
@@ -227,9 +236,9 @@ end
             println("n = $(n), m = $(m), epochs = $(epochs)")
             i_max = 20
             T = 1e-1
-            h_array = [16, 16]
+            h_array = [128, 128]
             z_array = h_array  # for PICNN
-            u_array = vcat(16, z_array...)  # for PICNN; length(u_array) != length(z_array) + 1
+            u_array = vcat(128, z_array...)  # for PICNN; length(u_array) != length(z_array) + 1
             act = Flux.leakyrelu
             α_is = 1:i_max |> Map(i -> Flux.glorot_uniform(n+m)) |> collect
             β_is = 1:i_max |> Map(i -> Flux.glorot_uniform(1)) |> collect
@@ -252,7 +261,7 @@ end
             mkpath(_dir_save)
             results = approximators |> Map(approximator -> test_all(approximator, data, epochs, min_nt, max_nt)) |> collect
             for (approximator, result) in zip(approximators, results)
-                push!(df, (
+                @run push!(df, (;
                            n=n, m=m, epochs=epochs,
                            approximator=approximator_type(approximator),
                            optimise_time_mean=mean(result.benchmark).time*1e-9,  # unit: 1 ns
