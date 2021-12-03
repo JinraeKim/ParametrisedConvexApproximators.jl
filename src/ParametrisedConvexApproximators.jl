@@ -14,7 +14,7 @@ export AbstractApproximator, FNN
 export ConvexApproximator, MA, LSE
 export ParametrisedConvexApproximator, PMA, PLSE
 export PICNN, project_nonnegative!
-export optimise
+export optimise, number_of_parameters
 # data manipulation
 export partitionTrainTest
 

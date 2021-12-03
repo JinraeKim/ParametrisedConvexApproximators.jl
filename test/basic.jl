@@ -6,10 +6,12 @@ const PCA = ParametrisedConvexApproximators
 using UnPack
 using Transducers
 using Convex
-using BenchmarkTools
+# using BenchmarkTools
 using Random
 using Plots
+ENV["GKSwstype"]="nul"  # deactivate X server needs
 using DataFrames
+using Statistics
 
 
 __dir_save = "test/basic"
@@ -18,7 +20,7 @@ __dir_save = "test/basic"
 function target_function(x, u)
     n_x = length(x)
     n_u = length(u)
-    [0.5 * ( -(1/sqrt(n_x))*x'*x + (1/sqrt(n_u))*u'*u )]
+    [0.5 * ( -(1/n_x)*x'*x + (1/n_u)*u'*u )]
 end
 
 function sample(min, max)
@@ -61,8 +63,8 @@ end
 function optimise_test(approximator, data, min_nt, max_nt)
     @unpack n, m = approximator
     d = data.x |> length
-    BenchmarkTools.DEFAULT_PARAMETERS.samples = d  # number of samples
-    BenchmarkTools.DEFAULT_PARAMETERS.seconds = 30  # maximum times
+    # BenchmarkTools.DEFAULT_PARAMETERS.samples = d  # number of samples
+    # BenchmarkTools.DEFAULT_PARAMETERS.seconds = 30  # maximum times
     println("optimise test; with $(d) test data")
     if typeof(approximator) <: ParametrisedConvexApproximator
         x = rand(n)
@@ -70,14 +72,18 @@ function optimise_test(approximator, data, min_nt, max_nt)
         @test approximator(x, u) |> size == (1,)  # inference with Convex.jl
     end
     _xs = hcat(data.x...)
-    println("Optimise a single point (evaluating via BenchmarkTools)")
-    bchmkr = @benchmark optimise($approximator, sample($(min_nt.u), $(max_nt.u)); u_min=$(min_nt.u), u_max=$(max_nt.u))
-    # TODO: change to BenchmarkTools...?
+    # println("Optimise a single point (evaluating via BenchmarkTools)")
+    # bchmkr = @benchmark optimise($approximator, sample($(min_nt.u), $(max_nt.u)); u_min=$(min_nt.u), u_max=$(max_nt.u))
     # println("Optimise a single point (analysing the result using BenchmarkTools...)")
     # @btime res = optimise($approximator, rand($n))
-    println("Optimise $(d) points (using multi-threading)")
+    println("Optimise $(d) points")
     # @time res = optimise(approximator, _xs)
-    @time res = optimise(approximator, _xs; u_min=min_nt.u, u_max=max_nt.u)  # with box constraints
+    @time res_timed = @timed optimise(approximator, _xs;
+                                      u_min=min_nt.u, u_max=max_nt.u,
+                                      multithreading=false,
+                                     )  # with box constraints
+    res = res_timed.value
+    bchmkr = res_timed.time / d  # average time
     @test res.minimiser |> size == (m, d)  # optimise; minimiser
     @test res.optval |> size == (1, d)  # optimise; optval
     # compare true and estimated minimisers and optvals
@@ -147,7 +153,7 @@ end
 function test_all(approximator, data, epochs, min_nt, max_nt)
     # split data
     xs_us_fs = zip(data.x, data.u, data.f) |> collect
-    xs_us_fs_train, xs_us_fs_test = partitionTrainTest(xs_us_fs, 0.8)  # 80:20
+    xs_us_fs_train, xs_us_fs_test = partitionTrainTest(xs_us_fs, 0.9)  # 90:10
     data_train = (;
                   x=xs_us_fs_train |> Map(xuf -> xuf[1]) |> collect,
                   u=xs_us_fs_train |> Map(xuf -> xuf[2]) |> collect,
@@ -159,9 +165,10 @@ function test_all(approximator, data, epochs, min_nt, max_nt)
                   f=xs_us_fs_test |> Map(xuf -> xuf[3]) |> collect,
                 )
     @show typeof(approximator)
+    @show number_of_parameters(approximator)
     # tests
     infer_test(approximator)
-    training_test(approximator, data_train, data_test, epochs)
+    @time training_test(approximator, data_train, data_test, epochs)
     fig_minimiser_diff_norm, fig_optval_diff_abs, bchmkr, minimisers_diff_norm, optvals_diff_abs = optimise_test(approximator, data_test, min_nt, max_nt)
     # figures
     fig_surface = nothing
@@ -213,16 +220,11 @@ end
 
 @testset "basic" begin
     @warn("Note: if you change the target function, you may have to change the true minimisers manually (in the function `optimise_test`).")
-    df = DataFrame(
-                   optimise_time_mean=Union{Missing, Float64}[],
-                   no_of_optimise_points=Union{Missing, Int64}[],
-                   minimisers_diff_norm_mean=Union{Missing, Float64}[],
-                   optvals_diff_abs_mean=Union{Missing, Float64}[],
-                  )  # allow missing
+    df = DataFrame()
     # tests
     println("TODO: change ns and ms, epochs_list, etc.")
-    # ns = [100]
-    # ms = [100]
+    # ns = [1]
+    # ms = [1]
     ns = [1, 10, 100]
     ms = [1, 10, 100]
     for (n, m) in zip(ns, ms)
@@ -231,7 +233,8 @@ end
         for epochs in epochs_list
             Random.seed!(2021)
             # training data
-            d = 1_000
+            d = 1_000  # TODO
+            println("No. of data points: $(d)")
             min_nt = (; x = -1*ones(n), u = -1*ones(m))
             max_nt = (; x = 1*ones(n), u = 1*ones(m))
             xs = 1:d |> Map(i -> sample(min_nt.x, max_nt.x)) |> collect
@@ -241,14 +244,30 @@ end
             println("n = $(n), m = $(m), epochs = $(epochs)")
             i_max = 20
             T = 1e-1
-            h_array = [128, 128]
-            z_array = h_array  # for PICNN
-            u_array = vcat(128, z_array...)  # for PICNN; length(u_array) != length(z_array) + 1
+            h_array = [32, 32]  # fix it
+            z_array = [32, 32]  # for PICNN
+            h_array_fnn = nothing
+            multiplication_factor = nothing
+            u_array_0 = nothing
+            if n == 1 && m == 1
+                h_array_fnn = [48, 48]
+                multiplication_factor = 36
+                u_array_0 = 1
+            elseif n == 10 && m == 10
+                h_array_fnn = [72, 72]
+                multiplication_factor = 18
+                u_array_0 = 32
+            elseif n == 100 && m == 100
+                h_array_fnn = [192, 192]
+                multiplication_factor = 18
+                u_array_0 = 128
+            end
+            u_array = vcat(u_array_0, z_array...)  # for PICNN; length(u_array) != length(z_array) + 1
             act = Flux.leakyrelu
-            α_is = 1:i_max |> Map(i -> Flux.glorot_uniform(n+m)) |> collect
-            β_is = 1:i_max |> Map(i -> Flux.glorot_uniform(1)) |> collect
+            α_is = 1:i_max*multiplication_factor |> Map(i -> Flux.glorot_uniform(n+m)) |> collect
+            β_is = 1:i_max*multiplication_factor |> Map(i -> Flux.glorot_uniform(1)) |> collect
             # generate approximators
-            fnn = FNN(n, m, h_array, act)
+            fnn = FNN(n, m, h_array_fnn, act)
             ma = MA(α_is, β_is; n=n, m=m)
             lse = LSE(α_is, β_is, T; n=n, m=m)
             picnn = PICNN(n, m, u_array, z_array, act, act)
@@ -267,27 +286,27 @@ end
             results = approximators |> Map(approximator -> test_all(approximator, data, epochs, min_nt, max_nt)) |> collect
             for (approximator, result) in zip(approximators, results)
                 optimise_time_mean = missing
-                no_of_optimise_points = missing
                 minimisers_diff_norm_mean = missing
                 optvals_diff_abs_mean = missing
                 optimisation_failure = true
                 if result.benchmark != nothing
-                    optimise_time_mean = mean(result.benchmark).time*1e-9  # unit: 1 ns
-                    no_of_optimise_points = length(result.benchmark)
+                    optimise_time_mean = mean(result.benchmark)*1e-9  # unit: 1 ns
                     minimisers_diff_norm_mean = mean(result.minimisers_diff_norm)
                     optvals_diff_abs_mean = mean(result.optvals_diff_abs)
                     optimisation_failure = false
                 end
+                no_params = number_of_parameters(approximator)
                 push!(df, (;
                            n=n, m=m, epochs=epochs,
                            approximator=approximator_type(approximator),
                            optimise_time_mean=optimise_time_mean,
-                           no_of_optimise_points=no_of_optimise_points,
                            minimisers_diff_norm_mean=minimisers_diff_norm_mean,
                            optvals_diff_abs_mean=optvals_diff_abs_mean,
                            optimisation_failure=optimisation_failure,
-                          ),
+                           number_of_parameters=no_params,
+                          );
                       cols=:union,
+                      promote=true,
                      )
             end
             # plotting

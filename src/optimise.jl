@@ -17,6 +17,8 @@ function _optimise(approximator::ParametrisedConvexApproximator, x::AbstractVect
     )
     @unpack m = approximator
     u = Convex.Variable(m)
+    @assert length(u) == length(u_min)
+    @assert length(u) == length(u_max)
     problem = minimize(approximator(x, u)[1])
     if u_min != nothing
         problem.constraints += [u >= u_min]
@@ -25,7 +27,7 @@ function _optimise(approximator::ParametrisedConvexApproximator, x::AbstractVect
         problem.constraints += [u <= u_max]
     end
     solve!(problem, solver.Optimizer(); verbose=false, silent_solver=true)
-    minimiser = u.value[:]  # to make it a vector
+    minimiser = typeof(u.value) <: Number ? [u.value] : u.value[:]  # to make it a vector
     optval = [problem.optval]  # to make it a vector
     minimiser, optval
 end
@@ -86,8 +88,9 @@ data point `x::AbstractMatrix` using multi-thread computing (powered by Transduc
 """
 function optimise(approximator::AbstractApproximator, x::AbstractMatrix;
         u_min=nothing, u_max=nothing,
-        collector=Transducers.tcollect,
+        multithreading=true,
     )
+    collector = multithreading ? Transducers.tcollect : collect
     d = size(x)[2]
     ress = 1:d |> Map(i -> optimise(approximator, x[:, i]; u_min=u_min, u_max=u_max)) |> collector
     minimiser_matrix = hcat((ress |> Map(res -> res.minimiser) |> collector)...)

@@ -31,6 +31,10 @@ function construct_layer_array(node_array, act; act_terminal=Flux.identity)
     construct_layer_array(node_array, act_vec)
 end
 
+function number_of_parameters(approximator::AbstractApproximator)
+    Flux.params(approximator) |> Map(length) |> sum
+end
+
 
 include("FNN.jl")
 include("parametrised_convex_approximators/parametrised_convex_approximators.jl")
