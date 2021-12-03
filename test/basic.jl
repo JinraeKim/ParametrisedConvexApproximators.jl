@@ -225,15 +225,15 @@ end
     println("TODO: change ns and ms, epochs_list, etc.")
     # ns = [1]
     # ms = [1]
-    ns = [1, 10, 100]
-    ms = [1, 10, 100]
+    ns = [1, 5, 20]
+    ms = [1, 5, 20]
     for (n, m) in zip(ns, ms)
         # epochs_list = [20]
         epochs_list = [100]
         for epochs in epochs_list
             Random.seed!(2021)
             # training data
-            d = 1_000  # TODO
+            d = 1_000
             println("No. of data points: $(d)")
             min_nt = (; x = -1*ones(n), u = -1*ones(m))
             max_nt = (; x = 1*ones(n), u = 1*ones(m))
@@ -241,7 +241,7 @@ end
             us = 1:d |> Map(i -> sample(min_nt.u, max_nt.u)) |> collect
             fs = zip(xs, us) |> MapSplat((x, u) -> target_function(x, u)) |> collect
             data = (; x=xs, u=us, f=fs)
-            println("n = $(n), m = $(m), epochs = $(epochs)")
+            println("#"^10 * "n = $(n), m = $(m), epochs = $(epochs)" * "#"^10)
             i_max = 20
             T = 1e-1
             h_array = [32, 32]  # fix it
@@ -253,14 +253,14 @@ end
                 h_array_fnn = [48, 48]
                 multiplication_factor = 36
                 u_array_0 = 1
-            elseif n == 10 && m == 10
-                h_array_fnn = [72, 72]
+            elseif n == 5 && m == 5
+                h_array_fnn = [64, 64]
+                multiplication_factor = 24
+                u_array_0 = 16
+            elseif n == 20 && m == 20
+                h_array_fnn = [96, 96]
                 multiplication_factor = 18
-                u_array_0 = 32
-            elseif n == 100 && m == 100
-                h_array_fnn = [192, 192]
-                multiplication_factor = 18
-                u_array_0 = 128
+                u_array_0 = 64
             end
             u_array = vcat(u_array_0, z_array...)  # for PICNN; length(u_array) != length(z_array) + 1
             act = Flux.leakyrelu
@@ -290,7 +290,7 @@ end
                 optvals_diff_abs_mean = missing
                 optimisation_failure = true
                 if result.benchmark != nothing
-                    optimise_time_mean = mean(result.benchmark)*1e-9  # unit: 1 ns
+                    optimise_time_mean = mean(result.benchmark)
                     minimisers_diff_norm_mean = mean(result.minimisers_diff_norm)
                     optvals_diff_abs_mean = mean(result.optvals_diff_abs)
                     optimisation_failure = false
@@ -321,7 +321,7 @@ end
                 fig_surface = plot(title_surface,
                                    fig_surface_true,
                                    ((results |> Map(result -> result.fig_surface) |> collect)...),
-                                   plot();  # dummy
+                                   plot(; framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px);  # dummy
                                    layout=@layout[a{0.01h}; grid(4, 2)],
                                    size=(800, 1200),
                                   )
