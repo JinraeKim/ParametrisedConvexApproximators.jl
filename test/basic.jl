@@ -8,7 +8,7 @@ using Transducers
 using Convex
 # using BenchmarkTools
 using Random
-using Plots
+using Plots, StatsPlots
 ENV["GKSwstype"]="nul"  # deactivate X server needs
 using DataFrames
 using Statistics
@@ -223,10 +223,10 @@ end
     df = DataFrame()
     # tests
     println("TODO: change ns and ms, epochs_list, etc.")
-    # ns = [1]
-    # ms = [1]
-    ns = [1, 5, 20]
-    ms = [1, 5, 20]
+    ns = [100]
+    ms = [100]
+    # ns = [1, 5, 20]
+    # ms = [1, 5, 20]
     for (n, m) in zip(ns, ms)
         # epochs_list = [20]
         epochs_list = [100]
@@ -244,24 +244,27 @@ end
             println("#"^10 * "n = $(n), m = $(m), epochs = $(epochs)" * "#"^10)
             i_max = 20
             T = 1e-1
-            h_array = [32, 32]  # fix it
-            z_array = [32, 32]  # for PICNN
-            h_array_fnn = nothing
-            multiplication_factor = nothing
-            u_array_0 = nothing
-            if n == 1 && m == 1
-                h_array_fnn = [48, 48]
-                multiplication_factor = 36
-                u_array_0 = 1
-            elseif n == 5 && m == 5
-                h_array_fnn = [64, 64]
-                multiplication_factor = 24
-                u_array_0 = 16
-            elseif n == 20 && m == 20
-                h_array_fnn = [96, 96]
-                multiplication_factor = 18
-                u_array_0 = 64
-            end
+            h_array = [64, 64]  # fix it
+            z_array = [64, 64]  # for PICNN
+            h_array_fnn = [64, 64]
+            multiplication_factor = 1
+            u_array_0 = 64
+            # h_array_fnn = nothing
+            # multiplication_factor = nothing
+            # u_array_0 = nothing
+            # if n == 1 && m == 1
+            #     h_array_fnn = [48, 48]
+            #     multiplication_factor = 36
+            #     u_array_0 = 1
+            # elseif n == 5 && m == 5
+            #     h_array_fnn = [64, 64]
+            #     multiplication_factor = 24
+            #     u_array_0 = 16
+            # elseif n == 20 && m == 20
+            #     h_array_fnn = [96, 96]
+            #     multiplication_factor = 18
+            #     u_array_0 = 64
+            # end
             u_array = vcat(u_array_0, z_array...)  # for PICNN; length(u_array) != length(z_array) + 1
             act = Flux.leakyrelu
             α_is = 1:i_max*multiplication_factor |> Map(i -> Flux.glorot_uniform(n+m)) |> collect
@@ -309,6 +312,14 @@ end
                       promote=true,
                      )
             end
+            # box plot
+            _minimisers_diff_norm = hcat((results |> Map(result -> result.minimisers_diff_norm) |> collect)...)
+            _optvals_diff_abs = hcat((results |> Map(result -> result.optvals_diff_abs) |> collect)...)
+            approx_types = approximators |> Map(approximator_type) |> collect
+            box_minimiser_diff_norm = boxplot(reshape(approx_types, 1, :), _minimisers_diff_norm; label=nothing)
+            savefig(box_minimiser_diff_norm, joinpath(_dir_save, "boxplot_minimiser_diff_norm.png"))
+            box_optval_diff_abs = boxplot(reshape(approx_types, 1, :), _optvals_diff_abs; label=nothing)
+            savefig(box_optval_diff_abs, joinpath(_dir_save, "boxplot_optval_diff_abs.png"))
             # plotting
             if n == 1 && m == 1
                 title_surface = plot(title="Trained approximators",

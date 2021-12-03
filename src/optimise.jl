@@ -5,15 +5,16 @@
 
 Find a minimiser and optimal value (optval) of `approximator::ParametrisedConvexApproximator` for given
 data point `x::AbstractVector`.
-Default solver is SCS [1] or COSMO [3] with Convex.jl [2].
-Available solvers include Mosek.
+Solve with Convex.jl [1].
+Available solvers include SCS [2], COSMO [3], Mosek [4], etc.
 # Refs.
-[1] https://github.com/jump-dev/SCS.jl
-[2] https://github.com/jump-dev/Convex.jl
+[1] https://github.com/jump-dev/Convex.jl
+[2] https://github.com/jump-dev/SCS.jl
 [3] https://github.com/oxfordcontrol/COSMO.jl
+[4] https://github.com/MOSEK/Mosek.jl
 """
 function _optimise(approximator::ParametrisedConvexApproximator, x::AbstractVector, u_min, u_max;
-        solver=SCS,
+        solver=Mosek,
     )
     @unpack m = approximator
     u = Convex.Variable(m)

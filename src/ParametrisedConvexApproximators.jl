@@ -3,7 +3,7 @@ module ParametrisedConvexApproximators
 using Flux
 using UnPack
 using Convex
-using SCS  # currently not compatible with apple silicon
+using Mosek, MosekTools  # currently not compatible with apple silicon
 using Optim
 using Transducers
 using Random
