@@ -14,7 +14,7 @@ Available solvers include SCS [2], COSMO [3], Mosek [4], etc.
 [4] https://github.com/MOSEK/Mosek.jl
 """
 function _optimise(approximator::ParametrisedConvexApproximator, x::AbstractVector, u_min, u_max;
-        solver=Mosek,
+        solver=SCS,
     )
     @unpack m = approximator
     u = Convex.Variable(m)

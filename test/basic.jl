@@ -91,23 +91,54 @@ function optimise_test(approximator, data, min_nt, max_nt)
     optvals_true = 1:d |> Map(i -> target_function(data.x[i], minimisers_true[i])) |> collect
     minimisers_estimated = 1:d |> Map(i -> res.minimiser[:, i]) |> collect
     optvals_estimated = 1:d |> Map(i -> res.optval[:, i]) |> collect
-    minimiser_failure_cases = findall(x -> x == repeat([nothing], m), minimisers_estimated)
-    optval_failure_cases = findall(x -> x == [Inf] || x == [-Inf], optvals_estimated)
-    if length(minimiser_failure_cases) > 0 || length(optval_failure_cases) > 0
-        @warn("(optimisaiton failure) there is at least one failure case to solve the optimisation;
-              # of minimiser failure cases (nothing): ($(length(minimiser_failure_cases)) / $(d)),
-              # of optval failure cases (-Inf or Inf): ($(length(optval_failure_cases)) / $(d))",
-             )
-        return nothing, nothing, nothing, missing, missing
-    else
-        minimisers_diff_norm = 1:d |> Map(i -> norm(minimisers_estimated[i] - minimisers_true[i])) |> collect
-        optvals_diff = 1:d |> Map(i -> abs(optvals_estimated[i][1] - optvals_true[i][1])) |> collect
-        # println("norm(estimated minimiser - true minimiser)'s mean: $(mean(minimisers_diff_norm))")
-        # println("norm(estimated optval - true optval)'s mean: $(mean(optvals_diff))")
-        fig_minimiser_diff_norm = histogram(minimisers_diff_norm; label=nothing)
-        fig_optval_diff = histogram(optvals_diff; label=nothing)
-        return fig_minimiser_diff_norm, fig_optval_diff, bchmkr, minimisers_diff_norm, optvals_diff
-    end
+    # TODO: remove the below line; only for test!!!
+    @show minimisers_estimated[1]
+    minimisers_estimated = [[nothing], minimisers_estimated[2:end]...]
+    # TODO: remove the above line; only for test!!!
+    minimisers_diff_norm = skipmissing(1:d |> Map(i -> minimisers_estimated[i] == [nothing] ? missing : norm(minimisers_estimated[i] - minimisers_true[i])) |> collect)  # make each element 'Number'
+    optvals_diff_abs = skipmissing(1:d |> Map(i -> optvals_estimated[i] == [-Inf] || optvals_estimated[i] == [Inf] ? missing : abs((optvals_estimated[i] - optvals_true[i])[1])) |> collect)  # make each element 'Number'
+    println("norm(estimated minimiser - true minimiser)'s mean (only for success cases): $(mean(minimisers_diff_norm))")
+    println("norm(estimated optval - true optval)'s mean (only for success cases): $(mean(optvals_diff_abs))")
+    _result = (;
+               benchmark = bchmkr,
+               minimisers_diff_norm=minimisers_diff_norm,
+               optvals_diff_abs=optvals_diff_abs,
+              )
+    return _result
+    ##
+    #minimiser_success_indices = findall(x -> x != repeat([nothing], m), minimisers_estimated)
+    #optval_success_indices = findall(x -> x != [Inf] && x != [-Inf], optvals_estimated)
+    #minimisers_diff_norm_only_for_success = minimiser_success_indices |> Map(i -> norm(minimisers_estimated[i] - minimisers_true[i])) |> collect
+    #optvals_diff_abs_only_for_success = optval_success_indices |> Map(i -> norm(optvals_estimated[i] - optvals_true[i])) |> collect
+    #println("norm(estimated minimiser - true minimiser)'s mean (only for success cases): $(mean(minimisers_diff_norm_only_for_success))")
+    #println("norm(estimated optval - true optval)'s mean (only for success cases): $(mean(optvals_diff_abs_only_for_success))")
+    #no_of_minimiser_failure_cases = d - length(minimisers_diff_norm_only_for_success)
+    #no_of_optval_failure_cases = d - length(optvals_diff_abs_only_for_success)
+    #_result = (;
+    #           benchmark = bchmkr,
+    #           minimisers_diff_norm=minimisers_diff_norm_only_for_success,
+    #           optvals_diff_abs=optvals_diff_abs_only_for_success,
+    #           no_of_minimiser_failure_cases=no_of_minimiser_failure_cases,
+    #           no_of_optval_failure_cases=no_of_optval_failure_cases,
+    #          )
+    #return _result
+    # minimiser_failure_indices = findall(x -> x == repeat([nothing], m), minimisers_estimated)
+    # optval_failure_indices = findall(x -> x == [Inf] || x == [-Inf], optvals_estimated)
+    # if length(minimiser_failure_indices) > 0 || length(optval_failure_indices) > 0
+    #     @warn("(optimisaiton failure) there is at least one failure case to solve the optimisation;
+    #           # of minimiser failure cases (nothing): ($(length(minimiser_failure_indices)) / $(d)),
+    #           # of optval failure cases (-Inf or Inf): ($(length(optval_failure_indices)) / $(d))",
+    #          )
+    #     return nothing, nothing, nothing, missing, missing
+    # else
+    #     minimisers_diff_norm = 1:d |> Map(i -> norm(minimisers_estimated[i] - minimisers_true[i])) |> collect
+    #     optvals_diff = 1:d |> Map(i -> abs(optvals_estimated[i][1] - optvals_true[i][1])) |> collect
+    #     # println("norm(estimated minimiser - true minimiser)'s mean: $(mean(minimisers_diff_norm))")
+    #     # println("norm(estimated optval - true optval)'s mean: $(mean(optvals_diff))")
+    #     fig_minimiser_diff_norm = histogram(minimisers_diff_norm; label=nothing)
+    #     fig_optval_diff = histogram(optvals_diff; label=nothing)
+    #     return fig_minimiser_diff_norm, fig_optval_diff, bchmkr, minimisers_diff_norm, optvals_diff
+    # end
 end
 
 function training_test(approximator, data_train, data_test, epochs)
@@ -169,7 +200,7 @@ function test_all(approximator, data, epochs, min_nt, max_nt)
     # tests
     infer_test(approximator)
     @time training_test(approximator, data_train, data_test, epochs)
-    fig_minimiser_diff_norm, fig_optval_diff_abs, bchmkr, minimisers_diff_norm, optvals_diff_abs = optimise_test(approximator, data_test, min_nt, max_nt)
+    _result = optimise_test(approximator, data_test, min_nt, max_nt)
     # figures
     fig_surface = nothing
     @unpack n, m = approximator
@@ -181,23 +212,16 @@ function test_all(approximator, data, epochs, min_nt, max_nt)
         println("plotting surface is ignored for high-dimensional cases")
         fig_surface = plot()
     end
-    # postprocessing of figures
-    if fig_minimiser_diff_norm == nothing
-        fig_minimiser_diff_norm = plot()
-    end
-    if fig_optval_diff_abs == nothing
-        fig_optval_diff_abs = plot()
-    end
-    title!(fig_minimiser_diff_norm, approx_type)
-    title!(fig_optval_diff_abs, approx_type)
-    (;
-     fig_surface=fig_surface,
-     fig_minimiser_diff_norm=fig_minimiser_diff_norm,
-     fig_optval_diff_abs=fig_optval_diff_abs,
-     minimisers_diff_norm=minimisers_diff_norm,
-     optvals_diff_abs=optvals_diff_abs,
-     benchmark=bchmkr,
-    )
+    # # postprocessing of figures
+    # if fig_minimiser_diff_norm == nothing
+    #     fig_minimiser_diff_norm = plot()
+    # end
+    # if fig_optval_diff_abs == nothing
+    #     fig_optval_diff_abs = plot()
+    # end
+    # title!(fig_minimiser_diff_norm, approx_type)
+    # title!(fig_optval_diff_abs, approx_type)
+    result = (; _result..., fig_surface=fig_surface)
 end
 
 function plot_surface(approximator, min_nt, max_nt; kwargs...)
@@ -218,15 +242,22 @@ function plot_surface(approximator, min_nt, max_nt; kwargs...)
     fig
 end
 
+"""
+# References
+[1] T. Bian and Z.-P. Jiang, “Value Iteration, Adaptive Dynamic Programming, and Optimal Control of Nonlinear Systems,” in 2016 IEEE 55th Conference on Decision and Control (CDC), Las Vegas, NV, USA, Dec. 2016, pp. 3375–3380. doi: 10.1109/CDC.2016.7798777.
+[2] B. L. Stevens, F. L. Lewis, and E. N. Johnson, Aircraft Control and Simulation: Dynamics, Controls Design, and Autonomous Systems, Third edition. Hoboken, N.J: John Wiley & Sons, 2016.
+[3] gym, "Humanoid-v2", https://gym.openai.com/envs/Humanoid-v2/
+# dimensions
+# n/m = 2/1: toy nonlinear systems, e.g., [1], 13/4: [2, p.185, Table 3.5-2, F-16 Model Test Case], 376/17: [3]
+"""
+
 @testset "basic" begin
     @warn("Note: if you change the target function, you may have to change the true minimisers manually (in the function `optimise_test`).")
     df = DataFrame()
     # tests
     println("TODO: change ns and ms, epochs_list, etc.")
-    ns = [100]
-    ms = [100]
-    # ns = [1, 5, 20]
-    # ms = [1, 5, 20]
+    ns = [2]
+    ms = [1]
     for (n, m) in zip(ns, ms)
         # epochs_list = [20]
         epochs_list = [100]
@@ -241,30 +272,14 @@ end
             us = 1:d |> Map(i -> sample(min_nt.u, max_nt.u)) |> collect
             fs = zip(xs, us) |> MapSplat((x, u) -> target_function(x, u)) |> collect
             data = (; x=xs, u=us, f=fs)
-            println("#"^10 * "n = $(n), m = $(m), epochs = $(epochs)" * "#"^10)
-            i_max = 20
+            println("#"^10 * " " * "n = $(n), m = $(m), epochs = $(epochs)" * " " * "#"^10)
+            i_max = 30
             T = 1e-1
             h_array = [64, 64]  # fix it
             z_array = [64, 64]  # for PICNN
             h_array_fnn = [64, 64]
             multiplication_factor = 1
             u_array_0 = 64
-            # h_array_fnn = nothing
-            # multiplication_factor = nothing
-            # u_array_0 = nothing
-            # if n == 1 && m == 1
-            #     h_array_fnn = [48, 48]
-            #     multiplication_factor = 36
-            #     u_array_0 = 1
-            # elseif n == 5 && m == 5
-            #     h_array_fnn = [64, 64]
-            #     multiplication_factor = 24
-            #     u_array_0 = 16
-            # elseif n == 20 && m == 20
-            #     h_array_fnn = [96, 96]
-            #     multiplication_factor = 18
-            #     u_array_0 = 64
-            # end
             u_array = vcat(u_array_0, z_array...)  # for PICNN; length(u_array) != length(z_array) + 1
             act = Flux.leakyrelu
             α_is = 1:i_max*multiplication_factor |> Map(i -> Flux.glorot_uniform(n+m)) |> collect
@@ -288,38 +303,54 @@ end
             mkpath(_dir_save)
             results = approximators |> Map(approximator -> test_all(approximator, data, epochs, min_nt, max_nt)) |> collect
             for (approximator, result) in zip(approximators, results)
-                optimise_time_mean = missing
-                minimisers_diff_norm_mean = missing
-                optvals_diff_abs_mean = missing
-                optimisation_failure = true
-                if result.benchmark != nothing
-                    optimise_time_mean = mean(result.benchmark)
-                    minimisers_diff_norm_mean = mean(result.minimisers_diff_norm)
-                    optvals_diff_abs_mean = mean(result.optvals_diff_abs)
-                    optimisation_failure = false
-                end
-                no_params = number_of_parameters(approximator)
+                # optimise_time_mean = missing
+                # minimisers_diff_norm_mean = missing
+                # optvals_diff_abs_mean = missing
+                # optimisation_failure = true
+                # if result.benchmark != nothing
+                #     optimise_time_mean = mean(result.benchmark)
+                #     minimisers_diff_norm_mean = mean(result.minimisers_diff_norm)
+                #     optvals_diff_abs_mean = mean(result.optvals_diff_abs)
+                #     optimisation_failure = false
+                # end
+                @unpack benchmark, minimisers_diff_norm, optvals_diff_abs, = result
                 push!(df, (;
                            n=n, m=m, epochs=epochs,
                            approximator=approximator_type(approximator),
-                           optimise_time_mean=optimise_time_mean,
-                           minimisers_diff_norm_mean=minimisers_diff_norm_mean,
-                           optvals_diff_abs_mean=optvals_diff_abs_mean,
-                           optimisation_failure=optimisation_failure,
-                           number_of_parameters=no_params,
+                           optimise_time_mean=benchmark |> mean,
+                           minimisers_diff_norm_mean=minimisers_diff_norm |> mean,
+                           optvals_diff_abs_mean=optvals_diff_abs |> mean,
+                           no_of_minimiser_failure_cases=minimisers_diff_norm |> collect |> length,
+                           no_of_optval_failure_cases=optvals_diff_abs |> collect |> length,
+                           # optimisation_failure=optimisation_failure,
+                           number_of_parameters=approximator |> number_of_parameters,
                           );
                       cols=:union,
                       promote=true,
                      )
             end
             # box plot
-            _minimisers_diff_norm = hcat((results |> Map(result -> result.minimisers_diff_norm) |> collect)...)
-            _optvals_diff_abs = hcat((results |> Map(result -> result.optvals_diff_abs) |> collect)...)
+            minimisers_diff_norm = results |> Map(result -> result.minimisers_diff_norm) |> collect  # skipmissing's
+            optvals_diff_abs = results |> Map(result -> result.optvals_diff_abs.x) |> collect  # skipmissing's
             approx_types = approximators |> Map(approximator_type) |> collect
-            box_minimiser_diff_norm = boxplot(reshape(approx_types, 1, :), _minimisers_diff_norm; label=nothing)
+            box_minimiser_diff_norm = plot()
+            for (approx_type, minimiser_diff_norm) in zip(approx_types, minimisers_diff_norm)
+                boxplot!(box_minimiser_diff_norm,
+                         [approx_type], minimiser_diff_norm |> collect  # remove missing's
+                        )
+            end
+            # box_minimiser_diff_norm = boxplot(reshape(approx_types, 1, :), replace(_minimisers_diff_norm, missing => NaN); label=nothing)
             savefig(box_minimiser_diff_norm, joinpath(_dir_save, "boxplot_minimiser_diff_norm.png"))
-            box_optval_diff_abs = boxplot(reshape(approx_types, 1, :), _optvals_diff_abs; label=nothing)
+            savefig(box_minimiser_diff_norm, joinpath(_dir_save, "boxplot_minimiser_diff_norm.pdf"))
+            box_optval_diff_abs = plot()
+            for (approx_type, optval_diff_abs) in zip(approx_types, optvals_diff_abs)
+                boxplot!(box_minimiser_diff_norm,
+                         [approx_type], optval_diff_abs |> collect  # remove missing's
+                        )
+            end
+            # box_optval_diff_abs = boxplot(reshape(approx_types, 1, :), replace(_optvals_diff_abs, missing => NaN); label=nothing)
             savefig(box_optval_diff_abs, joinpath(_dir_save, "boxplot_optval_diff_abs.png"))
+            savefig(box_optval_diff_abs, joinpath(_dir_save, "boxplot_optval_diff_abs.pdf"))
             # plotting
             if n == 1 && m == 1
                 title_surface = plot(title="Trained approximators",
@@ -342,25 +373,25 @@ end
             title_minimiser_diff_norm = plot(title="2-norm of minimiser errors",
                                              framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px,
                                             )
-            fig_minimiser_diff_norm = plot(title_minimiser_diff_norm,
-                                           (results |> Map(result -> result.fig_minimiser_diff_norm) |> collect)...;
-                                           # layout=@layout[a{0.01h}; grid(1, length(approximators))],
-                                           layout=@layout[a{0.01h}; grid(3, 2)],
-                                           size=(800, 900),
-                                          )
-            savefig(fig_minimiser_diff_norm, joinpath(_dir_save, "minimiser_diff_norm.png"))
-            savefig(fig_minimiser_diff_norm, joinpath(_dir_save, "minimiser_diff_norm.pdf"))
-            title_optval_diff_abs = plot(title="Absolute value of optval errors",
-                                         framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px,
-                                        )
-            fig_optval_diff_abs = plot(title_optval_diff_abs,
-                                       (results |> Map(result -> result.fig_optval_diff_abs) |> collect)...;
-                                       # layout=@layout[a{0.01h}; grid(1, length(approximators))],
-                                       layout=@layout[a{0.01h}; grid(3, 2)],
-                                       size=(800, 900),
-                                      )
-            savefig(fig_optval_diff_abs, joinpath(_dir_save, "optval_diff_abs.png"))
-            savefig(fig_optval_diff_abs, joinpath(_dir_save, "optval_diff_abs.pdf"))
+            # fig_minimiser_diff_norm = plot(title_minimiser_diff_norm,
+            #                                (results |> Map(result -> result.fig_minimiser_diff_norm) |> collect)...;
+            #                                # layout=@layout[a{0.01h}; grid(1, length(approximators))],
+            #                                layout=@layout[a{0.01h}; grid(3, 2)],
+            #                                size=(800, 900),
+            #                               )
+            # savefig(fig_minimiser_diff_norm, joinpath(_dir_save, "minimiser_diff_norm.png"))
+            # savefig(fig_minimiser_diff_norm, joinpath(_dir_save, "minimiser_diff_norm.pdf"))
+            # title_optval_diff_abs = plot(title="Absolute value of optval errors",
+            #                              framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px,
+            #                             )
+            # fig_optval_diff_abs = plot(title_optval_diff_abs,
+            #                            (results |> Map(result -> result.fig_optval_diff_abs) |> collect)...;
+            #                            # layout=@layout[a{0.01h}; grid(1, length(approximators))],
+            #                            layout=@layout[a{0.01h}; grid(3, 2)],
+            #                            size=(800, 900),
+            #                           )
+            # savefig(fig_optval_diff_abs, joinpath(_dir_save, "optval_diff_abs.png"))
+            # savefig(fig_optval_diff_abs, joinpath(_dir_save, "optval_diff_abs.pdf"))
         end
     end
     @show df
