@@ -244,7 +244,7 @@ end
 [2] B. L. Stevens, F. L. Lewis, and E. N. Johnson, Aircraft Control and Simulation: Dynamics, Controls Design, and Autonomous Systems, Third edition. Hoboken, N.J: John Wiley & Sons, 2016.
 [3] gym, "Humanoid-v2", https://gym.openai.com/envs/Humanoid-v2/
 # dimensions
-# n/m = 2/1: toy nonlinear systems, e.g., [1], 13/4: [2, p.185, Table 3.5-2, F-16 Model Test Case], 376/17: [3]
+# n/m = 1/1: for visualisation, 13/4: [2, p.185, Table 3.5-2, F-16 Model Test Case], 376/17: [3]
 """
 
 @testset "basic" begin
@@ -252,7 +252,7 @@ end
     df = DataFrame()
     # tests
     println("TODO: change ns and ms, epochs_list, etc.")
-    ns = [2, 13, 376]
+    ns = [1, 13, 376]
     ms = [1, 4, 17]
     for (n, m) in zip(ns, ms)
         # epochs_list = [20]
