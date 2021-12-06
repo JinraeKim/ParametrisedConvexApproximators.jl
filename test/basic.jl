@@ -91,10 +91,6 @@ function optimise_test(approximator, data, min_nt, max_nt)
     optvals_true = 1:d |> Map(i -> target_function(data.x[i], minimisers_true[i])) |> collect
     minimisers_estimated = 1:d |> Map(i -> res.minimiser[:, i]) |> collect
     optvals_estimated = 1:d |> Map(i -> res.optval[:, i]) |> collect
-    # TODO: remove the below line; only for test!!!
-    @show minimisers_estimated[1]
-    minimisers_estimated = [[nothing], minimisers_estimated[2:end]...]
-    # TODO: remove the above line; only for test!!!
     minimisers_diff_norm = skipmissing(1:d |> Map(i -> minimisers_estimated[i] == [nothing] ? missing : norm(minimisers_estimated[i] - minimisers_true[i])) |> collect)  # make each element 'Number'
     optvals_diff_abs = skipmissing(1:d |> Map(i -> optvals_estimated[i] == [-Inf] || optvals_estimated[i] == [Inf] ? missing : abs((optvals_estimated[i] - optvals_true[i])[1])) |> collect)  # make each element 'Number'
     println("norm(estimated minimiser - true minimiser)'s mean (only for success cases): $(mean(minimisers_diff_norm))")
@@ -256,8 +252,8 @@ end
     df = DataFrame()
     # tests
     println("TODO: change ns and ms, epochs_list, etc.")
-    ns = [2]
-    ms = [1]
+    ns = [2, 13, 376]
+    ms = [1, 4, 17]
     for (n, m) in zip(ns, ms)
         # epochs_list = [20]
         epochs_list = [100]
@@ -331,7 +327,7 @@ end
             end
             # box plot
             minimisers_diff_norm = results |> Map(result -> result.minimisers_diff_norm) |> collect  # skipmissing's
-            optvals_diff_abs = results |> Map(result -> result.optvals_diff_abs.x) |> collect  # skipmissing's
+            optvals_diff_abs = results |> Map(result -> result.optvals_diff_abs) |> collect  # skipmissing's
             approx_types = approximators |> Map(approximator_type) |> collect
             box_minimiser_diff_norm = plot()
             for (approx_type, minimiser_diff_norm) in zip(approx_types, minimisers_diff_norm)
@@ -344,7 +340,7 @@ end
             savefig(box_minimiser_diff_norm, joinpath(_dir_save, "boxplot_minimiser_diff_norm.pdf"))
             box_optval_diff_abs = plot()
             for (approx_type, optval_diff_abs) in zip(approx_types, optvals_diff_abs)
-                boxplot!(box_minimiser_diff_norm,
+                boxplot!(box_optval_diff_abs,
                          [approx_type], optval_diff_abs |> collect  # remove missing's
                         )
             end
