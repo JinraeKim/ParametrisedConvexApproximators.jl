@@ -158,28 +158,37 @@ function test_all(approximator, data, epochs, min_nt, max_nt)
     @unpack n, m = approximator
     approx_type = approximator_type(approximator)
     if n == 1 && m == 1
-        fig_surface = plot_surface(approximator, min_nt, max_nt)
-        title!(fig_surface, approx_type)
+        fig_surface = plot_approximator(approximator, min_nt, max_nt)
     else
         println("plotting surface is ignored for high-dimensional cases")
         fig_surface = plot()
     end
-    result = (; _result..., fig_surface=fig_surface)
+    result = (; _result..., fig_surface=fig_surface, approx_type=approximator_type(approximator))
 end
 
-function plot_surface(approximator, min_nt, max_nt; kwargs...)
-    l = 100
+function plot_approximator(approximator, min_nt, max_nt; kwargs...)
+    l = 20
     _xs = range(min_nt.x[1], stop=max_nt.x[1], length=l)
     _us = range(min_nt.u[1], stop=max_nt.u[1], length=l)
     _f(x, u) = approximator([x], [u])[1]
     fig = plot(_xs, _us, _f;
-               st=:surface,
+               st=:wireframe,
                xlim=(min_nt.x[1], max_nt.x[1]),
                ylim=(min_nt.u[1], max_nt.u[1]),
                zlim=(-1.0, 1.0),
-               camera=(30, 45),
+               xticks=-0.5:0.5:1.0,
+               aspect_ratio=:equal,
+               camera=(60, 45),
                xlabel="x",
                ylabel="u",
+               colorbar=false,
+               xtickfontsize=13, 
+               ytickfontsize=13, 
+               ztickfontsize=13, 
+               xguidefontsize=13, 
+               yguidefontsize=13, 
+               zguidefontsize=13, 
+               legendfontsize=13,
                kwargs...
               )
     fig
@@ -201,8 +210,9 @@ end
     println("TODO: change ns and ms, epochs_list, etc.")
     ns = [1, 13, 376]
     ms = [1, 4, 17]
+    # ns = [1]
+    # ms = [1]
     for (n, m) in zip(ns, ms)
-        # epochs_list = [20]
         epochs_list = [100]
         for epochs in epochs_list
             Random.seed!(2021)
@@ -270,6 +280,11 @@ end
                 violin!(box_minimiser_diff_norm,
                          [approx_type], minimiser_diff_norm |> collect;  # remove missing's
                          legend=nothing,
+                         xtickfontsize=13, 
+                         ytickfontsize=13, 
+                         xguidefontsize=13, 
+                         yguidefontsize=13, 
+                         legendfontsize=13,
                         )
             end
             savefig(box_minimiser_diff_norm, joinpath(_dir_save, "minimiser_diff_norm.png"))
@@ -279,25 +294,37 @@ end
                 violin!(box_optval_diff_abs,
                          [approx_type], optval_diff_abs |> collect;  # remove missing's
                          legend=nothing,
+                         xtickfontsize=13, 
+                         ytickfontsize=13, 
+                         xguidefontsize=13, 
+                         yguidefontsize=13, 
+                         legendfontsize=13,
                         )
             end
             savefig(box_optval_diff_abs, joinpath(_dir_save, "optval_diff_abs.png"))
             savefig(box_optval_diff_abs, joinpath(_dir_save, "optval_diff_abs.pdf"))
             # plotting
             if n == 1 && m == 1
-                title_surface = plot(title="Trained approximators",
-                                     framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px,
-                                    )
-                fig_surface_true = plot_surface(target_function, min_nt, max_nt; xlabel="x", ylabel="u")
-                fig_surface = plot(title_surface,
-                                   fig_surface_true,
-                                   ((results |> Map(result -> result.fig_surface) |> collect)...),
-                                   plot(; framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px);  # dummy
-                                   layout=@layout[a{0.01h}; grid(4, 2)],
-                                   size=(800, 1200),
-                                  )
-                savefig(fig_surface, joinpath(_dir_save, "surface.png"))
-                savefig(fig_surface, joinpath(_dir_save, "surface.pdf"))
+                for result in results
+                    @unpack fig_surface, approx_type = result
+                    savefig(fig_surface, joinpath(_dir_save, "surface_" * approx_type * ".png"))
+                    savefig(fig_surface, joinpath(_dir_save, "surface_" * approx_type * ".pdf"))
+                end
+                # title_surface = plot(title="Trained approximators",
+                #                      framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px,
+                #                     )
+                fig_surface_true = plot_approximator(target_function, min_nt, max_nt)
+                savefig(fig_surface_true, joinpath(_dir_save, "surface_true.png"))
+                savefig(fig_surface_true, joinpath(_dir_save, "surface_true.pdf"))
+                # fig_surface = plot(title_surface,
+                #                    fig_surface_true,
+                #                    ((results |> Map(result -> result.fig_surface) |> collect)...),
+                #                    plot(; framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px);  # dummy
+                #                    layout=@layout[a{0.01h}; grid(4, 2)],
+                #                    size=(800, 1200),
+                #                   )
+                # savefig(fig_surface, joinpath(_dir_save, "surface.png"))
+                # savefig(fig_surface, joinpath(_dir_save, "surface.pdf"))
             end
             title_minimiser_diff_norm = plot(title="2-norm of minimiser errors",
                                              framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px,
