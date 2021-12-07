@@ -130,10 +130,10 @@ considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
 - Visualisation
     - [x] minimiser diff norm and optval diff abs (histogram)
     - [x] surface (for n = 1, m = 1)
-- [ ] 최적화 실패 처리 개선
+- [x] 최적화 실패 처리 개선
     - 현재는 실패한 경우가 하나만 있어도 아예 데이터에서 제외함
     - 실패한 경우의 케이스 수를 받고, 성공한 녀석들로 평균값을 구하자
-- [ ] 지금까지의 결과로 논문 시뮬파트 작성
+- [x] 지금까지의 결과로 논문 시뮬파트 작성
 - [ ] Finite-horizon Q-learning 코드 작성
 - [ ] (future works) network converter from Julia to Python and vice versa;
 for differentiable convex programming
@@ -141,37 +141,40 @@ for differentiable convex programming
 
 
 ### Benchmark
+- Note: to avoid first-run latency due to JIT compilation of Julia, the elapsed times are obtained from second-run.
 The following result is from `test/basic.jl`.
+- Note: run on M1 Macbook Air (Apple silicon).
 - `n`: dimension of condition variable `x`
 - `m`: dimension of decision variable `u`
 - `epochs`: training epochs
-- `optimisation_failure`: if there is at least one failure case in optimisation, `true`
+- `approximator`: the type of approximator
 - `minimisers_diff_norm_mean`: the mean value of 2-norm of the difference between true and estimated minimisers
 - `optvals_diff_abs_mean`: the mean value of absolute of the difference between true and estimated optimal values
-- `optimise_time_mean`: average time for optimisation
-- `no_of_optimise_points`: number of optimisation points to obtain benchmark results, using [BenchmarkTools.jl](https://github.com/JuliaCI/BenchmarkTools.jl) (can be truncated for too slow optimisation)
+- `no_of_minimiser_success_cases`: failure means no minimiser has been found (`NaN`)
+- `no_of_optval_success_cases`: failure means invalid optimal value has been found (`-Inf` or `Inf)
+- `number_of_parameters`: the number of network parameters
 ```julia
- Row │ optimise_time_mean  no_of_optimise_points  minimisers_diff_norm_mean  optvals_diff_abs_mean  n      m      epochs  approximator  optimisation_failure
-     │ Float64?            Union{Missing, Int64}  Float64?                   Float64?               Int64  Int64  Int64   String        Bool
-─────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-   1 │         0.00215083                    200                 0.0307585              0.00891506      1      1     100  FNN                          false
-   2 │         0.00171477                    200                 0.337122               0.125028        1      1     100  MA                           false
-   3 │         0.0336831                     200                 0.0607105              0.126509        1      1     100  LSE                          false
-   4 │         0.134263                      200                 0.0512199              0.0904881       1      1     100  PICNN                        false
-   5 │         0.0015151                     200                 0.321775               0.0125168       1      1     100  PMA                          false
-   6 │         0.00870789                    200                 0.00837253             0.00732863      1      1     100  PLSE                         false
-   7 │         0.102924                      200                 2.1967                 0.593645       10     10     100  FNN                          false
-   8 │         0.0264953                     200                 2.65532                0.318628       10     10     100  MA                           false
-   9 │         0.042978                      200                 2.35952                0.263024       10     10     100  LSE                          false
-  10 │         0.375921                       80                 2.77599                0.178636       10     10     100  PICNN                        false
-  11 │         0.00569223                    200                 1.7945                 0.173026       10     10     100  PMA                          false
-  12 │         0.0130083                     200                 1.58341                0.264676       10     10     100  PLSE                         false
-  13 │         1.18958                        26                 7.16768                1.66083       100    100     100  FNN                          false
-  14 │         0.145114                      200                 9.60918                0.197156      100    100     100  MA                           false
-  15 │         0.0653175                     200                 9.64556                0.167201      100    100     100  LSE                          false
-  16 │         3.3229                         10                 9.94982                0.917935      100    100     100  PICNN                        false
-  17 │         0.116434                      200                 9.55993                0.265828      100    100     100  PMA                          false
-  18 │         0.0670418                     200                 9.62691                0.431962      100    100     100  PLSE                         false
+ Row │ n      m      epochs  approximator  optimise_time_mean  minimisers_diff_norm_mean  optvals_diff_abs_mean  no_of_minimiser_success  no_of_optval_success  number_of_parameters
+     │ Int64  Int64  Int64   String        Float64             Float64                    Float64                Int64                    Int64                 Int64
+─────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   1 │     1      1     100  FNN                   0.00136872                 0.0339567              0.00835098                      500                   500                  4417
+   2 │     1      1     100  MA                    0.00174339                 0.0517859              0.131502                        500                   500                    90
+   3 │     1      1     100  LSE                   0.071346                   0.00626685             0.126809                        500                   500                    90
+   4 │     1      1     100  PICNN                 0.0287229                  0.050802               0.100065                        500                   499                 25608
+   5 │     1      1     100  PMA                   0.00252154                 0.324986               0.0189862                       500                   500                  8188
+   6 │     1      1     100  PLSE                  0.0137478                  0.00257412             0.00157031                      500                   500                  8188
+   7 │    13      4     100  FNN                   0.0239815                  0.998098               0.179316                        500                   500                  5377
+   8 │    13      4     100  MA                    0.00272083                 0.219982               0.063618                        500                   500                   540
+   9 │    13      4     100  LSE                   0.0565649                  0.0561577              0.0360103                       500                   500                   540
+  10 │    13      4     100  PICNN                 0.0253631                  0.366856               0.0343946                       500                   500                 27987
+  11 │    13      4     100  PMA                   0.00227412                 0.498253               0.015404                        500                   500                 14806
+  12 │    13      4     100  PLSE                  0.0159233                  0.0568649              0.00995584                      500                   500                 14806
+  13 │   376     17     100  FNN                   0.0786036                  2.94953                0.165373                        500                   500                 29441
+  14 │   376     17     100  MA                    0.0173594                  4.10848                0.125641                        500                   500                 11820
+  15 │   376     17     100  LSE                   0.316279                   4.01288                0.115364                        500                   500                 11820
+  16 │   376     17     100  PICNN                 0.432312                   3.79597                0.132973                        500                   500                 84534
+  17 │   376     17     100  PMA                   0.0361832                  3.51644                0.0878767                       500                   500                 63388
+  18 │   376     17     100  PLSE                  0.0169323                  0.568872               0.0828379                       500                   500                 63388
 ```
 
 ## References
