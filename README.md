@@ -153,6 +153,7 @@ considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
 - Note: to avoid first-run latency due to JIT compilation of Julia, the elapsed times are obtained from second-run.
 The following result is from `test/basic.jl`.
 - Note: run on M1 Macbook Air (Apple silicon).
+- Note: the result may be slightly different from the original paper [3].
 - `n`: dimension of condition variable `x`
 - `m`: dimension of decision variable `u`
 - `epochs`: training epochs
@@ -163,8 +164,28 @@ The following result is from `test/basic.jl`.
 - `no_of_optval_success_cases`: failure means invalid optimal value has been found (`-Inf` or `Inf)
 - `number_of_parameters`: the number of network parameters
 
-### TODO: add the latest simulation result
 ```julia
+ Row │ n      m      epochs  approximator  optimise_time_mean  minimisers_diff_norm_mean  optvals_diff_abs_mean  no_of_minimiser_success  no_of_optval_success  number_of_parameters
+     │ Int64  Int64  Int64   String        Float64             Float64                    Float64                Int64                    Int64                 Int64
+─────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+   1 │     1      1     100  FNN                   0.00132039                 0.0339567              0.00835098                      500                   500                  4417
+   2 │     1      1     100  MA                    0.00163027                 0.0517859              0.131502                        500                   500                    90
+   3 │     1      1     100  LSE                   0.0694084                  0.00626685             0.126809                        500                   500                    90
+   4 │     1      1     100  PICNN                 0.0272668                  0.050802               0.100065                        500                   499                 25608
+   5 │     1      1     100  PMA                   0.0022235                  0.324986               0.0189862                       500                   500                  8188
+   6 │     1      1     100  PLSE                  0.0142827                  0.00257412             0.00157031                      500                   500                  8188
+   7 │    13      4     100  FNN                   0.0228109                  0.998098               0.179316                        500                   500                  5377
+   8 │    13      4     100  MA                    0.00245655                 0.219982               0.063618                        500                   500                   540
+   9 │    13      4     100  LSE                   0.0566194                  0.0561577              0.0360103                       500                   500                   540
+  10 │    13      4     100  PICNN                 0.0253992                  0.366856               0.0343946                       500                   500                 27987
+  11 │    13      4     100  PMA                   0.00212663                 0.498253               0.015404                        500                   500                 14806
+  12 │    13      4     100  PLSE                  0.0153836                  0.0568649              0.00995584                      500                   500                 14806
+  13 │   376     17     100  FNN                   0.0714015                  2.94953                0.165373                        500                   500                 29441
+  14 │   376     17     100  MA                    0.0165729                  4.10848                0.125641                        500                   500                 11820
+  15 │   376     17     100  LSE                   0.316622                   4.01288                0.115364                        500                   500                 11820
+  16 │   376     17     100  PICNN                 0.43103                    3.79597                0.132973                        500                   500                 84534
+  17 │   376     17     100  PMA                   0.0375725                  3.51644                0.0878767                       500                   500                 63388
+  18 │   376     17     100  PLSE                  0.0166563                  0.568872               0.0828379                       500                   500                 63388
 ```
 
 ## References
