@@ -26,12 +26,14 @@ using Flux
 using Transducers
 using Flux
 using Flux: DataLoader
+using Random  # for random seed
 
 # construction
+Random.seed!(2021)
 n, m = 2, 3
 i_max = 20
 T = 1e-1
-h_array = [128, 128]
+h_array = [64, 64]
 act = Flux.leakyrelu
 plse = PLSE(n, m, i_max, T, h_array, act)  # parametrised log-sum-exp (PLSE) network
 x, u = rand(n), rand(m)
@@ -40,13 +42,13 @@ f̂ = plse(x, u)
 ```
 
 ```julia
-f̂ = [0.33484514229364964]
+f̂ = [0.3113165298981473]
 ```
 
-### Network training
+### Network training (as usual in [Flux.jl](https://github.com/FluxML/Flux.jl))
 ```julia
 f(x, u) = [0.5 * ( -(1/length(x))*x'*x + (1/length(u))*u'*u )]  # target function
-d = 1_000  # no. of data
+d = 5_000  # no. of data
 # data generation
 xs = 1:d |> Map(i -> -ones(n) + 2*ones(n) .* rand(n)) |> collect  # ∈ [-1, 1]^{n}
 us = 1:d |> Map(i -> -ones(m) + 2*ones(m) .* rand(m)) |> collect  # ∈ [-1, 1]^{m}
@@ -62,22 +64,52 @@ ps = Flux.params(plse)
 opt = ADAM(1e-3)
 epochs = 100
 for epoch in 0:epochs
-    println("epoch = $(epoch) / $(epochs)")
     if epoch != 0
         Flux.train!(loss, ps, dataloader, opt)
     end
-    @show loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test])
+    if epoch % 10 == 0
+        println("epoch = $(epoch) / $(epochs)")
+        @show loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test])
+    end
 end
 ```
 
-### Conditional decision making via optimisation
+```julia
+epoch = 0 / 100
+loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 0.14123486681126265
+epoch = 10 / 100
+loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 9.20156070602013e-5
+epoch = 20 / 100
+loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 8.428795608023727e-5
+epoch = 30 / 100
+loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 6.0756725678295076e-5
+epoch = 40 / 100
+loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 7.063355164819796e-5
+epoch = 50 / 100
+loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 6.08100029278485e-5
+epoch = 60 / 100
+loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 4.319644378100754e-5
+epoch = 70 / 100
+loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 7.028416247739685e-5
+epoch = 80 / 100
+loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 2.713945900329595e-5
+epoch = 90 / 100
+loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 3.524764563503706e-5
+epoch = 100 / 100
+loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 3.102460393375972e-5
+```
+
+### Conditional decision making via optimisation (given `x`, find a minimiser `u` and optimal value)
 ```julia
 # optimisation
-x = rand(n)
+x = [0.1, 0.2]  # any value
 u_min, u_max = -1*ones(m), 1*ones(m)
 res = optimise(plse, x; u_min=u_min, u_max=u_max)  # minimsation
 @show res  # NamedTuple
-res = (minimiser = [-0.2523565154854893, -0.9999967116995178, 0.09150518836473269], optval = [0.2943142110436148])
+```
+
+```julia
+res = (minimiser = [-0.027399600684580954, -0.0075144942411888155, -0.015772687025402597], optval = [-0.007673806913150762])
 ```
 
 ## Documentation
@@ -99,8 +131,8 @@ the output of an approximator is **one-length vector**.
     - `MA::ConvexApproximator`: max-affine (MA) network [1]
     - `LSE::ConvexApproximator`: log-sum-exp (LSE) network [1]
     - `PICNN::ParametrisedConvexApproximator`: partially input-convex neural network
-    - `PMA::ParametrisedConvexApproximator`: parametrised MA network
-    - `PLSE::ParametrisedConvexApproximator`: parametrised LSE network
+    - `PMA::ParametrisedConvexApproximator`: parametrised MA network [2]
+    - `PLSE::ParametrisedConvexApproximator`: parametrised LSE network [2]
 
 ### Utilities
 - `(nn::approximator)(x, u)` gives an inference (approximate function value).
@@ -156,3 +188,4 @@ The following result is from `test/basic.jl`.
 
 ## References
 - [1] [G. C. Calafiore, S. Gaubert, and C. Possieri, “Log-Sum-Exp Neural Networks and Posynomial Models for Convex and Log-Log-Convex Data,” IEEE Transactions on Neural Networks and Learning Systems, vol. 31, no. 3, pp. 827–838, Mar. 2020, doi: 10.1109/TNNLS.2019.2910417.](https://ieeexplore.ieee.org/abstract/document/8715799?casa_token=ptHxee1NJ30AAAAA:etAIY0UkR0yg6YK7mgtEzCzHavM0d6Cos1VNzpn0cw5hbiEnFnAxNDm1rflWjDAOa-iO6xU5Lg)
+- [2] J. Kim and Y. Kim, “Parametrised Convex Universa Approximators,” IEEE Transactions on Neural Networks and Learning Systems, In preparation.
