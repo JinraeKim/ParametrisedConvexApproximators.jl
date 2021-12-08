@@ -130,9 +130,9 @@ the output of an approximator is **one-length vector**.
     - `FNN::AbstractApproximator`: feedforward neural network
     - `MA::ConvexApproximator`: max-affine (MA) network [1]
     - `LSE::ConvexApproximator`: log-sum-exp (LSE) network [1]
-    - `PICNN::ParametrisedConvexApproximator`: partially input-convex neural network
-    - `PMA::ParametrisedConvexApproximator`: parametrised MA network [2]
-    - `PLSE::ParametrisedConvexApproximator`: parametrised LSE network [2]
+    - `PICNN::ParametrisedConvexApproximator`: partially input-convex neural network (PICNN) [2]
+    - `PMA::ParametrisedConvexApproximator`: parametrised MA (PMA) network [3]
+    - `PLSE::ParametrisedConvexApproximator`: parametrised LSE (PLSE) network [3]
 
 ### Utilities
 - `(nn::approximator)(x, u)` gives an inference (approximate function value).
@@ -169,4 +169,5 @@ The following result is from `test/basic.jl`.
 
 ## References
 - [1] [G. C. Calafiore, S. Gaubert, and C. Possieri, “Log-Sum-Exp Neural Networks and Posynomial Models for Convex and Log-Log-Convex Data,” IEEE Transactions on Neural Networks and Learning Systems, vol. 31, no. 3, pp. 827–838, Mar. 2020, doi: 10.1109/TNNLS.2019.2910417.](https://ieeexplore.ieee.org/abstract/document/8715799?casa_token=ptHxee1NJ30AAAAA:etAIY0UkR0yg6YK7mgtEzCzHavM0d6Cos1VNzpn0cw5hbiEnFnAxNDm1rflWjDAOa-iO6xU5Lg)
-- [2] J. Kim and Y. Kim, “Parametrised Convex Universa Approximators,” IEEE Transactions on Neural Networks and Learning Systems, In preparation.
+- [2] B. Amos, L. Xu, and J. Z. Kolter, “Input Convex Neural Networks,” in Proceedings of the 34th International Conference on Machine Learning, Sydney, Australia, Jul. 2017, pp. 146–155.
+- [3] J. Kim and Y. Kim, “Parametrised Convex Universa Approximators,” IEEE Transactions on Neural Networks and Learning Systems, In preparation.
