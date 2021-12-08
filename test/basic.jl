@@ -310,21 +310,9 @@ end
                     savefig(fig_surface, joinpath(_dir_save, "surface_" * approx_type * ".png"))
                     savefig(fig_surface, joinpath(_dir_save, "surface_" * approx_type * ".pdf"))
                 end
-                # title_surface = plot(title="Trained approximators",
-                #                      framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px,
-                #                     )
                 fig_surface_true = plot_approximator(target_function, min_nt, max_nt)
                 savefig(fig_surface_true, joinpath(_dir_save, "surface_true.png"))
                 savefig(fig_surface_true, joinpath(_dir_save, "surface_true.pdf"))
-                # fig_surface = plot(title_surface,
-                #                    fig_surface_true,
-                #                    ((results |> Map(result -> result.fig_surface) |> collect)...),
-                #                    plot(; framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px);  # dummy
-                #                    layout=@layout[a{0.01h}; grid(4, 2)],
-                #                    size=(800, 1200),
-                #                   )
-                # savefig(fig_surface, joinpath(_dir_save, "surface.png"))
-                # savefig(fig_surface, joinpath(_dir_save, "surface.pdf"))
             end
             title_minimiser_diff_norm = plot(title="2-norm of minimiser errors",
                                              framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px,

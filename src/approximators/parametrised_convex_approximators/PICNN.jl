@@ -18,7 +18,6 @@ struct PICNN <: ParametrisedConvexApproximator
         new(n, m, make_PICNN(n, m, u_array, z_array, g, g̃))
     end
 end
-# PICNN(n::Int, m::Int, u_array, z_array; g=Flux.identity, g̃=Flux.identity) = PICNN(n, m, make_PICNN(n, m, u_array, z_array, g, g̃))
 
 # """
 # # Notes
