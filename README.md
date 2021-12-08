@@ -2,6 +2,9 @@
 
 [ParametrisedConvexApproximators.jl](https://github.com/JinraeKim/ParametrisedConvexApproximators.jl) is a package providing (pararmetrised) convex approximators.
 
+# !!!NOTICE!!! This package is being rewritten, see branch `rewrite-code`.
+
+
 ## Supported approximators
 This package provides the following approximators. 
 - **convex approximators (CAs)**
