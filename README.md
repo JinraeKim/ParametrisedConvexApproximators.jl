@@ -164,7 +164,9 @@ The following result is from `test/basic.jl`.
 - `no_of_optval_success_cases`: failure means invalid optimal value has been found (`-Inf` or `Inf)
 - `number_of_parameters`: the number of network parameters
 
-- [ ] TODO: replace the following result with (optimisation time seems not correct as for e.g., LSE's time for (n, m) = (1, 1) is higher than that for (n, m) = (13, 4))
+- Note: it is possible that
+the optimisation solve time can decrease as the dimension of problem increases for small to medium dimensional problems,
+as reported in some studies on optimisation solvers, e.g., [the paper about COSMO.jl](https://arxiv.org/pdf/1901.10887.pdf).
 ```julia
  Row │ n      m      epochs  approximator  optimise_time_mean  minimisers_diff_norm_mean  optvals_diff_abs_mean  no_of_minimiser_success  no_of_optval_success  number_of_parameters
      │ Int64  Int64  Int64   String        Float64             Float64                    Float64                Int64                    Int64                 Int64

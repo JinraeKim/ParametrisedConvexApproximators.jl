@@ -203,7 +203,10 @@ end
 # n/m = 1/1: for visualisation, 13/4: [2, p.185, Table 3.5-2, F-16 Model Test Case], 376/17: [3]
 """
 
-@testset "basic" begin
+# @testset "basic" begin
+# end
+
+function main()
     @warn("Note: if you change the target function, you may have to change the true minimisers manually (in the function `optimise_test`).")
     df = DataFrame()
     # tests
@@ -318,6 +321,6 @@ end
                                              framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px,
                                             )
         end
+        @show df
     end
-    @show df
 end
