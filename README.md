@@ -152,7 +152,7 @@ considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
 ### Benchmark
 - Note: to avoid first-run latency due to JIT compilation of Julia, the elapsed times are obtained from second-run.
 The following result is from `test/basic.jl`.
-- Note: run on M1 Macbook Air (Apple silicon).
+- Note: run on ADM Ryzen:tm: 9 5900X.
 - Note: the result may be slightly different from the original paper [3].
 - `n`: dimension of condition variable `x`
 - `m`: dimension of decision variable `u`
@@ -164,6 +164,7 @@ The following result is from `test/basic.jl`.
 - `no_of_optval_success_cases`: failure means invalid optimal value has been found (`-Inf` or `Inf)
 - `number_of_parameters`: the number of network parameters
 
+- [ ] TODO: replace the following result with (optimisation time seems not correct as for e.g., LSE's time for (n, m) = (1, 1) is higher than that for (n, m) = (13, 4))
 ```julia
  Row │ n      m      epochs  approximator  optimise_time_mean  minimisers_diff_norm_mean  optvals_diff_abs_mean  no_of_minimiser_success  no_of_optval_success  number_of_parameters
      │ Int64  Int64  Int64   String        Float64             Float64                    Float64                Int64                    Int64                 Int64
