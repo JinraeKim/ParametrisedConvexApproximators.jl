@@ -206,121 +206,111 @@ end
 # @testset "basic" begin
 # end
 
-function main()
+function main(n, m, epochs=100)
     @warn("Note: if you change the target function, you may have to change the true minimisers manually (in the function `optimise_test`).")
     df = DataFrame()
     # tests
-    println("TODO: change ns and ms, epochs_list, etc.")
-    ns = [1, 13, 376]
-    ms = [1, 4, 17]
-    # ns = [1]
-    # ms = [1]
-    for (n, m) in zip(ns, ms)
-        epochs_list = [100]
-        for epochs in epochs_list
-            Random.seed!(2021)
-            # training data
-            d = 5_000
-            println("No. of data points: $(d)")
-            min_nt = (; x = -1*ones(n), u = -1*ones(m))
-            max_nt = (; x = 1*ones(n), u = 1*ones(m))
-            xs = 1:d |> Map(i -> sample(min_nt.x, max_nt.x)) |> collect
-            us = 1:d |> Map(i -> sample(min_nt.u, max_nt.u)) |> collect
-            fs = zip(xs, us) |> MapSplat((x, u) -> target_function(x, u)) |> collect
-            data = (; x=xs, u=us, f=fs)
-            println("#"^10 * " " * "n = $(n), m = $(m), epochs = $(epochs)" * " " * "#"^10)
-            i_max = 30
-            T = 1e-1
-            h_array = [64, 64]  # fix it
-            z_array = [64, 64]  # for PICNN
-            h_array_fnn = [64, 64]
-            multiplication_factor = 1
-            u_array_0 = 64
-            u_array = vcat(u_array_0, z_array...)  # for PICNN; length(u_array) != length(z_array) + 1
-            act = Flux.leakyrelu
-            α_is = 1:i_max*multiplication_factor |> Map(i -> Flux.glorot_uniform(n+m)) |> collect
-            β_is = 1:i_max*multiplication_factor |> Map(i -> Flux.glorot_uniform(1)) |> collect
-            # generate approximators
-            fnn = FNN(n, m, h_array_fnn, act)
-            ma = MA(α_is, β_is; n=n, m=m)
-            lse = LSE(α_is, β_is, T; n=n, m=m)
-            picnn = PICNN(n, m, u_array, z_array, act, act)
-            pma = PMA(n, m, i_max, h_array, act)
-            plse = PLSE(n, m, i_max, T, h_array, act)
-            approximators = (;
-                             fnn=fnn,
-                             ma=ma,
-                             lse=lse,
-                             picnn=picnn,
-                             pma=pma,
-                             plse=plse,
-                            )
-            _dir_save = joinpath(__dir_save, "n=$(n)_m=$(m)_epochs=$(epochs)")
-            mkpath(_dir_save)
-            results = approximators |> Map(approximator -> test_all(approximator, data, epochs, min_nt, max_nt)) |> collect
-            for (approximator, result) in zip(approximators, results)
-                @unpack benchmark, minimisers_diff_norm, optvals_diff_abs, = result
-                push!(df, (;
-                           n=n, m=m, epochs=epochs,
-                           approximator=approximator_type(approximator),
-                           optimise_time_mean=benchmark |> mean,
-                           minimisers_diff_norm_mean=minimisers_diff_norm |> mean,
-                           optvals_diff_abs_mean=optvals_diff_abs |> mean,
-                           no_of_minimiser_success=minimisers_diff_norm |> collect |> length,
-                           no_of_optval_success=optvals_diff_abs |> collect |> length,
-                           number_of_parameters=approximator |> number_of_parameters,
-                          );
-                      cols=:union,
-                      promote=true,
-                     )
-            end
-            # violin plots
-            minimisers_diff_norm = results |> Map(result -> result.minimisers_diff_norm) |> collect  # skipmissing's
-            optvals_diff_abs = results |> Map(result -> result.optvals_diff_abs) |> collect  # skipmissing's
-            approx_types = approximators |> Map(approximator_type) |> collect
-            box_minimiser_diff_norm = plot()
-            for (approx_type, minimiser_diff_norm) in zip(approx_types, minimisers_diff_norm)
-                violin!(box_minimiser_diff_norm,
-                         [approx_type], minimiser_diff_norm |> collect;  # remove missing's
-                         legend=nothing,
-                         xtickfontsize=13, 
-                         ytickfontsize=13, 
-                         xguidefontsize=13, 
-                         yguidefontsize=13, 
-                         legendfontsize=13,
-                        )
-            end
-            savefig(box_minimiser_diff_norm, joinpath(_dir_save, "minimiser_diff_norm.png"))
-            savefig(box_minimiser_diff_norm, joinpath(_dir_save, "minimiser_diff_norm.pdf"))
-            box_optval_diff_abs = plot()
-            for (approx_type, optval_diff_abs) in zip(approx_types, optvals_diff_abs)
-                violin!(box_optval_diff_abs,
-                         [approx_type], optval_diff_abs |> collect;  # remove missing's
-                         legend=nothing,
-                         xtickfontsize=13, 
-                         ytickfontsize=13, 
-                         xguidefontsize=13, 
-                         yguidefontsize=13, 
-                         legendfontsize=13,
-                        )
-            end
-            savefig(box_optval_diff_abs, joinpath(_dir_save, "optval_diff_abs.png"))
-            savefig(box_optval_diff_abs, joinpath(_dir_save, "optval_diff_abs.pdf"))
-            # plotting
-            if n == 1 && m == 1
-                for result in results
-                    @unpack fig_surface, approx_type = result
-                    savefig(fig_surface, joinpath(_dir_save, "surface_" * approx_type * ".png"))
-                    savefig(fig_surface, joinpath(_dir_save, "surface_" * approx_type * ".pdf"))
-                end
-                fig_surface_true = plot_approximator(target_function, min_nt, max_nt)
-                savefig(fig_surface_true, joinpath(_dir_save, "surface_true.png"))
-                savefig(fig_surface_true, joinpath(_dir_save, "surface_true.pdf"))
-            end
-            title_minimiser_diff_norm = plot(title="2-norm of minimiser errors",
-                                             framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px,
-                                            )
-        end
-        @show df
+    Random.seed!(2021)
+    # training data
+    d = 5_000
+    println("No. of data points: $(d)")
+    min_nt = (; x = -1*ones(n), u = -1*ones(m))
+    max_nt = (; x = 1*ones(n), u = 1*ones(m))
+    xs = 1:d |> Map(i -> sample(min_nt.x, max_nt.x)) |> collect
+    us = 1:d |> Map(i -> sample(min_nt.u, max_nt.u)) |> collect
+    fs = zip(xs, us) |> MapSplat((x, u) -> target_function(x, u)) |> collect
+    data = (; x=xs, u=us, f=fs)
+    println("#"^10 * " " * "n = $(n), m = $(m), epochs = $(epochs)" * " " * "#"^10)
+    i_max = 30
+    T = 1e-1
+    h_array = [64, 64]  # fix it
+    z_array = [64, 64]  # for PICNN
+    h_array_fnn = [64, 64]
+    multiplication_factor = 1
+    u_array_0 = 64
+    u_array = vcat(u_array_0, z_array...)  # for PICNN; length(u_array) != length(z_array) + 1
+    act = Flux.leakyrelu
+    α_is = 1:i_max*multiplication_factor |> Map(i -> Flux.glorot_uniform(n+m)) |> collect
+    β_is = 1:i_max*multiplication_factor |> Map(i -> Flux.glorot_uniform(1)) |> collect
+    # generate approximators
+    fnn = FNN(n, m, h_array_fnn, act)
+    ma = MA(α_is, β_is; n=n, m=m)
+    lse = LSE(α_is, β_is, T; n=n, m=m)
+    picnn = PICNN(n, m, u_array, z_array, act, act)
+    pma = PMA(n, m, i_max, h_array, act)
+    plse = PLSE(n, m, i_max, T, h_array, act)
+    approximators = (;
+                     fnn=fnn,
+                     ma=ma,
+                     lse=lse,
+                     picnn=picnn,
+                     pma=pma,
+                     plse=plse,
+                    )
+    _dir_save = joinpath(__dir_save, "n=$(n)_m=$(m)_epochs=$(epochs)")
+    mkpath(_dir_save)
+    results = approximators |> Map(approximator -> test_all(approximator, data, epochs, min_nt, max_nt)) |> collect
+    for (approximator, result) in zip(approximators, results)
+        @unpack benchmark, minimisers_diff_norm, optvals_diff_abs, = result
+        push!(df, (;
+                   n=n, m=m, epochs=epochs,
+                   approximator=approximator_type(approximator),
+                   optimise_time_mean=benchmark |> mean,
+                   minimisers_diff_norm_mean=minimisers_diff_norm |> mean,
+                   optvals_diff_abs_mean=optvals_diff_abs |> mean,
+                   no_of_minimiser_success=minimisers_diff_norm |> collect |> length,
+                   no_of_optval_success=optvals_diff_abs |> collect |> length,
+                   number_of_parameters=approximator |> number_of_parameters,
+                  );
+              cols=:union,
+              promote=true,
+             )
     end
+    # violin plots
+    minimisers_diff_norm = results |> Map(result -> result.minimisers_diff_norm) |> collect  # skipmissing's
+    optvals_diff_abs = results |> Map(result -> result.optvals_diff_abs) |> collect  # skipmissing's
+    approx_types = approximators |> Map(approximator_type) |> collect
+    box_minimiser_diff_norm = plot()
+    for (approx_type, minimiser_diff_norm) in zip(approx_types, minimisers_diff_norm)
+        violin!(box_minimiser_diff_norm,
+                [approx_type], minimiser_diff_norm |> collect;  # remove missing's
+                legend=nothing,
+                xtickfontsize=13, 
+                ytickfontsize=13, 
+                xguidefontsize=13, 
+                yguidefontsize=13, 
+                legendfontsize=13,
+               )
+    end
+    savefig(box_minimiser_diff_norm, joinpath(_dir_save, "minimiser_diff_norm.png"))
+    savefig(box_minimiser_diff_norm, joinpath(_dir_save, "minimiser_diff_norm.pdf"))
+    box_optval_diff_abs = plot()
+    for (approx_type, optval_diff_abs) in zip(approx_types, optvals_diff_abs)
+        violin!(box_optval_diff_abs,
+                [approx_type], optval_diff_abs |> collect;  # remove missing's
+                legend=nothing,
+                xtickfontsize=13, 
+                ytickfontsize=13, 
+                xguidefontsize=13, 
+                yguidefontsize=13, 
+                legendfontsize=13,
+               )
+    end
+    savefig(box_optval_diff_abs, joinpath(_dir_save, "optval_diff_abs.png"))
+    savefig(box_optval_diff_abs, joinpath(_dir_save, "optval_diff_abs.pdf"))
+    # plotting
+    if n == 1 && m == 1
+        for result in results
+            @unpack fig_surface, approx_type = result
+            savefig(fig_surface, joinpath(_dir_save, "surface_" * approx_type * ".png"))
+            savefig(fig_surface, joinpath(_dir_save, "surface_" * approx_type * ".pdf"))
+        end
+        fig_surface_true = plot_approximator(target_function, min_nt, max_nt)
+        savefig(fig_surface_true, joinpath(_dir_save, "surface_true.png"))
+        savefig(fig_surface_true, joinpath(_dir_save, "surface_true.pdf"))
+    end
+    title_minimiser_diff_norm = plot(title="2-norm of minimiser errors",
+                                     framestyle=nothing,showaxis=false,xticks=false,yticks=false,margin=0Plots.px,
+                                    )
+    @show df
 end
