@@ -1,7 +1,7 @@
 abstract type ConvexApproximator <: ParametrisedConvexApproximator end
 
 
-function _construct_convex_approximator(α_is::Vector, β_is::Vector)
+function _construct_convex_approximator(α_is::AbstractVector, β_is::AbstractVector)
     l = length(α_is[1])
     i_max = length(α_is)
     @assert length(β_is) == i_max
@@ -10,7 +10,12 @@ function _construct_convex_approximator(α_is::Vector, β_is::Vector)
     l, i_max, _α_is, _β_is
 end
 
-function affine_map(nn::ConvexApproximator, z::Union{Array, Convex.AbstractExpr})
+function affine_map(nn::ConvexApproximator, z::AbstractArray)
+    @unpack _α_is, _β_is = nn
+    _α_is * z .+ _β_is
+end
+
+function affine_map(nn::ConvexApproximator, z::Convex.AbstractExpr)
     @unpack _α_is, _β_is = nn
     _α_is * z + (_α_is*zeros(size(z)) .+ _β_is)
 end

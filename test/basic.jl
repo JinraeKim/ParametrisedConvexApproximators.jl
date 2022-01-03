@@ -13,6 +13,7 @@ using DataFrames
 using Statistics
 using ForwardDiff
 using LinearAlgebra
+using SCS
 
 
 __dir_save = "test/basic"
@@ -71,6 +72,13 @@ function optimise_test(approximator, data, min_nt, max_nt)
         @test approximator(x, u) |> size == (1,)  # inference with Convex.jl
     end
     _xs = hcat(data.x...)
+    # begin  # TODO: remove it; only for test
+    #     u = Convex.Variable(m)
+    #     problem = minimize(approximator(_xs[:, 1], u)[1])
+    #     problem.constraints += [u >= min_nt.u]
+    #     problem.constraints += [u <= max_nt.u]
+    #     @time solve!(problem, opt; verbose=true, silent_solver=false)
+    # end
     println("Optimise $(d) points")
     @time res_timed = @timed optimise(approximator, _xs;
                                       u_min=min_nt.u, u_max=max_nt.u,
