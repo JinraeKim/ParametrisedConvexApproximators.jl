@@ -18,8 +18,12 @@ function _optimise(approximator::ParametrisedConvexApproximator, x::AbstractVect
     )
     @unpack m = approximator
     u = Convex.Variable(m)
-    @assert length(u) == length(u_min)
-    @assert length(u) == length(u_max)
+    if u_min != nothing
+        @assert length(u) == length(u_min)
+    end
+    if u_max != nothing
+        @assert length(u) == length(u_max)
+    end
     problem = minimize(approximator(x, u)[1])
     if u_min != nothing
         problem.constraints += [u >= u_min]

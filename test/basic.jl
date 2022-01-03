@@ -266,6 +266,7 @@ function main(n, m; epochs=100, seed=2021)
                    no_of_optval_success=optvals_diff_abs |> collect |> length,
                    number_of_parameters=approximator |> number_of_parameters,
                    cond_hessian_mean=hessians |> Map(cond) |> collect |> mean,  # the mean condition number of hessians
+                   cond_hessian_max=hessians |> Map(cond) |> collect |> maximum,  # the mean condition number of hessians
                   );
               cols=:union,
               promote=true,
