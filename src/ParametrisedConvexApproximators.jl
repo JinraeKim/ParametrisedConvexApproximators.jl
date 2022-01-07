@@ -4,7 +4,6 @@ using Flux
 using UnPack
 using Convex
 using SCS  # 211207; currently not compatible with apple silicon
-using Mosek, MosekTools
 using Optim
 using Transducers
 using Random
