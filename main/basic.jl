@@ -11,7 +11,6 @@ using Plots, StatsPlots
 ENV["GKSwstype"]="nul"  # deactivate X server needs
 using DataFrames
 using Statistics
-using ForwardDiff
 using LinearAlgebra
 using SCS
 
@@ -88,7 +87,6 @@ function optimise_test(approximator, data, min_nt, max_nt)
     bchmkr = res_timed.time / d  # average time
     @test res.minimiser |> size == (m, d)  # optimise; minimiser
     @test res.optval |> size == (1, d)  # optimise; optval
-    hessians = 1:d |> Map(i -> ForwardDiff.hessian(u -> approximator(_xs[:, i], u)[1], res.minimiser[:, i])) |> collect
     # compare true and estimated minimisers and optvals
     minimisers_true = 1:d |> Map(i -> zeros(m)) |> collect
     optvals_true = 1:d |> Map(i -> target_function(data.x[i], minimisers_true[i])) |> collect
@@ -102,7 +100,6 @@ function optimise_test(approximator, data, min_nt, max_nt)
                benchmark = bchmkr,
                minimisers_diff_norm=minimisers_diff_norm,
                optvals_diff_abs=optvals_diff_abs,
-               hessians=hessians,
               )
     return _result
 end
@@ -263,7 +260,7 @@ function main(n, m; epochs=100, seed=2021)
     mkpath(_dir_save)
     results = approximators |> Map(approximator -> test_all(approximator, data, epochs, min_nt, max_nt)) |> collect
     for (approximator, result) in zip(approximators, results)
-        @unpack benchmark, minimisers_diff_norm, optvals_diff_abs, hessians, = result
+        @unpack benchmark, minimisers_diff_norm, optvals_diff_abs, = result
         push!(df, (;
                    n=n, m=m, epochs=epochs,
                    approximator=approximator_type(approximator),
@@ -273,8 +270,6 @@ function main(n, m; epochs=100, seed=2021)
                    no_of_minimiser_success=minimisers_diff_norm |> collect |> length,
                    no_of_optval_success=optvals_diff_abs |> collect |> length,
                    number_of_parameters=approximator |> number_of_parameters,
-                   cond_hessian_mean=hessians |> Map(cond) |> collect |> mean,  # the mean condition number of hessians
-                   cond_hessian_max=hessians |> Map(cond) |> collect |> maximum,  # the mean condition number of hessians
                   );
               cols=:union,
               promote=true,
