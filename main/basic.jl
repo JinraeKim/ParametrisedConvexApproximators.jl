@@ -252,12 +252,12 @@ function main(n, m; epochs=100, seed=2021)
     pma = PMA(n, m, i_max, h_array, act)
     plse = PLSE(n, m, i_max, T, h_array, act)
     approximators = (;
-                     # fnn=fnn,
-                     # ma=ma,
+                     fnn=fnn,
+                     ma=ma,
                      lse=lse,
-                     # picnn=picnn,
-                     # pma=pma,
-                     # plse=plse,
+                     picnn=picnn,
+                     pma=pma,
+                     plse=plse,
                     )
     _dir_save = joinpath(__dir_save, "n=$(n)_m=$(m)_epochs=$(epochs)")
     mkpath(_dir_save)
