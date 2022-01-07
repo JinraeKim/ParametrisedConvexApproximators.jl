@@ -15,7 +15,7 @@ using LinearAlgebra
 using SCS
 
 
-__dir_save = "test/basic"
+__dir_save = "main/basic"
 
 
 function target_function(x, u)
