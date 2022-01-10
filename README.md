@@ -169,7 +169,7 @@ The following result is from `main/basic.jl`.
 #### Results
 - Run as
 ```julia
-include("test/basic.jl")
+include("main/basic.jl")
 main(1, 1); main(61, 20); main(376, 17)  # second run
 ```
 
