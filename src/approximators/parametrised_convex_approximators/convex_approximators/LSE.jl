@@ -41,7 +41,10 @@ end
 Flux.@functor LSE (_α_is, _β_is,)
 
 
-function (nn::LSE)(z::Array)
+"""
+Considering univariate function approximator
+"""
+function (nn::LSE)(z::AbstractArray)
     is_vector = length(size(z)) == 1
     @unpack T = nn
     z_affine = affine_map(nn, z)
@@ -58,6 +61,10 @@ end
 """
 Considering bivariate function approximator
 """
-function (nn::LSE)(x::Array, u::Union{Array, Convex.AbstractExpr})
+function (nn::LSE)(x::AbstractArray, u::AbstractArray)
     nn(vcat(x, u))
+end
+
+function (nn::LSE)(x::AbstractArray, u::Convex.AbstractExpr)
+    nn(vcat(Convex.Constant(x), u))  # if x is a ComponentArray, vcat(⋅, ⋅) becomes ambiguous
 end

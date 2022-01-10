@@ -1,37 +1,28 @@
 module ParametrisedConvexApproximators
 
-# using Debugger  # tmp
 using Flux
-using Random
-using Transducers
-using Convex
-# import Convex
-using Mosek, MosekTools
 using UnPack
-using RecipesBase: AbstractPlot, plot!
-using Statistics: mean, std
+using Convex
+using SCS  # 211207; currently not compatible with apple silicon
+using Optim
+using Transducers
+using Random
 
-# data structure
-export xufData
-export partitionTrainTest
-## normaliser
-export IdentityNormaliser, MinMaxNormaliser, StandardNormalDistributionNormaliser
+
 # approximators
-export NormalisedApproximator
-export ParametrisedConvexApproximator, ConvexApproximator
-export FNN
-export MA, LSE
-export PMA, PLSE
-# training
-export train_approximator!
-export plot_approx!
-export solve!
+export AbstractApproximator, FNN
+export ConvexApproximator, MA, LSE
+export ParametrisedConvexApproximator, PMA, PLSE
+export PICNN, project_nonnegative!
+export optimise, number_of_parameters
+# data manipulation
+export partitionTrainTest
 
 
-include("data_manipulation/data_manipulation.jl")
+# approximators
 include("approximators/approximators.jl")
-include("training/training.jl")
-include("visualisation/visualisation.jl")
+include("optimise.jl")
+include("data_manipulation/data_manipulation.jl")
 
 
 end  # module

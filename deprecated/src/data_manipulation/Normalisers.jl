@@ -71,6 +71,22 @@ struct MinMaxNormaliser <: AbstractNormaliser
         max_nt = (; x=maximum(_xs, dims=2)[:], u=maximum(_us, dims=2)[:], f=maximum(_fs, dims=2)[:])  # vectorise
         new(min_nt, max_nt)
     end
+    function MinMaxNormaliser(data::xurx_nextData)
+        @unpack x, u, r, x_next = data
+        _xs = hcat(x...)
+        _us = hcat(u...)
+        _rs = hcat(r...)
+        _x_nexts = hcat(x_next...)
+        # min_nt = (; x=minimum(_xs, dims=2)[:], u=minimum(_us, dims=2)[:], r=minimum(_rs, dims=2)[:], x_next=minimum(_x_nexts, dims=2)[:])  # vectorise
+        # max_nt = (; x=maximum(_xs, dims=2)[:], u=maximum(_us, dims=2)[:], r=maximum(_rs, dims=2)[:], x_next=maximum(_x_nexts, dims=2)[:])  # vectorise
+        # TODO: f should be normalised by r...?
+        min_nt = (; x=minimum(_xs, dims=2)[:], u=minimum(_us, dims=2)[:], f=minimum(_rs, dims=2)[:])  # vectorise
+        max_nt = (; x=maximum(_xs, dims=2)[:], u=maximum(_us, dims=2)[:], f=maximum(_rs, dims=2)[:])  # vectorise
+        new(min_nt, max_nt)
+    end
+    function MinMaxNormaliser(min_nt, max_nt)
+        new(min_nt, max_nt)
+    end
 end
 
 """
@@ -83,7 +99,19 @@ function normalise(normaliser::MinMaxNormaliser, z::Convex.AbstractExpr, name)
     (z - getproperty(min_nt, name)) ./ (getproperty(max_nt, name) - getproperty(min_nt, name))
 end
 
-function normalise(normaliser::MinMaxNormaliser, z, name)
+"""
+# Note
+`normalise` has two methods for AbstractArray and AbstractMatrix;
+if you adopt only one method with broadcasting (e.g., `.-`),
+when `z`'s dimension is one, it gives a result even if
+the normaliser is defined for `m`-dimensional data (`m > 1`).
+"""
+function normalise(normaliser::MinMaxNormaliser, z::AbstractArray, name)
+    @unpack min_nt, max_nt = normaliser
+    (z - getproperty(min_nt, name)) ./ (getproperty(max_nt, name) - getproperty(min_nt, name))
+end
+
+function normalise(normaliser::MinMaxNormaliser, z::AbstractMatrix, name)
     @unpack min_nt, max_nt = normaliser
     (z .- getproperty(min_nt, name)) ./ (getproperty(max_nt, name) - getproperty(min_nt, name))
 end

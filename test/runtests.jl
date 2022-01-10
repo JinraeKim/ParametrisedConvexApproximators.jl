@@ -5,5 +5,14 @@ using Random
 @testset "ParametrisedConvexApproximators" begin
     seed = 2021
     Random.seed!(seed)
-    include("approximators.jl")
+    core()
+    # auxiliary()
+end
+
+function core()
+    include("basic.jl")
+end
+
+function auxiliary()
+    include("solver.jl")
 end

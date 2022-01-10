@@ -6,20 +6,16 @@ version = "0.1.0"
 [deps]
 Convex = "f65535da-76fb-5f13-bab9-19810c17039a"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
-Mosek = "6405355b-0ac2-5fba-af84-adbd65488c0e"
-MosekTools = "1ec41992-ff65-5c91-ac43-2df89e9693a4"
-Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
-RecipesBase = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
-Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+Optim = "429524aa-4258-5aef-a3af-852621145aeb"
+SCS = "c946c3f1-0d1f-5ce8-9dea-7daa1f7e2d13"
 Transducers = "28d57a85-8fef-5791-bfe6-a80928e7c999"
 UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 
 [compat]
 Convex = "0.14"
 Flux = "0.12"
-RecipesBase = "1.1"
+Optim = "1.5"
 Transducers = "0.4"
-UnPack = "1.0"
 julia = "1"
 
 [extras]
