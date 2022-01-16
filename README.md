@@ -145,9 +145,9 @@ considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
 
 
 ## Notes
-### To-do list
-- [ ] Q-learning via differentiable convex programming
-- [ ] Greatest convex minorant (GCM) approach
+<!-- ### To-do list -->
+<!-- - [ ] Q-learning via differentiable convex programming -->
+<!-- - [ ] Greatest convex minorant (GCM) approach -->
 
 
 ### Benchmark
