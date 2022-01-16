@@ -19,6 +19,7 @@ It will reduce computation time for minimising networks w.r.t. multiple points.
 ParametrisedConvexApproximators.jl focuses on providing predefined approximators including parametrised convex approximators.
 Note that when approximators receive two arguments, the first and second arguments correspond to
 condition and decision vectors, usually denoted by `x` and `u`.
+
 ### Network construction
 ```julia
 using ParametrisedConvexApproximators
@@ -150,10 +151,11 @@ considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
 
 
 ### Benchmark
+The benchmark result is reported in [3] using ParametrisedConvexApproximator.jl v0.1.1.
+The following benchmark result may be slightly different from the original paper.
 - Note: to avoid first-run latency due to JIT compilation of Julia, the elapsed times are obtained from second-run.
 The following result is from `main/basic.jl`.
 - Note: run on ADM Ryzen:tm: 9 5900X.
-- Note: the result may be slightly different from the original paper [3].
 
 - `n`: dimension of condition variable `x`
 - `m`: dimension of decision variable `u`
