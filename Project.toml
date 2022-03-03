@@ -12,7 +12,7 @@ Transducers = "28d57a85-8fef-5791-bfe6-a80928e7c999"
 UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 
 [compat]
-Convex = "0.14"
+Convex = "0.14, 0.15"
 Flux = "0.12"
 Optim = "1.5"
 SCS = "0.8"
