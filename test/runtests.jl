@@ -3,6 +3,6 @@ using Random
 
 
 @testset "ParametrisedConvexApproximators" begin
-    # include("data_manipulation.jl")  # TODO
     include("networks.jl")
+    include("data_manipulation.jl")  # TODO
 end

@@ -145,7 +145,7 @@ end
 function test_all(approximator, data, epochs, min_nt, max_nt)
     # split data
     xs_us_fs = zip(data.x, data.u, data.f) |> collect
-    xs_us_fs_train, xs_us_fs_test = partitionTrainTest(xs_us_fs, 0.9)  # 90:10
+    xs_us_fs_train, xs_us_fs_test = split_data2(xs_us_fs, 0.9)  # 90:10
     data_train = (;
                   x=xs_us_fs_train |> Map(xuf -> xuf[1]) |> collect,
                   u=xs_us_fs_train |> Map(xuf -> xuf[2]) |> collect,
