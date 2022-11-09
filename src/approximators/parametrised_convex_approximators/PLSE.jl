@@ -23,7 +23,7 @@ x and u should be arrays.
 For example, u = [1] for the one-element case.
 """
 function (nn::PLSE)(x::AbstractArray, u::AbstractArray)
-    @unpack T = nn
+    (; T) = nn
     is_vector = length(size(x)) == 1
     @assert is_vector == (length(size(u)) == 1)
     x = is_vector ? reshape(x, :, 1) : x
@@ -35,7 +35,7 @@ function (nn::PLSE)(x::AbstractArray, u::AbstractArray)
 end
 
 function (nn::PLSE)(x::AbstractArray, u::Convex.AbstractExpr)
-    @unpack T = nn
+    (; T) = nn
     tmp = affine_map(nn, x, u)
     res = [T * Convex.logsumexp((1/T)*tmp)]
 end

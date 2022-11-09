@@ -1,7 +1,6 @@
 module ParametrisedConvexApproximators
 
 using Flux
-using UnPack
 using Convex
 using SCS  # 211207; currently not compatible with apple silicon
 using Optim

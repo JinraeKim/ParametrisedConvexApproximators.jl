@@ -46,14 +46,14 @@ Considering univariate function approximator
 """
 function (nn::LSE)(z::AbstractArray)
     is_vector = length(size(z)) == 1
-    @unpack T = nn
+    (; T) = nn
     z_affine = affine_map(nn, z)
     _res = T * Flux.logsumexp((1/T)*z_affine; dims=1)
     res = is_vector ? reshape(_res, 1) : _res
 end
 
 function (nn::LSE)(z::Convex.AbstractExpr)
-    @unpack T = nn
+    (; T) = nn
     z_affine = affine_map(nn, z)
     _res = [T * Convex.logsumexp((1/T)*z_affine)]
 end

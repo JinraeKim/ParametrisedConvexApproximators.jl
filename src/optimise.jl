@@ -16,7 +16,7 @@ Available solvers include SCS [2], COSMO [3], Mosek [4], etc.
 function _optimise(approximator::ParametrisedConvexApproximator, x::AbstractVector, u_min, u_max;
         solver=SCS,
     )
-    @unpack m = approximator
+    (; m) = approximator
     u = Convex.Variable(m)
     if u_min != nothing
         @assert length(u) == length(u_min)
@@ -49,7 +49,7 @@ Default solver is `IPNewton` in Optim.jl for box constraints [1].
 [1] https://julianlsolvers.github.io/Optim.jl/stable/#examples/generated/ipnewton_basics/#box-minimzation
 """
 function _optimise(approximator::AbstractApproximator, x::AbstractVector, u_min, u_max)
-    @unpack m = approximator
+    (; m) = approximator
     obj(u) = approximator(x, u)[1]
     if u_min == nothing
         u_min = Float64[]  # no constraint
@@ -77,7 +77,7 @@ function optimise(approximator::AbstractApproximator, x::AbstractVector;
     )
     minimiser, optval = _optimise(approximator, x, u_min, u_max)
     if minimiser == nothing
-        @unpack m = approximator
+        (; m) = approximator
         minimiser = repeat([nothing], m)
     end
     result = (; minimiser=minimiser, optval=optval)
