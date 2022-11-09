@@ -68,7 +68,7 @@ function _optimise(approximator::AbstractApproximator, x::AbstractVector, u_min,
     dfc = TwiceDifferentiableConstraints(u_min, u_max)
     res = Optim.optimize(obj, dfc, u_guess, IPNewton())
     minimiser = prod(size(u_guess)) == 1 ? res.minimizer[1] : res.minimizer
-    optval = res.minimum
+    optval = [res.minimum]  # to make it a vector
     minimiser, optval
 end
 
