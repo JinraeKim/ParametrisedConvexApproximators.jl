@@ -49,7 +49,7 @@ Default solver is `IPNewton` in Optim.jl for box constraints [1].
 [1] https://julianlsolvers.github.io/Optim.jl/stable/#examples/generated/ipnewton_basics/#box-minimzation
 """
 function _optimise(approximator::AbstractApproximator, x::AbstractVector, u_min, u_max)
-    (; m = approximator)
+    (; m) = approximator
     obj(u) = approximator(x, u)[1]
     if u_min == nothing
         u_min = Float64[]  # no constraint
