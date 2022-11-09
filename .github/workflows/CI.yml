@@ -2,10 +2,10 @@ name: CI
 on:
   pull_request:
     branches:
-      - [ master, develop ]
+      - master
   push:
     branches:
-      - [ master, develop ]
+      - master
 
 env:
   DISPLAY: ':99'
