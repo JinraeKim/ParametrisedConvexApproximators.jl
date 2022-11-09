@@ -16,7 +16,7 @@ export ParametrisedConvexApproximator, PMA, PLSE
 export PICNN, project_nonnegative!
 export optimise, number_of_parameters
 # data manipulation
-export partitionTrainTest
+export split_data2, split_data3
 
 
 # approximators
