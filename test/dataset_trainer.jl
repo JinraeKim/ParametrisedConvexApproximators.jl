@@ -29,12 +29,13 @@ function test_SimpleDataset(func_name, split)
 end
 
 
-function test_SupervisedLearningTrainer(dataset, network; epochs=1)
-    trainer = SupervisedLearningTrainer(dataset, network)
-    @infiltrate
-    for i in 1:epochs
+function test_SupervisedLearningTrainer(dataset_train, dataset_validate, dataset_test, network; epochs=2)
+    trainer = SupervisedLearningTrainer(dataset_train, dataset_validate, dataset_test, network)
+    for epoch in 1:epochs
+        println("epoch: $(epoch)/$(epochs)")
         Flux.train!(trainer)
     end
+    @show get_loss(trainer, :test)
 end
 
 
@@ -48,9 +49,11 @@ end
 
 
 function test_trainer()
-    dataset = test_SimpleDataset(:quadratic, :train)  # for training
+    dataset_train = test_SimpleDataset(:quadratic, :train)  # for trainer
+    dataset_validate = test_SimpleDataset(:quadratic, :validate)  # for trainer
+    dataset_test = test_SimpleDataset(:quadratic, :test)  # for trainer
     network = PLSE(n, m, i_max, T, h_array, act)
-    test_SupervisedLearningTrainer(dataset, network)
+    test_SupervisedLearningTrainer(dataset_train, dataset_validate, dataset_test, network)
 end
 
 

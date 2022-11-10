@@ -20,6 +20,7 @@ export split_data2, split_data3
 export SimpleDataset
 # trainer
 export SupervisedLearningTrainer
+export get_loss
 
 
 # approximators
