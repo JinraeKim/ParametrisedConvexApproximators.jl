@@ -4,5 +4,6 @@ using Random
 
 @testset "ParametrisedConvexApproximators" begin
     include("networks.jl")
-    include("data_manipulation.jl")  # TODO
+    include("data_manipulation.jl")
+    include("dataset.jl")
 end

@@ -16,12 +16,15 @@ export PICNN, project_nonnegative!
 export optimise, number_of_parameters
 # data manipulation
 export split_data2, split_data3
+# dataset
+export SimpleDataset
 
 
 # approximators
 include("approximators/approximators.jl")
 include("optimise.jl")
 include("data_manipulation/data_manipulation.jl")
+include("dataset/dataset.jl")
 
 
 end  # module
