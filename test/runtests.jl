@@ -2,7 +2,7 @@ using Test
 using Random
 
 
-@testset "ParametrisedConvexApproximators" begin
+@testset "ParameterizedConvexApproximators" begin
     include("networks.jl")
     include("data_manipulation.jl")
     include("dataset_trainer.jl")

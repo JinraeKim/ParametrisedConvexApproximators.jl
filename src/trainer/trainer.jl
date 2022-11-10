@@ -36,15 +36,14 @@ end
 function Flux.train!(
         trainer::SupervisedLearningTrainer;
         batchsize=16,
-        throttle_time=5.0,  # [s]
+        throttle_time=5,  # [s]
     )
     (; loss, network, optimizer, dataset_train, dataset_validate) = trainer
     @assert dataset_train.split == :train
-    evalcb = function()
+    cb = Flux.throttle(throttle_time) do
         println("loss_train: $(get_loss(trainer, :train))")
         println("loss_validate: $(get_loss(trainer, :validate))")
     end
-    cb = Flux.throttle(evalcb, throttle_time)
     parameters = Flux.params(network)
     data_train = Flux.DataLoader((
         hcat(dataset_train.conditions...),

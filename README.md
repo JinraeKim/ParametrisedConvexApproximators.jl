@@ -1,134 +1,135 @@
 # Notes
-- "Parametrised" was changed to "Parameterized" in the title of the paper [3].
-- For a Python package, see [pcapprox](https://github.com/JinraeKim/pcapprox).
-    - It may be a private repo though.
+- The name is changed from `ParametrisedConvexApproximators` to `ParameterizedConvexApproximators`.
 
 
-# ParametrisedConvexApproximators
-
-[ParametrisedConvexApproximators.jl](https://github.com/JinraeKim/ParametrisedConvexApproximators.jl) is a Julia package providing predefined pararmetrised convex approximators and related functionalities.
+# ParameterizedConvexApproximators
+[ParameterizedConvexApproximators.jl](https://github.com/JinraeKim/ParameterizedConvexApproximators.jl)
+is a Julia package providing predefined parameterized convex approximators and related functionalities.
 An official package for simulation in [3].
 
 
 ## Installation
-To install ParametrisedConvexApproximator,
-please open Julia's interactive session (known as REPL) and press `]` key
+To install ParameterizedConvexApproximator,
+please open Julia's interactive session (a.k.a REPL) and press `]` key
 in the REPL to use the package mode, then type the following command
 
 ```julia
-pkg> add ParametrisedConvexApproximator
+pkg> add ParameterizedConvexApproximator
 ```
 
 ### Notes
 - Activate multi-threading if available, e.g., `julia -t 7` enabling `7` threads.
-It will reduce computation time for minimising networks w.r.t. multiple points.
+It will reduce computation time to obtain multiple minimizers.
 
 ## Quick Start
-ParametrisedConvexApproximators.jl focuses on providing predefined approximators including parametrised convex approximators.
+ParameterizedConvexApproximators.jl focuses on providing predefined approximators
+including parameterized convex approximators.
 Note that when approximators receive two arguments, the first and second arguments correspond to
 condition and decision vectors, usually denoted by `x` and `u`.
 
 ### Network construction
 ```julia
-using ParametrisedConvexApproximators
+using ParameterizedConvexApproximators
 using Flux
-using Transducers
-using Flux
-using Flux: DataLoader
 using Random  # for random seed
 
 # construction
-Random.seed!(2021)
-n, m = 2, 3
+seed = 2022
+Random.seed!(seed)
+n, m = 3, 2
 i_max = 20
-T = 1e-1
+T = 1.0
 h_array = [64, 64]
 act = Flux.leakyrelu
-plse = PLSE(n, m, i_max, T, h_array, act)  # parametrised log-sum-exp (PLSE) network
+network = PLSE(n, m, i_max, T, h_array, act)  # parameterized log-sum-exp (PLSE) network
 x, u = rand(n), rand(m)
-f̂ = plse(x, u)
+f̂ = network(x, u)
 @show f̂
 ```
 
 ```julia
-f̂ = [0.3113165298981473]
+f̂ = [2.9972948397933683]  # size(f̂) = (1,)
 ```
 
-### Network training (as usual in [Flux.jl](https://github.com/FluxML/Flux.jl))
+### Prepare dataset
 ```julia
-f(x, u) = [0.5 * ( -(1/length(x))*x'*x + (1/length(u))*u'*u )]  # target function
-d = 5_000  # no. of data
-# data generation
-xs = 1:d |> Map(i -> -ones(n) + 2*ones(n) .* rand(n)) |> collect  # ∈ [-1, 1]^{n}
-us = 1:d |> Map(i -> -ones(m) + 2*ones(m) .* rand(m)) |> collect  # ∈ [-1, 1]^{m}
-fs = zip(xs, us) |> MapSplat((x, u) -> f(x, u)) |> collect
-_xs = hcat(xs...)
-_us = hcat(us...)
-_fs = hcat(fs...)
-indices_train, indices_test = partitionTrainTest(1:d, 0.8)  # exported from `ParametrisedConvexApproximators`; train:test = 80:20
-dataloader = DataLoader((_xs[:, indices_train], _us[:, indices_train], _fs[:, indices_train],), batchsize=16)
-# training
-loss(x, u, f) = Flux.Losses.mse(f, plse(x, u))
-ps = Flux.params(plse)
-opt = ADAM(1e-3)
-epochs = 100
-for epoch in 0:epochs
-    if epoch != 0
-        Flux.train!(loss, ps, dataloader, opt)
-    end
-    if epoch % 10 == 0
-        println("epoch = $(epoch) / $(epochs)")
-        @show loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test])
-    end
+min_condition = -ones(n)
+max_condition = +ones(n)
+min_decision = -ones(m)
+max_decision = +ones(m)
+func_name = :quadratic  # f(x, u) = transpose(x)*x + transpose(u)*u
+N = 1_000
+
+dataset = Dict()
+for split in (:train, :validate, :test)
+    dataset[split] = SimpleDataset(
+        func_name, split;
+        N=N, n=n, m=m, seed=seed,
+        min_condition=min_condition,
+        max_condition=max_condition,
+        min_decision=min_decision,
+        max_decision=max_decision,
+    )
+end
+@show dataset
+```
+
+```julia
+Dict{Any, Any} with 3 entries:
+  :test     => SimpleDataset((target_function = func, target_function_name = :quadratic, split_ratio = (train = 0.7, validate = 0.2, test = 0.1), min_conditi…
+  :train    => SimpleDataset((target_function = func, target_function_name = :quadratic, split_ratio = (train = 0.7, validate = 0.2, test = 0.1), min_conditi…
+  :validate => SimpleDataset((target_function = func, target_function_name = :quadratic, split_ratio = (train = 0.7, validate = 0.2, test = 0.1), min_conditi…
+```
+
+### Network training
+```julia
+epochs = 200
+trainer = SupervisedLearningTrainer(dataset[:train], dataset[:validate], dataset[:test], network)
+
+@show get_loss(trainer, :train)
+@show get_loss(trainer, :validate)
+for epoch in 1:epochs
+    println("epoch: $(epoch)/$(epochs)")
+    Flux.train!(trainer)
 end
 ```
 
 ```julia
-epoch = 0 / 100
-loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 0.14123486681126265
-epoch = 10 / 100
-loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 9.20156070602013e-5
-epoch = 20 / 100
-loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 8.428795608023727e-5
-epoch = 30 / 100
-loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 6.0756725678295076e-5
-epoch = 40 / 100
-loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 7.063355164819796e-5
-epoch = 50 / 100
-loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 6.08100029278485e-5
-epoch = 60 / 100
-loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 4.319644378100754e-5
-epoch = 70 / 100
-loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 7.028416247739685e-5
-epoch = 80 / 100
-loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 2.713945900329595e-5
-epoch = 90 / 100
-loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 3.524764563503706e-5
-epoch = 100 / 100
-loss(_xs[:, indices_test], _us[:, indices_test], _fs[:, indices_test]) = 3.102460393375972e-5
+get_loss(trainer, :train) = 2.2769195120551933
+get_loss(trainer, :validate) = 2.1979592520382782
+
+...
+epoch: 199/200
+loss_train: 0.0006266152701661066
+loss_validate: 0.0016607687304338987
+epoch: 200/200
+loss_train: 0.0006160065356733662
+loss_validate: 0.0016429337946183937
 ```
 
-### Conditional decision making via optimisation (given `x`, find a minimiser `u` and optimal value)
+### Conditional decision making via optimization (given `x`, find a minimizer `u` and optimal value)
 ```julia
-# optimisation
-x = [0.1, 0.2]  # any value
-u_min, u_max = -1*ones(m), 1*ones(m)
-res = optimise(plse, x; u_min=u_min, u_max=u_max)  # minimsation
+# optimization
+Random.seed!(seed)
+x = rand(n)  # any value
+res = optimize(network, x; u_min=min_decision, u_max=max_decision)  # minimsation
 @show res  # NamedTuple
+@show dataset[:train].metadata.target_function(x, res.minimizer)
 ```
 
 ```julia
-res = (minimiser = [-0.027399600684580954, -0.0075144942411888155, -0.015772687025402597], optval = [-0.007673806913150762])
+res = (minimizer = [-0.02104153539730755, -0.01888282109115546], optval = [1.116781939734353])
+(dataset[:train]).metadata.target_function(x, res.minimizer) = 1.1032538504349
 ```
 
 ## Documentation
 ### Types
 - `AbstractApproximator` is an abstract type of approximator.
-- `ParametrisedConvexApproximator <: AbstractApproximator` is an abstract type of parametrised convex approximator.
-- `ConvexApproximator <: ParametrisedConvexApproximator` is an abstract type of convex approximator.
+- `ParameterizedConvexApproximator <: AbstractApproximator` is an abstract type of parameterized convex approximator.
+- `ConvexApproximator <: ParameterizedConvexApproximator` is an abstract type of convex approximator.
 
 ### Approximators
-- All approximators in ParametrisedConvexApproximators.jl receive two arguments, namely, `x` and `u`.
+- All approximators in ParameterizedConvexApproximators.jl receive two arguments, namely, `x` and `u`.
 When `x` and `u` are vectors whose lengths are `n` and `m`, respectively,
 the output of an approximator is **one-length vector**.
     - Note that `x` and `u` can be matrices, whose sizes are `(n, d)` and `(m, d)`,
@@ -139,39 +140,33 @@ the output of an approximator is **one-length vector**.
     - `FNN::AbstractApproximator`: feedforward neural network
     - `MA::ConvexApproximator`: max-affine (MA) network [1]
     - `LSE::ConvexApproximator`: log-sum-exp (LSE) network [1]
-    - `PICNN::ParametrisedConvexApproximator`: partially input-convex neural network (PICNN) [2]
-    - `PMA::ParametrisedConvexApproximator`: parametrised MA (PMA) network [3]
-    - `PLSE::ParametrisedConvexApproximator`: parametrised LSE (PLSE) network [3]
+    - `PICNN::ParameterizedConvexApproximator`: partially input-convex neural network (PICNN) [2]
+    - `PMA::ParameterizedConvexApproximator`: parameterized MA (PMA) network [3]
+    - `PLSE::ParameterizedConvexApproximator`: parameterized LSE (PLSE) network [3]
 
 ### Utilities
 - `(nn::approximator)(x, u)` gives an inference (approximate function value).
-- `res = optimise(approximator, x; u_min=nothing, u_max=nothing)` provides
-minimiser and optimal value (optval) for given `x` as `res.minimiser` and `res.optval`
+- `res = optimize(approximator, x; u_min=nothing, u_max=nothing)` provides
+minimizer and optimal value (optval) for given `x` as `res.minimizer` and `res.optval`
 considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
     - The condition variable `x` can be a vector, i.e., `size(x) = (n,)`,
     or a matrix for parallel solve (via multi-threading), i.e., `size(x) = (n, d)`.
 
 
-## Notes
-<!-- ### To-do list -->
-<!-- - [ ] Q-learning via differentiable convex programming -->
-<!-- - [ ] Greatest convex minorant (GCM) approach -->
-
-
-### Benchmark
-The benchmark result is reported in [3] using ParametrisedConvexApproximator.jl v0.1.1.
+## Benchmark
+The benchmark result is reported in [3] using ParameterizedConvexApproximator.jl v0.1.1.
 The following benchmark result may be slightly different from the original paper.
 - Note: to avoid first-run latency due to JIT compilation of Julia, the elapsed times are obtained from second-run.
-The following result is from `main/basic.jl`.
-- Note: run on ADM Ryzen:tm: 9 5900X.
+The following result is from `main/basic.jl` in ParameterizedConvexApproximators.jl v0.1.1 (currently deprecated).
+- Note: it was run on ADM Ryzen:tm: 9 5900X.
 
 - `n`: dimension of condition variable `x`
 - `m`: dimension of decision variable `u`
 - `epochs`: training epochs
 - `approximator`: the type of approximator
-- `minimisers_diff_norm_mean`: the mean value of 2-norm of the difference between true and estimated minimisers
+- `minimizers_diff_norm_mean`: the mean value of 2-norm of the difference between true and estimated minimizers
 - `optvals_diff_abs_mean`: the mean value of absolute of the difference between true and estimated optimal values
-- `no_of_minimiser_success_cases`: failure means no minimiser has been found (`NaN`)
+- `no_of_minimizer_success_cases`: failure means no minimizer has been found (`NaN`)
 - `no_of_optval_success_cases`: failure means invalid optimal value has been found (`-Inf` or `Inf)
 - `number_of_parameters`: the number of network parameters
 
@@ -185,7 +180,7 @@ main(1, 1); main(61, 20); main(376, 17)  # second run
 
 - (n, m) = (1, 1)
 ```julia
- Row │ n      m      epochs  approximator  optimise_time_mean  minimisers_diff_norm_mean  optvals_diff_abs_mean  no_of_minimiser_success  no_of_optval_success  number_of_parameters
+ Row │ n      m      epochs  approximator  optimize_time_mean  minimizers_diff_norm_mean  optvals_diff_abs_mean  no_of_minimizer_success  no_of_optval_success  number_of_parameters
      │ Int64  Int64  Int64   String        Float64             Float64                    Float64                Int64                    Int64                 Int64
 ─────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
    1 │     1      1     100  FNN                  0.000777166                 0.0339567              0.00835098                      500                   500                  4417
@@ -198,7 +193,7 @@ main(1, 1); main(61, 20); main(376, 17)  # second run
 
 - (n, m) = (61, 20)
 ```julia
- Row │ n      m      epochs  approximator  optimise_time_mean  minimisers_diff_norm_mean  optvals_diff_abs_mean  no_of_minimiser_success  no_of_optval_success  number_of_parameters
+ Row │ n      m      epochs  approximator  optimize_time_mean  minimizers_diff_norm_mean  optvals_diff_abs_mean  no_of_minimizer_success  no_of_optval_success  number_of_parameters
      │ Int64  Int64  Int64   String        Float64             Float64                    Float64                Int64                    Int64                 Int64
 ─────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
    1 │    61     20     100  FNN                   0.0354606                     3.19316              0.172008                       500                   500                  9473
@@ -211,7 +206,7 @@ main(1, 1); main(61, 20); main(376, 17)  # second run
 
 - (n, m) = (376, 17)
 ```julia
- Row │ n      m      epochs  approximator  optimise_time_mean  minimisers_diff_norm_mean  optvals_diff_abs_mean  no_of_minimiser_success  no_of_optval_success  number_of_parameters
+ Row │ n      m      epochs  approximator  optimize_time_mean  minimizers_diff_norm_mean  optvals_diff_abs_mean  no_of_minimizer_success  no_of_optval_success  number_of_parameters
      │ Int64  Int64  Int64   String        Float64             Float64                    Float64                Int64                    Int64                 Int64
 ─────┼───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
    1 │   376     17     100  FNN                   0.0312941                     2.95216              0.165991                       500                   500                 29441
