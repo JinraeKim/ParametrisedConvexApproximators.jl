@@ -31,6 +31,8 @@ end
 
 function test_SupervisedLearningTrainer(dataset_train, dataset_validate, dataset_test, network; epochs=2)
     trainer = SupervisedLearningTrainer(dataset_train, dataset_validate, dataset_test, network)
+    @show get_loss(trainer, :train)
+    @show get_loss(trainer, :validate)
     for epoch in 1:epochs
         println("epoch: $(epoch)/$(epochs)")
         Flux.train!(trainer)
