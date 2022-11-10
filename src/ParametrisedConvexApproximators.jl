@@ -18,6 +18,9 @@ export optimise, number_of_parameters
 export split_data2, split_data3
 # dataset
 export SimpleDataset
+# trainer
+export SupervisedLearningTrainer
+export get_loss
 
 
 # approximators
@@ -25,6 +28,7 @@ include("approximators/approximators.jl")
 include("optimise.jl")
 include("data_manipulation/data_manipulation.jl")
 include("dataset/dataset.jl")
+include("trainer/trainer.jl")
 
 
 end  # module
