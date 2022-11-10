@@ -37,4 +37,4 @@ end
 
 
 include("FNN.jl")
-include("parametrised_convex_approximators/parametrised_convex_approximators.jl")
+include("parameterized_convex_approximators/parameterized_convex_approximators.jl")

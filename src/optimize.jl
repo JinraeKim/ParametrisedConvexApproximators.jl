@@ -1,9 +1,9 @@
 """
-    _optimise(approximator::ParametrisedConvexApproximator, x::AbstractVector;
+    _optimize(approximator::ParameterizedConvexApproximator, x::AbstractVector;
         u_min=nothing, u_max=nothing,
     )
 
-Find a minimiser and optimal value (optval) of `approximator::ParametrisedConvexApproximator` for given
+Find a minimizer and optimal value (optval) of `approximator::ParameterizedConvexApproximator` for given
 data point `x::AbstractVector`.
 Solve with Convex.jl [1].
 Available solvers include SCS [2], COSMO [3], Mosek [4], etc.
@@ -13,7 +13,7 @@ Available solvers include SCS [2], COSMO [3], Mosek [4], etc.
 [3] https://github.com/oxfordcontrol/COSMO.jl
 [4] https://github.com/MOSEK/Mosek.jl
 """
-function _optimise(approximator::ParametrisedConvexApproximator, x::AbstractVector, u_min, u_max;
+function _optimize(approximator::ParameterizedConvexApproximator, x::AbstractVector, u_min, u_max;
         solver=SCS,
     )
     (; m) = approximator
@@ -32,23 +32,23 @@ function _optimise(approximator::ParametrisedConvexApproximator, x::AbstractVect
         problem.constraints += [u <= u_max]
     end
     solve!(problem, solver.Optimizer(); verbose=false, silent_solver=true)
-    minimiser = typeof(u.value) <: Number ? [u.value] : u.value[:]  # to make it a vector
+    minimizer = typeof(u.value) <: Number ? [u.value] : u.value[:]  # to make it a vector
     optval = [problem.optval]  # to make it a vector
-    minimiser, optval
+    minimizer, optval
 end
 
 """
-    _optimise(approximator::AbstractApproximator, x::AbstractVector;
+    _optimize(approximator::AbstractApproximator, x::AbstractVector;
         u_min=nothing, u_max=nothing,
     )
 
-Find a minimiser and optimal value (optval) of `approximator::AbstractApproximator` (non-parametrised-convex) for given
+Find a minimizer and optimal value (optval) of `approximator::AbstractApproximator` (non-parameterized-convex) for given
 data point `x::AbstractVector`.
 Default solver is `IPNewton` in Optim.jl for box constraints [1].
 # Refs.
 [1] https://julianlsolvers.github.io/Optim.jl/stable/#examples/generated/ipnewton_basics/#box-minimzation
 """
-function _optimise(approximator::AbstractApproximator, x::AbstractVector, u_min, u_max)
+function _optimize(approximator::AbstractApproximator, x::AbstractVector, u_min, u_max)
     (; m) = approximator
     obj(u) = approximator(x, u)[1]
     if u_min == nothing
@@ -67,38 +67,38 @@ function _optimise(approximator::AbstractApproximator, x::AbstractVector, u_min,
     end
     dfc = TwiceDifferentiableConstraints(u_min, u_max)
     res = Optim.optimize(obj, dfc, u_guess, IPNewton())
-    minimiser = prod(size(u_guess)) == 1 ? res.minimizer[1] : res.minimizer
+    minimizer = prod(size(u_guess)) == 1 ? res.minimizer[1] : res.minimizer
     optval = [res.minimum]  # to make it a vector
-    minimiser, optval
+    minimizer, optval
 end
 
-function optimise(approximator::AbstractApproximator, x::AbstractVector;
+function optimize(approximator::AbstractApproximator, x::AbstractVector;
         u_min=nothing, u_max=nothing,
     )
-    minimiser, optval = _optimise(approximator, x, u_min, u_max)
-    if minimiser == nothing
+    minimizer, optval = _optimize(approximator, x, u_min, u_max)
+    if minimizer == nothing
         (; m) = approximator
-        minimiser = repeat([nothing], m)
+        minimizer = repeat([nothing], m)
     end
-    result = (; minimiser=minimiser, optval=optval)
+    result = (; minimizer=minimizer, optval=optval)
 end
 
 """
-    optimise(approximator::AbstractApproximator, x::AbstractMatrix;
+    optimize(approximator::AbstractApproximator, x::AbstractMatrix;
         u_min=nothing, u_max=nothing,
     )
 
-Find a minimiser and optimal value (optval) of `approximator::AbstractApproximator` for given
+Find a minimizer and optimal value (optval) of `approximator::AbstractApproximator` for given
 data point `x::AbstractMatrix` using multi-thread computing (powered by Transducers.jl).
 """
-function optimise(approximator::AbstractApproximator, x::AbstractMatrix;
+function optimize(approximator::AbstractApproximator, x::AbstractMatrix;
         u_min=nothing, u_max=nothing,
         multithreading=true,
     )
     collector = multithreading ? Transducers.tcollect : collect
     d = size(x)[2]
-    ress = 1:d |> Map(i -> optimise(approximator, x[:, i]; u_min=u_min, u_max=u_max)) |> collector
-    minimiser_matrix = hcat((ress |> Map(res -> res.minimiser) |> collector)...)
+    ress = 1:d |> Map(i -> optimize(approximator, x[:, i]; u_min=u_min, u_max=u_max)) |> collector
+    minimizer_matrix = hcat((ress |> Map(res -> res.minimizer) |> collector)...)
     optval_matrix = hcat((ress |> Map(res -> res.optval) |> collector)...)
-    (; minimiser = minimiser_matrix, optval = optval_matrix)
+    (; minimizer = minimizer_matrix, optval = optval_matrix)
 end

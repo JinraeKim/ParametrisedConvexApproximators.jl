@@ -3,7 +3,8 @@
 
 Split a dataset into train and test datasets (array).
 """
-function split_data2(dataset, ratio)
+function split_data2(dataset, ratio; seed=2022)
+    Random.seed!(seed)
     @assert ratio >= 0.0
     @assert ratio <= 1.0
     n = length(dataset)
@@ -19,7 +20,8 @@ end
 
 Split a dataset into train, validate, and test datasets (array).
 """
-function split_data3(dataset, ratio1, ratio2)
+function split_data3(dataset, ratio1, ratio2; seed=2022)
+    Random.seed!(seed)
     @assert ratio1 >= 0.0
     @assert ratio2 >= 0.0
     @assert ratio1 + ratio2 <= 1.0

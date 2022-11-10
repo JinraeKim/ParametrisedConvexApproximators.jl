@@ -1,14 +1,14 @@
-abstract type ParametrisedConvexApproximator <: AbstractApproximator end
+abstract type ParameterizedConvexApproximator <: AbstractApproximator end
 
 
-function affine_map(nn::ParametrisedConvexApproximator, x::AbstractArray, u::AbstractArray)
+function affine_map(nn::ParameterizedConvexApproximator, x::AbstractArray, u::AbstractArray)
     (; NN, i_max, m) = nn
     d = size(x)[2]
     X = reshape(NN(x), i_max, m+1, d)
     tmp = hcat([(X[:, 1:end-1, i]*u[:, i] .+ X[:, end:end, i]) for i in 1:d]...)
 end
 
-function affine_map(nn::ParametrisedConvexApproximator, x::AbstractArray, u::Convex.AbstractExpr)
+function affine_map(nn::ParameterizedConvexApproximator, x::AbstractArray, u::Convex.AbstractExpr)
     (; NN, i_max, m) = nn
     X = reshape(NN(x), i_max, m+1)  # size(X1) = (i_max, m)
     tmp = (

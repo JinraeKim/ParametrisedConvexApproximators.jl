@@ -1,6 +1,6 @@
 using Test
 using Flux
-using ParametrisedConvexApproximators
+using ParameterizedConvexApproximators
 using Transducers
 using Random
 
@@ -50,22 +50,22 @@ function test_infer(network; seed=2022)
 end
 
 
-function test_optimise(network; seed=2022)
-    println("test_optimise")
+function test_optimize(network; seed=2022)
+    println("test_optimize")
     Random.seed!(seed)
     x = rand(n)
-    (; minimiser, optval) = optimise(network, x; u_min=u_min, u_max=u_max)
-    @test size(minimiser) == (m,)
+    (; minimizer, optval) = optimize(network, x; u_min=u_min, u_max=u_max)
+    @test size(minimizer) == (m,)
     @test size(optval) == (1,)
 end
 
 
-function test_optimise_multiple(network; seed=2022)
-    println("test_optimise_multiple")
+function test_optimize_multiple(network; seed=2022)
+    println("test_optimize_multiple")
     Random.seed!(seed)
     x = rand(n, d)
-    (; minimiser, optval) = optimise(network, x; u_min=u_min, u_max=u_max)
-    @test size(minimiser) == (m, d)
+    (; minimizer, optval) = optimize(network, x; u_min=u_min, u_max=u_max)
+    @test size(minimizer) == (m, d)
     @test size(optval) == (1, d)
 end
 
@@ -83,8 +83,8 @@ end
 function test_network(network)
     test_infer(network)
     test_infer_multiple(network)
-    test_optimise(network)
-    test_optimise_multiple(network)
+    test_optimize(network)
+    test_optimize_multiple(network)
 end
 
 

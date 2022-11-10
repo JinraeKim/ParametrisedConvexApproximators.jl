@@ -1,4 +1,4 @@
-module ParametrisedConvexApproximators
+module ParameterizedConvexApproximators
 
 using Flux
 using Convex
@@ -11,9 +11,9 @@ using Random
 # approximators
 export AbstractApproximator, FNN
 export ConvexApproximator, MA, LSE
-export ParametrisedConvexApproximator, PMA, PLSE
+export ParameterizedConvexApproximator, PMA, PLSE
 export PICNN, project_nonnegative!
-export optimise, number_of_parameters
+export optimize, number_of_parameters
 # data manipulation
 export split_data2, split_data3
 # dataset
@@ -25,7 +25,7 @@ export get_loss
 
 # approximators
 include("approximators/approximators.jl")
-include("optimise.jl")
+include("optimize.jl")
 include("data_manipulation/data_manipulation.jl")
 include("dataset/dataset.jl")
 include("trainer/trainer.jl")

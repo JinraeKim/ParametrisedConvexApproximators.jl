@@ -1,5 +1,5 @@
 using Test
-using ParametrisedConvexApproximators
+using ParameterizedConvexApproximators
 
 
 n = 3

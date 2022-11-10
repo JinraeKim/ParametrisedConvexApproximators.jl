@@ -10,7 +10,7 @@ Partially input convex neural network [1].
 `g̃` and `g` denote activation functions of `x`- and `y`- paths, respectively.
 Furthermore, `u` and `z` denote `x`- and `y`-path variables, respectively.
 """
-struct PICNN <: ParametrisedConvexApproximator
+struct PICNN <: ParameterizedConvexApproximator
     n::Int
     m::Int
     NN::Flux.Chain
