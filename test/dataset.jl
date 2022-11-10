@@ -1,5 +1,6 @@
 using Test
 using ParametrisedConvexApproximators
+using LinearAlgebra
 
 
 n, m = 3, 2
@@ -24,7 +25,7 @@ end
 
 
 function main()
-    for func_name in [:quadratic]
+    for func_name in [:quadratic, (x, u) -> norm(x)+norm(u)]
         for split in [:train, :validate, :test]
             test_SimpleDataset(func_name, split)
         end

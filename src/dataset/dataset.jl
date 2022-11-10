@@ -14,11 +14,17 @@ function sample_from_bounds(N, min_value, max_value, seed)
 end
 
 
-function target_function(name::Symbol)
-    if name == :quadratic
-        func(x::Vector, u::Vector) = transpose(x)*x + transpose(u)*u
+function target_function(name)
+    if typeof(name) == Symbol
+        if name == :quadratic
+            func(x::Vector, u::Vector) = transpose(x)*x + transpose(u)*u
+        else
+            error("Undefined simple function")
+        end
+    elseif typeof(name) <: Function
+        func = name
     else
-        error("Undefined simple function")
+        error("Invalid target function type $(typeof(name))")
     end
     return func
 end
@@ -31,7 +37,7 @@ struct SimpleDataset <: DecisionMakingDataset
     decisions::Array
     costs::Array
     function SimpleDataset(
-            func_name::Symbol,
+            func,
             split::Symbol;
             n::Int=1, m::Int=1,
             N::Int=1_000, seed=2022,
@@ -55,12 +61,13 @@ struct SimpleDataset <: DecisionMakingDataset
             idx = test_idx
         end
         # get data
-        f = target_function(func_name)
+        f = target_function(func)
         conditions = sample_from_bounds(N, min_condition, max_condition, seed)[idx]
         decisions = sample_from_bounds(N, min_decision, max_decision, seed)[idx]
         costs = zip(conditions, decisions) |> MapSplat((x, u) -> f(x, u)) |> collect
         metadata = (;
-                    target_function_name=func_name,
+                    target_function=f,
+                    target_function_name=typeof(func) == Symbol ? func : nothing,
                     split_ratio=(;
                                  train=ratio1,
                                  validate=ratio2,
