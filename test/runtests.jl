@@ -5,6 +5,5 @@ using Random
 @testset "ParametrisedConvexApproximators" begin
     include("networks.jl")
     include("data_manipulation.jl")
-    include("dataset.jl")
-    include("trainer.jl")
+    include("dataset_trainer.jl")
 end
