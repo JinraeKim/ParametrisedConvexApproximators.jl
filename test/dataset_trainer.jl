@@ -1,7 +1,7 @@
 using Test
 using ParameterizedConvexApproximators
 using Flux
-using JLD2, FileIO
+# using JLD2, FileIO
 
 
 n, m = 3, 2
@@ -79,8 +79,8 @@ function test_trainer()
     network = PLSE(n, m, i_max, T, h_array, act)
     best_network = test_SupervisedLearningTrainer(dataset, network)
     # save and load example
-    save("example.jld2"; best_network=best_network, network=network)
-    best_network_ = load("example.jld2")["best_network"]
+    # save("example.jld2"; best_network=best_network, network=network)
+    # best_network_ = load("example.jld2")["best_network"]
 end
 
 
