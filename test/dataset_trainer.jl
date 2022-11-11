@@ -1,6 +1,7 @@
 using Test
 using ParameterizedConvexApproximators
 using Flux
+# using JLD2, FileIO
 
 
 n, m = 3, 2
@@ -14,30 +15,53 @@ min_condition = -ones(n)
 max_condition = -ones(n)
 min_decision = +ones(m)
 max_decision = +ones(m)
+ratio1 = 0.7
+ratio2 = 0.2
+
+
+function test_split_data2()
+    dataset = []
+    for i in 1:N
+        push!(dataset, rand(n))
+    end
+    dataset_train, dataset_test = split_data2(dataset, ratio1)
+    @test length(dataset_train) == round(N * ratio1)
+    @test length(dataset_test) == round(N * (1-ratio1))
+end
+
+
+function test_split_data3()
+    dataset = []
+    for i in 1:N
+        push!(dataset, rand(n))
+    end
+    dataset_train, dataset_validate, dataset_test = split_data3(dataset, ratio1, ratio2)
+    @test length(dataset_train) == round(N * ratio1)
+    @test length(dataset_validate) == round(N * ratio2)
+    @test length(dataset_test) == round(N * (1-(ratio1+ratio2)))
+end
 
 
 function test_SimpleDataset(func_name, split)
     dataset = SimpleDataset(
-        func_name, split;
+        func_name;
         N=N, n=n, m=m, seed=seed,
         min_condition=min_condition,
         max_condition=max_condition,
         min_decision=min_decision,
         max_decision=max_decision,
    )
-    return dataset
+    return dataset[split]
 end
 
 
-function test_SupervisedLearningTrainer(dataset_train, dataset_validate, dataset_test, network; epochs=2)
-    trainer = SupervisedLearningTrainer(dataset_train, dataset_validate, dataset_test, network)
+function test_SupervisedLearningTrainer(dataset, network; epochs=2)
+    trainer = SupervisedLearningTrainer(dataset, network)
     @show get_loss(trainer, :train)
     @show get_loss(trainer, :validate)
-    for epoch in 1:epochs
-        println("epoch: $(epoch)/$(epochs)")
-        Flux.train!(trainer)
-    end
+    best_network = Flux.train!(trainer)
     @show get_loss(trainer, :test)
+    return best_network
 end
 
 
@@ -51,15 +75,18 @@ end
 
 
 function test_trainer()
-    dataset_train = test_SimpleDataset(:quadratic, :train)  # for trainer
-    dataset_validate = test_SimpleDataset(:quadratic, :validate)  # for trainer
-    dataset_test = test_SimpleDataset(:quadratic, :test)  # for trainer
+    dataset = test_SimpleDataset(:quadratic, :full)  # for trainer
     network = PLSE(n, m, i_max, T, h_array, act)
-    test_SupervisedLearningTrainer(dataset_train, dataset_validate, dataset_test, network)
+    best_network = test_SupervisedLearningTrainer(dataset, network)
+    # save and load example
+    # save("example.jld2"; best_network=best_network, network=network)
+    # best_network_ = load("example.jld2")["best_network"]
 end
 
 
 function main()
+    test_split_data2()
+    test_split_data3()
     test_dataset()
     test_trainer()
 end
