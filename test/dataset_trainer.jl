@@ -59,7 +59,7 @@ function test_SupervisedLearningTrainer(dataset, network; epochs=2)
     trainer = SupervisedLearningTrainer(dataset, network)
     @show get_loss(trainer, :train)
     @show get_loss(trainer, :validate)
-    best_network = Flux.train!(trainer)
+    best_network = Flux.train!(trainer; epochs=epochs)
     @show get_loss(trainer, :test)
     return best_network
 end
