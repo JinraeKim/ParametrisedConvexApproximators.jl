@@ -26,7 +26,6 @@ export get_loss
 # approximators
 include("approximators/approximators.jl")
 include("optimize.jl")
-include("data_manipulation/data_manipulation.jl")
 include("dataset/dataset.jl")
 include("trainer/trainer.jl")
 

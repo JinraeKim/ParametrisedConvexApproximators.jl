@@ -1,35 +1,6 @@
 abstract type DecisionMakingDataset end
 
 
-function sample_from_bounds(N, min_value, max_value, seed)
-    samples = []
-    for i in 1:N
-        sampled_value = (
-             min_value
-             + (max_value - min_value) .* rand(size(min_value)...)
-        )
-        push!(samples, sampled_value)
-    end
-    return samples
-end
-
-
-function target_function(name)
-    if typeof(name) == Symbol
-        if name == :quadratic
-            func(x::Vector, u::Vector) = transpose(x)*x + transpose(u)*u
-        else
-            error("Undefined simple function")
-        end
-    elseif typeof(name) <: Function
-        func = name
-    else
-        error("Invalid target function type $(typeof(name))")
-    end
-    return func
-end
-
-
 struct SimpleDataset <: DecisionMakingDataset
     metadata::NamedTuple
     split::Symbol
@@ -95,4 +66,66 @@ function Base.getindex(dataset::SimpleDataset, split)
         dataset_ = SimpleDataset(metadata, split, conditions[idx], decisions[idx], costs[idx])
     end
     return dataset_
+end
+
+
+"""
+    split_data2(dataset, ratio)
+
+Split a dataset into train and test datasets (array).
+"""
+function split_data2(dataset, ratio; seed=2022)
+    Random.seed!(seed)
+    @assert ratio >= 0.0
+    @assert ratio <= 1.0
+    n = length(dataset)
+    idx = Random.shuffle(1:n)
+    train_idx = view(idx, 1:floor(Int, ratio*n))
+    test_idx = view(idx, (floor(Int, ratio*n)+1):n)
+    dataset[train_idx], dataset[test_idx]
+end
+
+
+"""
+    split_data3(dataset, ratio1, ratio2)
+
+Split a dataset into train, validate, and test datasets (array).
+"""
+function split_data3(dataset, ratio1, ratio2; seed=2022)
+    Random.seed!(seed)
+    @assert ratio1 >= 0.0
+    @assert ratio2 >= 0.0
+    @assert ratio1 + ratio2 <= 1.0
+    dataset_train, dataset_valtest = split_data2(dataset, ratio1)
+    dataset_validate, dataset_test = split_data2(dataset_valtest, ratio2/(1.0-ratio1))
+    return dataset_train, dataset_validate, dataset_test
+end
+
+
+function sample_from_bounds(N, min_value, max_value, seed)
+    samples = []
+    for i in 1:N
+        sampled_value = (
+             min_value
+             + (max_value - min_value) .* rand(size(min_value)...)
+        )
+        push!(samples, sampled_value)
+    end
+    return samples
+end
+
+
+function target_function(name)
+    if typeof(name) == Symbol
+        if name == :quadratic
+            func(x::Vector, u::Vector) = transpose(x)*x + transpose(u)*u
+        else
+            error("Undefined simple function")
+        end
+    elseif typeof(name) <: Function
+        func = name
+    else
+        error("Invalid target function type $(typeof(name))")
+    end
+    return func
 end
