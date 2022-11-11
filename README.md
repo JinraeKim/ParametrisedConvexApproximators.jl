@@ -137,6 +137,7 @@ the output of an approximator is **one-length vector**.
     - `PICNN::ParameterizedConvexApproximator`: partially input-convex neural network (PICNN) [2]
     - `PMA::ParameterizedConvexApproximator`: parameterized MA (PMA) network [3]
     - `PLSE::ParameterizedConvexApproximator`: parameterized LSE (PLSE) network [3]
+        - The default setting (`strict`) is slightly different from [3], see [#37](https://github.com/JinraeKim/ParameterizedConvexApproximators.jl/pull/37).
 
 ### Utilities
 - `(nn::approximator)(x, u)` gives an inference (approximate function value).
