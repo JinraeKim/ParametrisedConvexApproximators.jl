@@ -5,29 +5,22 @@ struct SupervisedLearningTrainer <: AbstractTrainer
     loss
     network
     optimizer
-    dataset_train
-    dataset_validate
-    dataset_test
+    dataset
     function SupervisedLearningTrainer(
-        dataset_train, dataset_validate, dataset_test, network;
+        dataset, network;
         loss=(x, u, f) -> Flux.mse(network(x, u), f),  # TODO: what agg?
-        optimizer=Adam(1e-3),
+        optimizer=Adam(1e-4),
     )
-        new(loss, network, optimizer, dataset_train, dataset_validate, dataset_test)
+        @assert dataset.split == :full
+        new(loss, network, optimizer, dataset)
     end
 end
 
 
 function get_loss(trainer::SupervisedLearningTrainer, split::Symbol)
     @assert split ∈ (:train, :validate, :test)
+    dataset = trainer.dataset[split]
     (; loss) = trainer
-    if split == :train
-        dataset = trainer.dataset_train
-    elseif split == :validate
-        dataset = trainer.dataset_validate
-    else split == :test
-        dataset = trainer.dataset_test
-    end
     l = loss(hcat(dataset.conditions...), hcat(dataset.decisions...), hcat(dataset.costs...))
     return l
 end
@@ -38,17 +31,16 @@ function Flux.train!(
         batchsize=16,
         throttle_time=5,  # [s]
     )
-    (; loss, network, optimizer, dataset_train, dataset_validate) = trainer
-    @assert dataset_train.split == :train
+    (; loss, network, optimizer, dataset) = trainer
     cb = Flux.throttle(throttle_time) do
         println("loss_train: $(get_loss(trainer, :train))")
         println("loss_validate: $(get_loss(trainer, :validate))")
     end
     parameters = Flux.params(network)
     data_train = Flux.DataLoader((
-        hcat(dataset_train.conditions...),
-        hcat(dataset_train.decisions...),
-        hcat(dataset_train.costs...),
+        hcat(dataset[:train].conditions...),
+        hcat(dataset[:train].decisions...),
+        hcat(dataset[:train].costs...),
     ); batchsize=batchsize)
     Flux.train!(loss, parameters, data_train, optimizer; cb=cb)
 end

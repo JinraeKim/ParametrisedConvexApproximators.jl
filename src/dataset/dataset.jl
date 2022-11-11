@@ -36,48 +36,63 @@ struct SimpleDataset <: DecisionMakingDataset
     conditions::Array
     decisions::Array
     costs::Array
-    function SimpleDataset(
-            func,
-            split::Symbol;
-            n::Int=1, m::Int=1,
-            N::Int=1_000, seed=2022,
-            ratio1=0.7, ratio2=0.2,
-            min_condition=-ones(n),
-            max_condition=+ones(n),
-            min_decision=-ones(m),
-            max_decision=+ones(m),
-        )
-        @assert split ∈ (:train, :validate, :test)
-        @assert all(min_condition .<= max_condition)
-        @assert all(min_decision .<= max_decision)
-        # split indicies
-        Random.seed!(seed)
-        train_idx, validate_idx, test_idx = split_data3(collect(1:N), ratio1, ratio2)
+end
+
+function SimpleDataset(
+        func;
+        n::Int=1, m::Int=1,
+        N::Int=1_000, seed=2022,
+        ratio1=0.7, ratio2=0.2,
+        min_condition=-ones(n),
+        max_condition=+ones(n),
+        min_decision=-ones(m),
+        max_decision=+ones(m),
+    )
+    @assert all(min_condition .<= max_condition)
+    @assert all(min_decision .<= max_decision)
+    # split indicies
+    Random.seed!(seed)
+    train_idx, validate_idx, test_idx = split_data3(collect(1:N), ratio1, ratio2)
+    # get data
+    f = target_function(func)
+    conditions = sample_from_bounds(N, min_condition, max_condition, seed)
+    decisions = sample_from_bounds(N, min_decision, max_decision, seed)
+    costs = zip(conditions, decisions) |> MapSplat((x, u) -> f(x, u)) |> collect
+    metadata = (;
+                target_function=f,
+                target_function_name=typeof(func) == Symbol ? func : nothing,
+                split_ratio=(;
+                             train=ratio1,
+                             validate=ratio2,
+                             test=1-(ratio1+ratio2),
+                            ),
+                min_condition=min_condition,
+                max_condition=max_condition,
+                min_decision=min_decision,
+                max_decision=max_decision,
+                train_idx=train_idx,
+                validate_idx=validate_idx,
+                test_idx=test_idx,
+               )
+    return SimpleDataset(metadata, :full, conditions, decisions, costs)
+end
+
+
+
+function Base.getindex(dataset::SimpleDataset, split)
+    (; metadata, conditions, decisions, costs) = dataset
+    @assert split in (:train, :validate, :test, :full)
+    if split == :full
+        dataset_ = dataset
+    else
         if split == :train
-            idx = train_idx
+            idx = metadata.train_idx
         elseif split == :validate
-            idx = validate_idx
+            idx = metadata.validate_idx
         else
-            idx = test_idx
+            idx = metadata.test_idx
         end
-        # get data
-        f = target_function(func)
-        conditions = sample_from_bounds(N, min_condition, max_condition, seed)[idx]
-        decisions = sample_from_bounds(N, min_decision, max_decision, seed)[idx]
-        costs = zip(conditions, decisions) |> MapSplat((x, u) -> f(x, u)) |> collect
-        metadata = (;
-                    target_function=f,
-                    target_function_name=typeof(func) == Symbol ? func : nothing,
-                    split_ratio=(;
-                                 train=ratio1,
-                                 validate=ratio2,
-                                 test=1-(ratio1+ratio2),
-                                ),
-                    min_condition=min_condition,
-                    max_condition=max_condition,
-                    min_decision=min_decision,
-                    max_decision=max_decision,
-                   )
-        new(metadata, split, conditions, decisions, costs)
+        dataset_ = SimpleDataset(metadata, split, conditions[idx], decisions[idx], costs[idx])
     end
+    return dataset_
 end

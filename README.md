@@ -58,33 +58,22 @@ max_condition = +ones(n)
 min_decision = -ones(m)
 max_decision = +ones(m)
 func_name = :quadratic  # f(x, u) = transpose(x)*x + transpose(u)*u
-N = 1_000
+N = 5_000
 
-dataset = Dict()
-for split in (:train, :validate, :test)
-    dataset[split] = SimpleDataset(
-        func_name, split;
-        N=N, n=n, m=m, seed=seed,
-        min_condition=min_condition,
-        max_condition=max_condition,
-        min_decision=min_decision,
-        max_decision=max_decision,
-    )
-end
-@show dataset
-```
-
-```julia
-Dict{Any, Any} with 3 entries:
-  :test     => SimpleDataset((target_function = func, target_function_name = :quadratic, split_ratio = (train = 0.7, validate = 0.2, test = 0.1), min_conditi…
-  :train    => SimpleDataset((target_function = func, target_function_name = :quadratic, split_ratio = (train = 0.7, validate = 0.2, test = 0.1), min_conditi…
-  :validate => SimpleDataset((target_function = func, target_function_name = :quadratic, split_ratio = (train = 0.7, validate = 0.2, test = 0.1), min_conditi…
+dataset = SimpleDataset(
+    func_name;
+    N=N, n=n, m=m, seed=seed,
+    min_condition=min_condition,
+    max_condition=max_condition,
+    min_decision=min_decision,
+    max_decision=max_decision,
+)
 ```
 
 ### Network training
 ```julia
 epochs = 200
-trainer = SupervisedLearningTrainer(dataset[:train], dataset[:validate], dataset[:test], network)
+trainer = SupervisedLearningTrainer(dataset, network; optimizer=Adam(1e-4))
 
 @show get_loss(trainer, :train)
 @show get_loss(trainer, :validate)
@@ -92,19 +81,24 @@ for epoch in 1:epochs
     println("epoch: $(epoch)/$(epochs)")
     Flux.train!(trainer)
 end
+@show get_loss(trainer, :test)
 ```
 
 ```julia
-get_loss(trainer, :train) = 2.2769195120551933
-get_loss(trainer, :validate) = 2.1979592520382782
+get_loss(trainer, :train) = 2.2485971763998576
+get_loss(trainer, :validate) = 2.288581633859485
 
 ...
+
+
 epoch: 199/200
-loss_train: 0.0006266152701661066
-loss_validate: 0.0016607687304338987
+loss_train: 0.0001672882024953069
+loss_validate: 0.0002682474510180785
 epoch: 200/200
-loss_train: 0.0006160065356733662
-loss_validate: 0.0016429337946183937
+loss_train: 0.00016627992642691757
+loss_validate: 0.0002670633060886428
+
+get_loss(trainer, :test) = 0.00024842624962788054
 ```
 
 ### Conditional decision making via optimization (given `x`, find a minimizer `u` and optimal value)
@@ -118,8 +112,8 @@ res = optimize(network, x; u_min=min_decision, u_max=max_decision)  # minimsatio
 ```
 
 ```julia
-res = (minimizer = [-0.02104153539730755, -0.01888282109115546], optval = [1.116781939734353])
-(dataset[:train]).metadata.target_function(x, res.minimizer) = 1.1032538504349
+res = (minimizer = [-0.006072644282314285, 0.009363546949627488], optval = [1.1356929322723475])
+(dataset[:train]).metadata.target_function(x, res.minimizer) = 1.1025790963107207
 ```
 
 ## Documentation
@@ -151,6 +145,12 @@ minimizer and optimal value (optval) for given `x` as `res.minimizer` and `res.o
 considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
     - The condition variable `x` can be a vector, i.e., `size(x) = (n,)`,
     or a matrix for parallel solve (via multi-threading), i.e., `size(x) = (n, d)`.
+
+### Dataset
+- `SimpleDataset <: DecisionMakingDataset` is used for analytically-expressed cost functions.
+
+### Trainer
+- `SupervisedLearningTrainer`
 
 
 ## Benchmark
