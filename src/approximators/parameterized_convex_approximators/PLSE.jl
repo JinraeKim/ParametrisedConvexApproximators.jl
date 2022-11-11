@@ -4,10 +4,11 @@ struct PLSE <: ParameterizedConvexApproximator
     i_max::Int
     T::Real
     NN::Flux.Chain
-    function PLSE(n::Int, m::Int, i_max::Int, T::Real, h_array::Vector{Int}, act)
+    strict::Bool
+    function PLSE(n::Int, m::Int, i_max::Int, T::Real, h_array::Vector{Int}, act; strict=true)
         @assert T > 0
         node_array = [n, h_array..., i_max*(m+1)]
-        new(n, m, i_max, T, construct_layer_array(node_array, act))
+        new(n, m, i_max, T, construct_layer_array(node_array, act), strict)
     end
 end
 
