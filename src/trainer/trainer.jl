@@ -9,7 +9,7 @@ struct SupervisedLearningTrainer <: AbstractTrainer
     function SupervisedLearningTrainer(
         dataset, network;
         loss=(x, u, f) -> Flux.mse(network(x, u), f),
-        optimizer=Adam(1e-4),
+        optimizer=Adam(1e-3),
     )
         @assert dataset.split == :full
         new(loss, network, optimizer, dataset)
@@ -64,7 +64,7 @@ function Flux.train!(
         end
     end
     # plot
-    p = plot(; xlabel="epoch", ylabel="loss")
+    p = plot(; xlabel="epoch", ylabel="loss", yaxis=:log)
     plot!(p, 0:epochs, losses_train, label="train")
     plot!(p, 0:epochs, losses_validate, label="validate")
     savefig(p, "loss.pdf")  # TODO: better file name

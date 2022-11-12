@@ -6,7 +6,7 @@ using Flux
 
 n, m = 3, 2
 i_max = 20
-T = 1.0
+T = 1e-0
 h_array = [64, 64]
 act = Flux.leakyrelu
 N = 1_000
@@ -66,7 +66,12 @@ end
 
 
 function test_dataset()
-    for func_name in [:quadratic, (x, u) -> sum(x)+sum(u)]
+    for func_name in [
+                      :quadratic,
+                      :parameterized_convex_basic,
+                      :quadratic_sin_sum,
+                      (x, u) -> sum(x)+sum(u),  # anonymous function example
+                     ]
         for split in [:train, :validate, :test]
             test_SimpleDataset(func_name, split)
         end
@@ -76,7 +81,10 @@ end
 
 function test_trainer()
     dataset = test_SimpleDataset(:quadratic, :full)  # for trainer
+    # dataset = test_SimpleDataset(:parameterized_convex_basic, :full)  # for trainer
+    # dataset = test_SimpleDataset(:quadratic_sin_sum, :full)  # for trainer
     network = PLSE(n, m, i_max, T, h_array, act)
+    # network = FNN(n, m, h_array, act)
     best_network = test_SupervisedLearningTrainer(dataset, network)
     # save and load example
     # save("example.jld2"; best_network=best_network, network=network)
