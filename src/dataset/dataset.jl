@@ -127,11 +127,11 @@ Get a target function.
 function target_function(name)
     if typeof(name) == Symbol
         if name == :quadratic
-            func = (x::Vector, u::Vector) -> transpose(x)*x + transpose(u)*u
+            func = (x::Vector, u::Vector) -> x'*x + u'*u
         elseif name == :parameterized_convex_basic  # [1]
-            func = (x::Vector, u::Vector) -> -transpose(x)*x + transpose(u)*u
+            func = (x::Vector, u::Vector) -> -x'*x + u'*u
         elseif name == :quadratic_sin_sum  # [2, Example 3] is modified
-            func = (x::Vector, u::Vector) -> transpose(x)*x + transpose(u)*u + sum(sin.(2*pi*u))
+            func = (x::Vector, u::Vector) -> x'*x + u'*u + sum(sin.(2*pi*u))
         else
             error("Undefined simple function")
         end

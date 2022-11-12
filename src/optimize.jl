@@ -37,6 +37,64 @@ function _optimize(approximator::ParameterizedConvexApproximator, x::AbstractVec
     minimizer, optval
 end
 
+
+"""
+    _optimize(approximator::DifferenceOfConvexApproximator, x::AbstractVector;
+        u_min=nothing, u_max=nothing,
+    )
+
+Find a minimizer and optimal value (optval) of `approximator::DifferenceOfConvexApproximator` for given data point `x::AbstractVector`.
+
+Basic DCA [1] is used.
+# Refs.
+[1] H. A. Le Thi and T. Pham Dinh, “DC programming and DCA: thirty years of developments,” Math. Program., vol. 169, no. 1, pp. 5–68, May 2018, doi: 10.1007/s10107-018-1235-y.
+[2] https://github.com/Corrado-possieri/DLSE_neural_networks/commit/8883e5bcf1733b79b2dd3c432b31af30b4bba0a6#diff-aa888e053028cc6dbd9f0cfb1c30f61f1bde256be213f27b9a083b95292ec5ebR26
+"""
+function _optimize(approximator::DifferenceOfConvexApproximator, x::AbstractVector, u_min, u_max;
+        solver=SCS,
+        max_iter=30,
+        tol=1e-3,  # borrowed from [2]
+    )
+    (; m) = approximator.NN1
+    u = Convex.Variable(m)
+    if u_min != nothing
+        @assert length(u) == length(u_min)
+    end
+    if u_max != nothing
+        @assert length(u) == length(u_max)
+    end
+    # initial guess
+    χ = u_min + (u_max - u_min) .* rand(size(u_min)...)
+    grad_NN2(u) = ForwardDiff.gradient(u -> approximator.NN2(x, u)[1], u)
+    optval = Inf
+    χ_next = nothing
+    k = 0
+    # @time while true
+    while true
+        k = k + 1
+        v = grad_NN2(χ)  # BE CAREFUL: CONSIDER THAT IT IS FOR BIVARIATE FUNCTION
+        problem = minimize(approximator.NN1(x, u)[1] - v'*u)
+        if u_min != nothing
+            problem.constraints += [u >= u_min]
+        end
+        if u_max != nothing
+            problem.constraints += [u <= u_max]
+        end
+        solve!(problem, solver.Optimizer(); verbose=false, silent_solver=true)
+        χ_next = typeof(u.value) <: Number ? [u.value] : u.value[:]  # to make it a vector
+        optval = [problem.optval]
+        if norm(χ_next - χ) / (1+norm(χ)) < tol || k == max_iter
+            # @show k
+            # @show χ, χ_next
+            break
+        end
+        χ = χ_next
+    end
+    minimizer = χ_next
+    minimizer, optval
+end
+
+
 """
     _optimize(approximator::AbstractApproximator, x::AbstractVector;
         u_min=nothing, u_max=nothing,
