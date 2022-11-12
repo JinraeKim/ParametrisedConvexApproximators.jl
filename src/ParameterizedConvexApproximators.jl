@@ -6,6 +6,7 @@ using SCS  # 211207; currently not compatible with apple silicon
 using Optim
 using Transducers
 using Random
+using Plots  # for visualization; may be seperated in near future
 
 
 # approximators
