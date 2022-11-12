@@ -55,7 +55,7 @@ function test_SimpleDataset(func_name, split)
 end
 
 
-function test_SupervisedLearningTrainer(dataset, network; epochs=200)
+function test_SupervisedLearningTrainer(dataset, network; epochs=3)
     trainer = SupervisedLearningTrainer(dataset, network)
     @show get_loss(trainer, :train)
     @show get_loss(trainer, :validate)
