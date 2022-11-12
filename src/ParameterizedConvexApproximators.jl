@@ -7,6 +7,7 @@ using Optim
 using Transducers
 using Random
 using Plots  # for visualization; may be seperated in near future
+using ForwardDiff
 
 
 # approximators
@@ -14,6 +15,7 @@ export AbstractApproximator, FNN
 export ConvexApproximator, MA, LSE
 export ParameterizedConvexApproximator, PMA, PLSE
 export PICNN, project_nonnegative!
+export DifferenceOfConvexApproximator, DLSE
 export optimize, number_of_parameters
 # data manipulation
 export split_data2, split_data3
