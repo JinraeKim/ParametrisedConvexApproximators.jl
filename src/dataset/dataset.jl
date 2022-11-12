@@ -115,10 +115,23 @@ function sample_from_bounds(N, min_value, max_value, seed)
 end
 
 
+"""
+    target_function(name)
+
+Get a target function.
+
+# References
+[1] J. Kim and Y. Kim, “Parameterized Convex Universal Approximators for Decision-Making Problems,” IEEE Trans. Neural Netw. Learning Syst., 2022, doi: 10.1109/TNNLS.2022.3190198.
+[2] G. C. Calafiore, S. Gaubert, and C. Possieri, “A Universal Approximation Result for Difference of Log-Sum-Exp Neural Networks,” IEEE Transactions on Neural Networks and Learning Systems, vol. 31, no. 12, pp. 5603–5612, Dec. 2020, doi: 10.1109/TNNLS.2020.2975051.
+"""
 function target_function(name)
     if typeof(name) == Symbol
         if name == :quadratic
-            func(x::Vector, u::Vector) = transpose(x)*x + transpose(u)*u
+            func = (x::Vector, u::Vector) -> transpose(x)*x + transpose(u)*u
+        elseif name == :parameterized_convex_basic  # [1]
+            func = (x::Vector, u::Vector) -> -transpose(x)*x + transpose(u)*u
+        elseif name == :quadratic_sin_sum  # [2, Example 3] is modified
+            func = (x::Vector, u::Vector) -> transpose(x)*x + transpose(u)*u + sum(sin.(2*pi*u))
         else
             error("Undefined simple function")
         end
