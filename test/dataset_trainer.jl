@@ -12,8 +12,8 @@ act = Flux.leakyrelu
 N = 1_000
 seed = 2022
 min_condition = -ones(n)
-max_condition = -ones(n)
-min_decision = +ones(m)
+max_condition = +ones(n)
+min_decision = -ones(m)
 max_decision = +ones(m)
 ratio1 = 0.7
 ratio2 = 0.2
@@ -55,7 +55,7 @@ function test_SimpleDataset(func_name, split)
 end
 
 
-function test_SupervisedLearningTrainer(dataset, network; epochs=2)
+function test_SupervisedLearningTrainer(dataset, network; epochs=3)
     trainer = SupervisedLearningTrainer(dataset, network)
     @show get_loss(trainer, :train)
     @show get_loss(trainer, :validate)
