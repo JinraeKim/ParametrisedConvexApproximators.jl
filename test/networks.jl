@@ -14,18 +14,16 @@ u_array = vcat(64, z_array...)
 act = Flux.leakyrelu
 i_max = 20
 T = 1.0
-α_is = 1:i_max |> Map(i -> Flux.glorot_uniform(n+m)) |> collect
-β_is = 1:i_max |> Map(i -> Flux.glorot_uniform(1)) |> collect
 u_min = -ones(m)
 u_max = ones(m)
 
 
 function generate_networks()
     fnn = FNN(n, m, h_array, act)
-    ma = MA(α_is, β_is; n=n, m=m)
-    lse = LSE(α_is, β_is, T; n=n, m=m)
+    ma = MA(n, m, i_max)
+    lse = LSE(n, m, i_max, T)
     picnn = PICNN(n, m, u_array, z_array, act, act)
-    pma = PMA(n, m, i_max, h_array, act)
+    pma = PMA(n, m, T, h_array, act)
     plse = PLSE(n, m, i_max, T, h_array, act)
     dlse = DLSE(
                 LSE(α_is, β_is, T; n=n, m=m),

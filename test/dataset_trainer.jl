@@ -10,10 +10,6 @@ i_max = 20
 T = 1e-0
 h_array = [64, 64]
 act = Flux.leakyrelu
-α_is = 1:i_max |> Map(i -> Flux.glorot_uniform(n+m)) |> collect
-β_is = 1:i_max |> Map(i -> Flux.glorot_uniform(1)) |> collect
-α_is_prime = 1:i_max |> Map(i -> Flux.glorot_uniform(n+m)) |> collect
-β_is_prime = 1:i_max |> Map(i -> Flux.glorot_uniform(1)) |> collect
 N = 1_000
 seed = 2022
 min_condition = -ones(n)
@@ -90,10 +86,10 @@ function test_trainer()
     # dataset = test_SimpleDataset(:quadratic_sin_sum, :full)  # for trainer
     network = PLSE(n, m, i_max, T, h_array, act)
     # network = FNN(n, m, h_array, act)
-    # network = LSE(α_is, β_is, T; n=n, m=m)
+    # network = LSE(n, m, i_max, T)
     # network = DLSE(
-    #                LSE(α_is, β_is, T; n=n, m=m),
-    #                LSE(α_is_prime, β_is_prime, T; n=n, m=m),
+    #                LSE(n, m, i_max, T),
+    #                LSE(n, m, i_max, T),
     #               )
     best_network = test_SupervisedLearningTrainer(dataset, network)
     # save and load example

@@ -7,7 +7,7 @@ If you specify `n` or `m`, it can also be regarded as bivariate function.
 # Variables
 x ∈ ℝ^n
 u ∈ ℝ^m
-z = [xᵀ, uᵀ]ᵀ ∈ ℝ^(n+m)  # l = n+m
+z = [xᵀ, uᵀ]ᵀ ∈ ℝ^(n+m)
 α_is: a vector of subgradients, i.e., α_is[i] ∈ ℝ^(n+m).
 β_is: a vector of bias terms, i.e., β_is[i] ∈ ℝ.
 
@@ -15,24 +15,16 @@ z = [xᵀ, uᵀ]ᵀ ∈ ℝ^(n+m)  # l = n+m
 [1] G. C. Calafiore, S. Gaubert, and C. Possieri, “Log-Sum-Exp Neural Networks and Posynomial Models for Convex and Log-Log-Convex Data,” IEEE Transactions on Neural Networks and Learning Systems, vol. 31, no. 3, pp. 827–838, Mar. 2020, doi: 10.1109/TNNLS.2019.2910417.
 """
 struct MA <: ConvexApproximator
-    l::Int  # n+m
     n::Int  # the first variable for bivariate function
     m::Int  # the second variable for bivariate function
     i_max::Int
     _α_is::Matrix
     _β_is::Matrix
-    function MA(α_is::Vector, β_is::Vector; n=nothing, m=nothing)
-        l, i_max, _α_is, _β_is = _construct_convex_approximator(α_is, β_is)
-        if n != nothing && m != nothing
-            @assert l == n + m
-        elseif n != nothing
-            m = l - n
-            @assert m > 0
-        elseif m != nothing
-            n = l - m
-            @assert n > 0
-        end
-        new(l, n, m, i_max, _α_is, _β_is)
+    function MA(n::Int, m::Int, i_max::Int)
+        α_is = 1:i_max |> Map(i -> Flux.glorot_uniform(n+m)) |> collect
+        β_is = 1:i_max |> Map(i -> Flux.glorot_uniform(1)) |> collect
+        i_max, _α_is, _β_is = _construct_convex_approximator(α_is, β_is)
+        new(n, m, i_max, _α_is, _β_is)
     end
 end
 Flux.@functor MA (_α_is, _β_is,)

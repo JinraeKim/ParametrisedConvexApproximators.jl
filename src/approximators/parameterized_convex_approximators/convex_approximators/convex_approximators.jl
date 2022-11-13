@@ -2,12 +2,11 @@ abstract type ConvexApproximator <: ParameterizedConvexApproximator end
 
 
 function _construct_convex_approximator(α_is::AbstractVector, β_is::AbstractVector)
-    l = length(α_is[1])
     i_max = length(α_is)
     @assert length(β_is) == i_max
     _α_is = hcat(α_is...)'
     _β_is = hcat(β_is...)'
-    l, i_max, _α_is, _β_is
+    i_max, _α_is, _β_is
 end
 
 function affine_map(nn::ConvexApproximator, z::AbstractArray)
