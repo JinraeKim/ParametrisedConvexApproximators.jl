@@ -2,7 +2,7 @@ module ParameterizedConvexApproximators
 
 using Flux
 using Convex
-using SCS  # 211207; currently not compatible with apple silicon
+using SCS  # 120721; currently not compatible with apple silicon
 using Optim
 using Transducers
 using Random
@@ -17,6 +17,7 @@ export ParameterizedConvexApproximator, PMA, PLSE
 export PICNN, project_nonnegative!
 export DifferenceOfConvexApproximator, DLSE
 export optimize, number_of_parameters
+export MaxAbsNormalizedApproximator
 # data manipulation
 export split_data2, split_data3
 # dataset
