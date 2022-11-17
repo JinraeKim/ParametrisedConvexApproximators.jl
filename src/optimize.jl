@@ -68,7 +68,20 @@ function _optimize(network::DifferenceOfConvexApproximator, x::AbstractVector, u
         @assert length(u) == length(u_max)
     end
     # initial guess
-    χ = initial_guess != nothing ? initial_guess : u_min + (u_max - u_min) .* rand(size(u_min)...)
+    if initial_guess == nothing
+        if u_min != nothing && u_max != nothing
+            initial_guess = u_min + (u_max - u_min) .* rand(size(u_min)...)
+        else
+            initial_guess = randn(m)
+            if u_min != nothing
+                initial_guess = maximum(hcat(u_min, initial_guess); dims=2)[:]
+            end
+            if u_max != nothing
+                initial_guess = minimum(hcat(u_max, initial_guess); dims=2)[:]
+            end
+        end
+    end
+    χ = initial_guess
     grad_NN2(u) = ForwardDiff.gradient(u -> network.NN2(x, u)[1], u)
     optval = Inf
     χ_next = nothing
@@ -119,14 +132,17 @@ function _optimize(network::AbstractApproximator, x::AbstractVector, u_min, u_ma
     if u_max == nothing
         u_max = Float64[]  # no constraint
     end
-    # TODO: initial guess; to make sure that `u_min + eps*ones(m) <= initial_guess <= u_max - eps*ones(m)`; this algorithm needs an initial guess in the interior of given box constraints.
     if initial_guess == nothing
-        initial_guess = randn(m)
-        if u_min != Float64[]
-            initial_guess = maximum(hcat(u_min, initial_guess); dims=2)[:] + 2*eps()*ones(m)  # make it an interior point
-        end
-        if u_max != Float64[]
-            initial_guess = minimum(hcat(u_max, initial_guess); dims=2)[:] - eps()*ones(m)  # make it an interior point
+        if u_min != Float64[] && u_max != Float64[]
+            initial_guess = (u_min+eps()*ones(m)) + ((u_max-eps()*ones(m)) - (u_min+eps()*ones(m))) .* rand(size(u_min)...)
+        else
+            initial_guess = randn(m)
+            if u_min != Float64[]
+                initial_guess = maximum(hcat(u_min, initial_guess); dims=2)[:] + eps()*ones(m)  # make it an interior point
+            end
+            if u_max != Float64[]
+                initial_guess = minimum(hcat(u_max, initial_guess); dims=2)[:] - eps()*ones(m)  # make it an interior point
+            end
         end
     end
     dfc = TwiceDifferentiableConstraints(u_min, u_max)
