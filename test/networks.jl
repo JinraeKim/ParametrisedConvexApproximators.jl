@@ -87,11 +87,10 @@ end
 
 
 function test_network(network)
-    # TODO
-    # test_infer(network)
-    # test_infer_multiple(network)
-    # test_optimize(network)
-    # test_optimize_multiple(network)
+    test_infer(network)
+    test_infer_multiple(network)
+    test_optimize(network)
+    test_optimize_multiple(network)
     test_max_abs_normalized_network(network)
 end
 
