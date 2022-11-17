@@ -111,9 +111,6 @@ function test_max_abs_normalized_network(network)
     # optimization
     (; minimizer, optval) = optimize(network, xs ./ x_max_abs; u_min=u_min ./ u_max_abs, u_max=u_max ./ u_max_abs, initial_guess=initial_guess ./ u_max_abs)
     res = optimize(normalized_network, xs; u_min=u_min, u_max=u_max, initial_guess=initial_guess)
-    if minimizer .* u_max_abs != res.minimizer
-        @infiltrate
-    end
     @test minimizer .* u_max_abs ≈ res.minimizer
     @test optval .* f_max_abs ≈ res.optval
 end
