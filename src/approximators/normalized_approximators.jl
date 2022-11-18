@@ -11,8 +11,8 @@ function unnormalize(nn::NormalizedApproximator, args...; kwargs...)
 end
 
 
-struct MaxAbsNormalizedApproximator <: NormalizedApproximator
-    network::AbstractApproximator
+struct MaxAbsNormalizedApproximator{T<:AbstractApproximator} <: NormalizedApproximator
+    network::T
     condition_max_abs::Union{Array, Nothing}
     decision_max_abs::Union{Array, Nothing}
     cost_max_abs::Union{Array, Nothing}
