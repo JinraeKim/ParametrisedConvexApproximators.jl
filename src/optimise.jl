@@ -146,7 +146,7 @@ function _optimise(network::AbstractApproximator, x::AbstractVector, u_min, u_ma
         end
     end
     dfc = TwiceDifferentiableConstraints(u_min, u_max)
-    res = Optim.optimise(obj, dfc, initial_guess, IPNewton())
+    res = Optim.optimize(obj, dfc, initial_guess, IPNewton())
     minimizer = prod(size(initial_guess)) == 1 ? res.minimizer[1] : res.minimizer
     optval = [res.minimum]  # to make it a vector
     minimizer, optval
