@@ -1,20 +1,16 @@
-# Notes
-- Note that the name of this package does not match with the original paper [3].
-
-
 # ParametrisedConvexApproximators
 [ParametrisedConvexApproximators.jl](https://github.com/JinraeKim/ParametrisedConvexApproximators.jl)
-is a Julia package providing predefined parameterized convex approximators and related functionalities.
+is a Julia package providing predefined parametrised convex approximators and related functionalities.
 An official package for simulation in [3].
 
 
 ## Installation
-To install ParameterizedConvexApproximator,
+To install ParametrisedConvexApproximator,
 please open Julia's interactive session (a.k.a REPL) and press `]` key
 in the REPL to use the package mode, then type the following command
 
 ```julia
-pkg> add ParameterizedConvexApproximator
+pkg> add ParametrisedConvexApproximator
 ```
 
 ### Notes
@@ -22,14 +18,14 @@ pkg> add ParameterizedConvexApproximator
 It will reduce computation time to obtain multiple minimizers.
 
 ## Quick Start
-ParameterizedConvexApproximators.jl focuses on providing predefined approximators
-including parameterized convex approximators.
+ParametrisedConvexApproximators.jl focuses on providing predefined approximators
+including parametrised convex approximators.
 Note that when approximators receive two arguments, the first and second arguments correspond to
 condition and decision vectors, usually denoted by `x` and `u`.
 
 ### Network construction
 ```julia
-using ParameterizedConvexApproximators
+using ParametrisedConvexApproximators
 using Flux
 using Random  # for random seed
 
@@ -41,7 +37,7 @@ i_max = 20
 T = 1.0
 h_array = [64, 64]
 act = Flux.leakyrelu
-network = PLSE(n, m, i_max, T, h_array, act)  # parameterized log-sum-exp (PLSE) network
+network = PLSE(n, m, i_max, T, h_array, act)  # parametrised log-sum-exp (PLSE) network
 x, u = rand(n), rand(m)
 f̂ = network(x, u)
 @show f̂
@@ -119,11 +115,11 @@ res = (minimizer = [-0.006072644282314285, 0.009363546949627488], optval = [1.13
 ## Documentation
 ### Types
 - `AbstractApproximator` is an abstract type of approximator.
-- `ParameterizedConvexApproximator <: AbstractApproximator` is an abstract type of parameterized convex approximator.
-- `ConvexApproximator <: ParameterizedConvexApproximator` is an abstract type of convex approximator.
+- `ParametrisedConvexApproximator <: AbstractApproximator` is an abstract type of parametrised convex approximator.
+- `ConvexApproximator <: ParametrisedConvexApproximator` is an abstract type of convex approximator.
 
 ### Approximators
-- All approximators in ParameterizedConvexApproximators.jl receive two arguments, namely, `x` and `u`.
+- All approximators in ParametrisedConvexApproximators.jl receive two arguments, namely, `x` and `u`.
 When `x` and `u` are vectors whose lengths are `n` and `m`, respectively,
 the output of an approximator is **one-length vector**.
     - Note that `x` and `u` can be matrices, whose sizes are `(n, d)` and `(m, d)`,
@@ -134,10 +130,10 @@ the output of an approximator is **one-length vector**.
     - `FNN::AbstractApproximator`: feedforward neural network
     - `MA::ConvexApproximator`: max-affine (MA) network [1]
     - `LSE::ConvexApproximator`: log-sum-exp (LSE) network [1]
-    - `PICNN::ParameterizedConvexApproximator`: partially input-convex neural network (PICNN) [2]
-    - `PMA::ParameterizedConvexApproximator`: parameterized MA (PMA) network [3]
-    - `PLSE::ParameterizedConvexApproximator`: parameterized LSE (PLSE) network [3]
-        - The default setting (`strict`) is slightly different from [3], see [#37](https://github.com/JinraeKim/ParameterizedConvexApproximators.jl/pull/37).
+    - `PICNN::ParametrisedConvexApproximator`: partially input-convex neural network (PICNN) [2]
+    - `PMA::ParametrisedConvexApproximator`: parametrised MA (PMA) network [3]
+    - `PLSE::ParametrisedConvexApproximator`: parametrised LSE (PLSE) network [3]
+        - The default setting (`strict`) is slightly different from [3], see [#37](https://github.com/JinraeKim/ParametrisedConvexApproximators.jl/pull/37).
 
 ### Utilities
 - `(nn::approximator)(x, u)` gives an inference (approximate function value).
@@ -155,10 +151,10 @@ considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
 
 
 ## Benchmark
-The benchmark result is reported in [3] using ParameterizedConvexApproximator.jl v0.1.1.
+The benchmark result is reported in [3] using ParametrisedConvexApproximator.jl v0.1.1.
 The following benchmark result may be slightly different from the original paper.
 - Note: to avoid first-run latency due to JIT compilation of Julia, the elapsed times are obtained from second-run.
-The following result is from `main/basic.jl` in ParameterizedConvexApproximators.jl v0.1.1 (currently deprecated).
+The following result is from `main/basic.jl` in ParametrisedConvexApproximators.jl v0.1.1 (currently deprecated).
 - Note: it was run on ADM Ryzen:tm: 9 5900X.
 
 - `n`: dimension of condition variable `x`

@@ -1,4 +1,4 @@
-struct PMA <: ParameterizedConvexApproximator
+struct PMA <: ParametrisedConvexApproximator
     n::Int
     m::Int
     i_max::Int

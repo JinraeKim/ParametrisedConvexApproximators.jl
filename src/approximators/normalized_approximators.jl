@@ -1,28 +1,28 @@
-abstract type NormalizedApproximator <: AbstractApproximator end
+abstract type NormalisedApproximator <: AbstractApproximator end
 
-function (nn::NormalizedApproximator)(network::AbstractApproximator, dataset::DecisionMakingDataset)
-    error("Specify the normalization method from dataset")
+function (nn::NormalisedApproximator)(network::AbstractApproximator, dataset::DecisionMakingDataset)
+    error("Specify the normalisation method from dataset")
 end
 
 
-function normalize(nn::NormalizedApproximator, args...; kwargs...)
-    error("Define method normalize")
+function normalise(nn::NormalisedApproximator, args...; kwargs...)
+    error("Define method normalise")
 end
 
 
-function unnormalize(nn::NormalizedApproximator, args...; kwargs...)
-    error("Define method unnormalize")
+function unnormalise(nn::NormalisedApproximator, args...; kwargs...)
+    error("Define method unnormalise")
 end
 
 
-struct MaxAbsNormalizedApproximator{T<:AbstractApproximator} <: NormalizedApproximator
+struct MaxAbsNormalisedApproximator{T<:AbstractApproximator} <: NormalisedApproximator
     network::T
     condition_max_abs::Union{Array, Nothing}
     decision_max_abs::Union{Array, Nothing}
     cost_max_abs::Union{Array, Nothing}
 end
 
-function MaxAbsNormalizedApproximator(
+function MaxAbsNormalisedApproximator(
     network::AbstractApproximator,
     dataset::DecisionMakingDataset,
 )
@@ -30,21 +30,21 @@ function MaxAbsNormalizedApproximator(
     condition_max_abs = maximum(abs.(hcat(conditions...)), dims=length(size(conditions)))
     decision_max_abs = maximum(abs.(hcat(decisions...)), dims=length(size(decisions)))
     cost_max_abs = maximum(abs.(hcat(costs...)), dims=length(size(costs)))
-    MaxAbsNormalizedApproximator(network, condition_max_abs, decision_max_abs, cost_max_abs)
+    MaxAbsNormalisedApproximator(network, condition_max_abs, decision_max_abs, cost_max_abs)
 end
 
 
-function (nn::NormalizedApproximator)(x, u)
+function (nn::NormalisedApproximator)(x, u)
     (; network, condition_max_abs, decision_max_abs, cost_max_abs) = nn
-    x = normalize(nn, x, :condition)
-    u = normalize(nn, u, :decision)
+    x = normalise(nn, x, :condition)
+    u = normalise(nn, u, :decision)
     f = network(x, u)
-    f = unnormalize(nn, f, :cost)
+    f = unnormalise(nn, f, :cost)
     return f
 end
 
 
-function normalize(nn::MaxAbsNormalizedApproximator, z, which::Symbol)
+function normalise(nn::MaxAbsNormalisedApproximator, z, which::Symbol)
     @assert which in (:condition, :decision, :cost)
     factor = getproperty(nn, Symbol(String(which) * "_max_abs"))
     z = factor != nothing ? z ./ factor : z
@@ -52,7 +52,7 @@ function normalize(nn::MaxAbsNormalizedApproximator, z, which::Symbol)
 end
 
 
-function unnormalize(nn::MaxAbsNormalizedApproximator, z, which::Symbol)
+function unnormalise(nn::MaxAbsNormalisedApproximator, z, which::Symbol)
     @assert which in (:condition, :decision, :cost)
     factor = getproperty(nn, Symbol(String(which) * "_max_abs"))
     z = factor != nothing ? z .* factor : z
@@ -60,4 +60,4 @@ function unnormalize(nn::MaxAbsNormalizedApproximator, z, which::Symbol)
 end
 
 
-Flux.params(approximator::NormalizedApproximator) = Flux.params(approximator.network)
+Flux.params(approximator::NormalisedApproximator) = Flux.params(approximator.network)

@@ -1,4 +1,4 @@
-module ParameterizedConvexApproximators
+module ParametrisedConvexApproximators
 
 using Flux
 using Convex
@@ -13,11 +13,11 @@ using ForwardDiff
 # approximators
 export AbstractApproximator, FNN
 export ConvexApproximator, MA, LSE
-export ParameterizedConvexApproximator, PMA, PLSE
+export ParametrisedConvexApproximator, PMA, PLSE
 export PICNN, project_nonnegative!
 export DifferenceOfConvexApproximator, DLSE
-export optimize, number_of_parameters
-export MaxAbsNormalizedApproximator
+export optimise, number_of_parameters
+export MaxAbsNormalisedApproximator
 # data manipulation
 export split_data2, split_data3
 # dataset
@@ -30,7 +30,7 @@ export get_loss
 # approximators
 include("dataset/dataset.jl")
 include("approximators/approximators.jl")
-include("optimize.jl")
+include("optimise.jl")
 include("trainer/trainer.jl")
 
 

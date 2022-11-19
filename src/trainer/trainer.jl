@@ -4,30 +4,30 @@ abstract type AbstractTrainer end
 struct SupervisedLearningTrainer <: AbstractTrainer
     loss
     network::AbstractApproximator
-    optimizer
+    optimiser
     dataset::DecisionMakingDataset
     function SupervisedLearningTrainer(
         dataset, network;
         loss=(x, u, f) -> Flux.mse(network(x, u), f),
-        optimizer=Adam(1e-3),
-        normalization=:max_abs,
+        optimiser=Adam(1e-3),
+        normalisation=:max_abs,
     )
-        network = retrieve_normalized_network(network, dataset, normalization)
+        network = retrieve_normalised_network(network, dataset, normalisation)
         @assert dataset.split == :full
-        new(loss, network, optimizer, dataset)
+        new(loss, network, optimiser, dataset)
     end
 end
 
 
-function retrieve_normalized_network(network::AbstractApproximator, dataset::DecisionMakingDataset, normalization)
-    if normalization == nothing
-        normalized_network = network
-    elseif normalization == :max_abs
-        normalized_network = MaxAbsNormalizedApproximator(network, dataset)
+function retrieve_normalised_network(network::AbstractApproximator, dataset::DecisionMakingDataset, normalisation)
+    if normalisation == nothing
+        normalised_network = network
+    elseif normalisation == :max_abs
+        normalised_network = MaxAbsNormalisedApproximator(network, dataset)
     else
-        error("Invalid normalization method $(normalization)")
+        error("Invalid normalisation method $(normalisation)")
     end
-    return normalized_network
+    return normalised_network
 end
 
 
@@ -45,7 +45,7 @@ function Flux.train!(
         batchsize=16,
         epochs=200,
     )
-    (; loss, network, optimizer, dataset) = trainer
+    (; loss, network, optimiser, dataset) = trainer
     parameters = Flux.params(network)
     data_train = Flux.DataLoader((
         hcat(dataset[:train].conditions...),
@@ -62,7 +62,7 @@ function Flux.train!(
     for epoch in 0:epochs
         println("epoch: $(epoch)/$(epochs)")
         if epoch != 0
-            Flux.train!(loss, parameters, data_train, optimizer)
+            Flux.train!(loss, parameters, data_train, optimiser)
         end
         loss_train = get_loss(trainer, :train)
         push!(losses_train, loss_train)

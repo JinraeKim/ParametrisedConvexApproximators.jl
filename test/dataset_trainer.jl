@@ -1,5 +1,5 @@
 using Test
-using ParameterizedConvexApproximators
+using ParametrisedConvexApproximators
 using Flux
 using Transducers
 # using JLD2, FileIO
@@ -57,7 +57,7 @@ end
 
 
 function test_SupervisedLearningTrainer(dataset, network; epochs=2)
-    trainer = SupervisedLearningTrainer(dataset, network; normalization=:max_abs)
+    trainer = SupervisedLearningTrainer(dataset, network; normalisation=:max_abs)
     @show get_loss(trainer, :train)
     @show get_loss(trainer, :validate)
     best_network = Flux.train!(trainer; epochs=epochs)
