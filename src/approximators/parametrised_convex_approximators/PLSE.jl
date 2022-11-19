@@ -1,4 +1,4 @@
-struct PLSE <: ParameterizedConvexApproximator
+struct PLSE <: ParametrisedConvexApproximator
     n::Int
     m::Int
     i_max::Int

@@ -1,7 +1,7 @@
 using Test
 using Flux
-using ParameterizedConvexApproximators
-using ParameterizedConvexApproximators: sample_from_bounds
+using ParametrisedConvexApproximators
+using ParametrisedConvexApproximators: sample_from_bounds
 using Transducers
 using Random
 
@@ -62,18 +62,18 @@ function test_infer(network)
 end
 
 
-function test_optimize(network)
-    println("test_optimize")
+function test_optimise(network)
+    println("test_optimise")
     x = xs[:, 1]
-    (; minimizer, optval) = optimize(network, x; u_min=u_min, u_max=u_max)
+    (; minimizer, optval) = optimise(network, x; u_min=u_min, u_max=u_max)
     @test size(minimizer) == (m,)
     @test size(optval) == (1,)
 end
 
 
-function test_optimize_multiple(network)
-    println("test_optimize_multiple")
-    (; minimizer, optval) = optimize(network, xs; u_min=u_min, u_max=u_max)
+function test_optimise_multiple(network)
+    println("test_optimise_multiple")
+    (; minimizer, optval) = optimise(network, xs; u_min=u_min, u_max=u_max)
     @test size(minimizer) == (m, d)
     @test size(optval) == (1, d)
 end
@@ -89,27 +89,27 @@ end
 function test_network(network)
     test_infer(network)
     test_infer_multiple(network)
-    test_optimize(network)
-    test_optimize_multiple(network)
-    test_max_abs_normalized_network(network)
+    test_optimise(network)
+    test_optimise_multiple(network)
+    test_max_abs_normalised_network(network)
 end
 
 
-function test_max_abs_normalized_network(network)
-    println("normalized network")
-    normalized_network = MaxAbsNormalizedApproximator(
+function test_max_abs_normalised_network(network)
+    println("normalised network")
+    normalised_network = MaxAbsNormalisedApproximator(
                              deepcopy(network),
                              x_max_abs,
                              u_max_abs,
                              f_max_abs,
                          )
     # inference
-    fs_normalized = network(xs ./ x_max_abs, us ./ u_max_abs)
-    fs = normalized_network(xs, us)
-    @test fs_normalized .* f_max_abs == fs
+    fs_normalised = network(xs ./ x_max_abs, us ./ u_max_abs)
+    fs = normalised_network(xs, us)
+    @test fs_normalised .* f_max_abs == fs
     # optimization
-    (; minimizer, optval) = optimize(network, xs ./ x_max_abs; u_min=u_min ./ u_max_abs, u_max=u_max ./ u_max_abs, initial_guess=initial_guess ./ u_max_abs)
-    res = optimize(normalized_network, xs; u_min=u_min, u_max=u_max, initial_guess=initial_guess)
+    (; minimizer, optval) = optimise(network, xs ./ x_max_abs; u_min=u_min ./ u_max_abs, u_max=u_max ./ u_max_abs, initial_guess=initial_guess ./ u_max_abs)
+    res = optimise(normalised_network, xs; u_min=u_min, u_max=u_max, initial_guess=initial_guess)
     @test minimizer .* u_max_abs ≈ res.minimizer
     @test optval .* f_max_abs ≈ res.optval
 end

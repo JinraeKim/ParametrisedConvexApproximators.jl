@@ -1,4 +1,4 @@
-abstract type ConvexApproximator <: ParameterizedConvexApproximator end
+abstract type ConvexApproximator <: ParametrisedConvexApproximator end
 
 
 function _construct_convex_approximator(α_is::AbstractVector, β_is::AbstractVector)

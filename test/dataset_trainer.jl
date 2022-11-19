@@ -1,5 +1,5 @@
 using Test
-using ParameterizedConvexApproximators
+using ParametrisedConvexApproximators
 using Flux
 using Transducers
 # using JLD2, FileIO
@@ -10,12 +10,12 @@ i_max = 20
 T = 1e-0
 h_array = [64, 64]
 act = Flux.leakyrelu
-N = 1_000
+N = 1_000  # The result may be poor if it's too low
 seed = 2022
-min_condition = -ones(n)
-max_condition = +ones(n)
-min_decision = -ones(m)
-max_decision = +ones(m)
+min_condition = -2*ones(n)
+max_condition = +2*ones(n)
+min_decision = -2*ones(m)
+max_decision = +2*ones(m)
 ratio1 = 0.7
 ratio2 = 0.2
 
@@ -56,8 +56,8 @@ function test_SimpleDataset(func_name, split)
 end
 
 
-function test_SupervisedLearningTrainer(dataset, network; epochs=3)
-    trainer = SupervisedLearningTrainer(dataset, network)
+function test_SupervisedLearningTrainer(dataset, network; epochs=2)
+    trainer = SupervisedLearningTrainer(dataset, network; normalisation=:max_abs)
     @show get_loss(trainer, :train)
     @show get_loss(trainer, :validate)
     best_network = Flux.train!(trainer; epochs=epochs)
