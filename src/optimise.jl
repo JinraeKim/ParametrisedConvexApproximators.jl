@@ -35,7 +35,7 @@ function _optimise(network::ParametrisedConvexApproximator, x::AbstractVector, u
     if u_max != nothing
         problem.constraints += [u <= u_max]
     end
-    solve!(problem, solver.Optimiser(); verbose=false, silent_solver=true)
+    solve!(problem, solver.Optimizer(); verbose=false, silent_solver=true)
     minimizer = typeof(u.value) <: Number ? [u.value] : u.value[:]  # to make it a vector
     optval = [problem.optval]  # to make it a vector
     minimizer, optval
@@ -97,7 +97,7 @@ function _optimise(network::DifferenceOfConvexApproximator, x::AbstractVector, u
         if u_max != nothing
             problem.constraints += [u <= u_max]
         end
-        solve!(problem, solver.Optimiser(); verbose=false, silent_solver=true)
+        solve!(problem, solver.Optimizer(); verbose=false, silent_solver=true)
         χ_next = typeof(u.value) <: Number ? [u.value] : u.value[:]  # to make it a vector
         optval = [problem.optval]
         if norm(χ_next - χ) / (1+norm(χ)) < tol || k == max_iter
