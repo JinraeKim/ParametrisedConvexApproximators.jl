@@ -1,9 +1,9 @@
 # Notes
-- The name is changed from `ParametrisedConvexApproximators` to `ParameterizedConvexApproximators`.
+- Note that the name of this package does not match with the original paper [3].
 
 
-# ParameterizedConvexApproximators
-[ParameterizedConvexApproximators.jl](https://github.com/JinraeKim/ParameterizedConvexApproximators.jl)
+# ParametrisedConvexApproximators
+[ParametrisedConvexApproximators.jl](https://github.com/JinraeKim/ParametrisedConvexApproximators.jl)
 is a Julia package providing predefined parameterized convex approximators and related functionalities.
 An official package for simulation in [3].
 

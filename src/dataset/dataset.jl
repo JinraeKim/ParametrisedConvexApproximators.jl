@@ -4,9 +4,9 @@ abstract type DecisionMakingDataset end
 struct SimpleDataset <: DecisionMakingDataset
     metadata::NamedTuple
     split::Symbol
-    conditions::Array
-    decisions::Array
-    costs::Array
+    conditions::AbstractVector
+    decisions::AbstractVector
+    costs::AbstractVector
 end
 
 function SimpleDataset(

@@ -5,15 +5,29 @@ struct SupervisedLearningTrainer <: AbstractTrainer
     loss
     network::AbstractApproximator
     optimizer
-    dataset
+    dataset::DecisionMakingDataset
     function SupervisedLearningTrainer(
         dataset, network;
         loss=(x, u, f) -> Flux.mse(network(x, u), f),
         optimizer=Adam(1e-3),
+        normalization=:max_abs,
     )
+        network = retrieve_normalized_network(network, dataset, normalization)
         @assert dataset.split == :full
         new(loss, network, optimizer, dataset)
     end
+end
+
+
+function retrieve_normalized_network(network::AbstractApproximator, dataset::DecisionMakingDataset, normalization)
+    if normalization == nothing
+        normalized_network = network
+    elseif normalization == :max_abs
+        normalized_network = MaxAbsNormalizedApproximator(network, dataset)
+    else
+        error("Invalid normalization method $(normalization)")
+    end
+    return normalized_network
 end
 
 
