@@ -3,7 +3,7 @@
         u_min=nothing, u_max=nothing,
     )
 
-Find a minimizer and optimal value (optval) of `network::ParametrisedConvexApproximator` for given
+Find a minimiser of `network::ParametrisedConvexApproximator` for given
 data point `x::AbstractVector`.
 Solve with Convex.jl [1].
 Available solvers include SCS [2], COSMO [3], Mosek [4], etc.
@@ -13,7 +13,9 @@ Available solvers include SCS [2], COSMO [3], Mosek [4], etc.
 [3] https://github.com/oxfordcontrol/COSMO.jl
 [4] https://github.com/MOSEK/Mosek.jl
 """
-function _optimise(network::ParametrisedConvexApproximator, x::AbstractVector, u_min, u_max, initial_guess;
+function _optimise(
+        network::ParametrisedConvexApproximator, x::AbstractVector,
+        u_min, u_max, initial_guess;
         solver=SCS,
     )
     (; m) = network
@@ -28,7 +30,7 @@ function _optimise(network::ParametrisedConvexApproximator, x::AbstractVector, u
     if u_max != nothing
         @assert length(u) == length(u_max)
     end
-    problem = minimize(network(x, u)[1])
+    problem = Convex.minimize(network(x, u)[1])
     if u_min != nothing
         problem.constraints += [u >= u_min]
     end
@@ -36,9 +38,8 @@ function _optimise(network::ParametrisedConvexApproximator, x::AbstractVector, u
         problem.constraints += [u <= u_max]
     end
     solve!(problem, solver.Optimizer(); verbose=false, silent_solver=true)
-    minimizer = typeof(u.value) <: Number ? [u.value] : u.value[:]  # to make it a vector
-    optval = [problem.optval]  # to make it a vector
-    minimizer, optval
+    minimiser = typeof(u.value) <: Number ? [u.value] : u.value[:]  # to make it a vector
+    return minimiser
 end
 
 
@@ -47,7 +48,7 @@ end
         u_min=nothing, u_max=nothing,
     )
 
-Find a minimizer and optimal value (optval) of `network::DifferenceOfConvexApproximator` for given data point `x::AbstractVector`.
+Find a minimiser of `network::DifferenceOfConvexApproximator` for given data point `x::AbstractVector`.
 
 Basic DCA [1] is used.
 # Refs.
@@ -83,14 +84,13 @@ function _optimise(network::DifferenceOfConvexApproximator, x::AbstractVector, u
     end
     χ = initial_guess
     grad_NN2(u) = ForwardDiff.gradient(u -> network.NN2(x, u)[1], u)
-    optval = Inf
     χ_next = nothing
     k = 0
     # @time while true
     while true
         k = k + 1
         v = grad_NN2(χ)  # BE CAREFUL: CONSIDER THAT IT IS FOR BIVARIATE FUNCTION
-        problem = minimize(network.NN1(x, u)[1] - v'*u)
+        problem = Convex.minimize(network.NN1(x, u)[1] - v'*u)
         if u_min != nothing
             problem.constraints += [u >= u_min]
         end
@@ -99,7 +99,6 @@ function _optimise(network::DifferenceOfConvexApproximator, x::AbstractVector, u
         end
         solve!(problem, solver.Optimizer(); verbose=false, silent_solver=true)
         χ_next = typeof(u.value) <: Number ? [u.value] : u.value[:]  # to make it a vector
-        optval = [problem.optval]
         if norm(χ_next - χ) / (1+norm(χ)) < tol || k == max_iter
             # @show k
             # @show χ, χ_next
@@ -107,8 +106,8 @@ function _optimise(network::DifferenceOfConvexApproximator, x::AbstractVector, u
         end
         χ = χ_next
     end
-    minimizer = χ_next
-    minimizer, optval
+    minimiser = χ_next
+    return minimiser
 end
 
 
@@ -117,7 +116,7 @@ end
         u_min=nothing, u_max=nothing,
     )
 
-Find a minimizer and optimal value (optval) of `network::AbstractApproximator` (non-parameterized-convex) for given
+Find a minimiser of `network::AbstractApproximator` (non-parameterized-convex) for given
 data point `x::AbstractVector`.
 Default solver is `IPNewton` in Optim.jl for box constraints [1].
 # Refs.
@@ -147,9 +146,8 @@ function _optimise(network::AbstractApproximator, x::AbstractVector, u_min, u_ma
     end
     dfc = TwiceDifferentiableConstraints(u_min, u_max)
     res = Optim.optimize(obj, dfc, initial_guess, IPNewton())
-    minimizer = prod(size(initial_guess)) == 1 ? res.minimizer[1] : res.minimizer
-    optval = [res.minimum]  # to make it a vector
-    minimizer, optval
+    minimiser = prod(size(initial_guess)) == 1 ? res.minimizer[1] : res.minimizer
+    return minimiser
 end
 
 
@@ -158,22 +156,21 @@ function _optimise(nn::NormalisedApproximator, x::AbstractVector, u_min, u_max, 
     u_min = u_min != nothing ? normalise(nn, u_min, :decision) : u_min
     u_max = u_max != nothing ? normalise(nn, u_max, :decision) : u_max
     initial_guess = initial_guess != nothing ? normalise(nn, initial_guess, :decision) : nothing
-    minimizer, optval = _optimise(nn.network, x, u_min, u_max, initial_guess)
-    minimizer = unnormalise(nn, minimizer, :decision)
-    optval = unnormalise(nn, optval, :cost)
-    return minimizer, optval
+    minimiser = _optimise(nn.network, x, u_min, u_max, initial_guess)
+    minimiser = unnormalise(nn, minimiser, :decision)
+    return minimiser
 end
 
 
 function optimise(network::AbstractApproximator, x::AbstractVector;
         u_min=nothing, u_max=nothing, initial_guess=nothing
     )
-    minimizer, optval = _optimise(network, x, u_min, u_max, initial_guess)
-    if minimizer == nothing
+    minimiser = _optimise(network, x, u_min, u_max, initial_guess)
+    if minimiser == nothing
         (; m) = network
-        minimizer = repeat([nothing], m)
+        minimiser = repeat([nothing], m)
     end
-    result = (; minimizer=minimizer, optval=optval)
+    minimiser
 end
 
 """
@@ -181,7 +178,7 @@ end
         u_min=nothing, u_max=nothing,
     )
 
-Find a minimizer and optimal value (optval) of `network::AbstractApproximator` for given
+Find a minimiser of `network::AbstractApproximator` for given
 data point `x::AbstractMatrix` using multi-thread computing (powered by Transducers.jl).
 """
 function optimise(network::AbstractApproximator, x::AbstractMatrix;
@@ -194,8 +191,7 @@ function optimise(network::AbstractApproximator, x::AbstractMatrix;
     # initial guess
     initial_guess = 1:d |> Map(i -> initial_guess == nothing ? nothing : initial_guess[:, i]) |> collect
     # optimisation
-    ress = 1:d |> Map(i -> optimise(network, x[:, i]; u_min=u_min, u_max=u_max, initial_guess=initial_guess[i])) |> collector
-    minimizer_matrix = hcat((ress |> Map(res -> res.minimizer) |> collector)...)
-    optval_matrix = hcat((ress |> Map(res -> res.optval) |> collector)...)
-    (; minimizer = minimizer_matrix, optval = optval_matrix)
+    minimisers = 1:d |> Map(i -> optimise(network, x[:, i]; u_min=u_min, u_max=u_max, initial_guess=initial_guess[i])) |> collector
+    minimiser_matrix = hcat(minimisers...)
+    return minimiser_matrix
 end

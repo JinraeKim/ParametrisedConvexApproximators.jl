@@ -65,17 +65,17 @@ end
 function test_optimise(network)
     println("test_optimise")
     x = xs[:, 1]
-    (; minimizer, optval) = optimise(network, x; u_min=u_min, u_max=u_max)
+    minimizer = optimise(network, x; u_min=u_min, u_max=u_max)
     @test size(minimizer) == (m,)
-    @test size(optval) == (1,)
+    @test size(network(x, minimizer)) == (1,)
 end
 
 
 function test_optimise_multiple(network)
     println("test_optimise_multiple")
-    (; minimizer, optval) = optimise(network, xs; u_min=u_min, u_max=u_max)
-    @test size(minimizer) == (m, d)
-    @test size(optval) == (1, d)
+    minimizers = optimise(network, xs; u_min=u_min, u_max=u_max)
+    @test size(minimizers) == (m, d)
+    @test size(network(xs, minimizers)) == (1, d)
 end
 
 
@@ -108,10 +108,10 @@ function test_max_abs_normalised_network(network)
     fs = normalised_network(xs, us)
     @test fs_normalised .* f_max_abs == fs
     # optimization
-    (; minimizer, optval) = optimise(network, xs ./ x_max_abs; u_min=u_min ./ u_max_abs, u_max=u_max ./ u_max_abs, initial_guess=initial_guess ./ u_max_abs)
-    res = optimise(normalised_network, xs; u_min=u_min, u_max=u_max, initial_guess=initial_guess)
-    @test minimizer .* u_max_abs ≈ res.minimizer
-    @test optval .* f_max_abs ≈ res.optval
+    minimizer = optimise(network, xs ./ x_max_abs; u_min=u_min ./ u_max_abs, u_max=u_max ./ u_max_abs, initial_guess=initial_guess ./ u_max_abs)
+    minimizer_normalized = optimise(normalised_network, xs; u_min=u_min, u_max=u_max, initial_guess=initial_guess)
+    @test minimizer .* u_max_abs ≈ minimizer_normalized
+    @test network(xs ./ x_max_abs, minimizer) .* f_max_abs ≈ normalised_network(xs, minimizer_normalized)
 end
 
 
