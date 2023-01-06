@@ -44,7 +44,7 @@ f̂ = network(x, u)
 ```
 
 ```julia
-f̂ = [2.9972948397933683]  # size(f̂) = (1,)
+f̂ = [2.995747603812025]  # size(f̂) = (1,)
 ```
 
 ### Prepare dataset
@@ -68,33 +68,32 @@ dataset = SimpleDataset(
 
 ### Network training
 ```julia
-epochs = 200
-trainer = SupervisedLearningTrainer(dataset, network; optimizer=Adam(1e-4))
+trainer = SupervisedLearningTrainer(dataset, network; optimiser=Adam(1e-4))
 
 @show get_loss(trainer, :train)
 @show get_loss(trainer, :validate)
-for epoch in 1:epochs
-    println("epoch: $(epoch)/$(epochs)")
-    Flux.train!(trainer)
-end
+Flux.train!(trainer; epochs=200)
 @show get_loss(trainer, :test)
 ```
 
 ```julia
-get_loss(trainer, :train) = 2.2485971763998576
-get_loss(trainer, :validate) = 2.288581633859485
+get_loss(trainer, :train) = 2.2485616017365517
+get_loss(trainer, :validate) = 2.2884594157659994
 
 ...
 
-
 epoch: 199/200
-loss_train: 0.0001672882024953069
-loss_validate: 0.0002682474510180785
+loss_train = 0.00020636060117068826
+loss_validate = 0.00027629941017224863
+Best network found!
+minimum_loss_validate = 0.00027629941017224863
 epoch: 200/200
-loss_train: 0.00016627992642691757
-loss_validate: 0.0002670633060886428
+loss_train = 0.00020551515617350474
+loss_validate = 0.0002751188168629372
+Best network found!
+minimum_loss_validate = 0.0002751188168629372
 
-get_loss(trainer, :test) = 0.00024842624962788054
+get_loss(trainer, :test) = 0.0002642962384649246
 ```
 
 ### Conditional decision making via optimization (given `x`, find a minimizer `u` and optimal value)
@@ -102,14 +101,16 @@ get_loss(trainer, :test) = 0.00024842624962788054
 # optimization
 Random.seed!(seed)
 x = rand(n)  # any value
-res = optimize(network, x; u_min=min_decision, u_max=max_decision)  # minimsation
-@show res  # NamedTuple
-@show dataset[:train].metadata.target_function(x, res.minimizer)
+minimiser = optimise(network, x; u_min=min_decision, u_max=max_decision)  # minimsation
+@show minimiser
+@show network(x, minimiser)
+@show dataset[:train].metadata.target_function(x, minimiser)
 ```
 
 ```julia
-res = (minimizer = [-0.006072644282314285, 0.009363546949627488], optval = [1.1356929322723475])
-(dataset[:train]).metadata.target_function(x, res.minimizer) = 1.1025790963107207
+minimiser = [-0.00863654920254873, 0.014258700223990051]
+network(x, minimiser) = [1.1275475934947705]
+(dataset[:train]).metadata.target_function(x, minimiser) = 1.1027324438048691
 ```
 
 ## Documentation
