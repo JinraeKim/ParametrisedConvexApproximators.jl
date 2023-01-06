@@ -18,6 +18,7 @@ pkg> add ParametrisedConvexApproximator
 It will reduce computation time to obtain multiple minimizers.
 - The benchmark result was reported in [ParametrisedConvexApproximator.jl v0.1.1](https://github.com/JinraeKim/ParametrisedConvexApproximators.jl/tree/v0.1.1) [3].
 
+
 ## Quick Start
 ParametrisedConvexApproximators.jl focuses on providing predefined approximators
 including parametrised convex approximators.
@@ -114,6 +115,8 @@ network(x, minimiser) = [1.1275475934947705]
 (dataset[:train]).metadata.target_function(x, minimiser) = 1.1027324438048691
 ```
 
+
+
 ## Documentation
 ### Types
 - `AbstractApproximator` is an abstract type of approximator.
@@ -141,11 +144,10 @@ the output of an approximator is **one-length vector**.
 
 ### Utilities
 - `(nn::approximator)(x, u)` gives an inference (approximate function value).
-- `res = optimize(approximator, x; u_min=nothing, u_max=nothing)` provides
-minimizer and optimal value (optval) for given `x` as `res.minimizer` and `res.optval`
+- `minimiser = optimize(approximator, x; u_min=nothing, u_max=nothing)` provides the minimiser for given condition `x`
 considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
     - The condition variable `x` can be a vector, i.e., `size(x) = (n,)`,
-    or a matrix for parallel solve (via multi-threading), i.e., `size(x) = (n, d)`.
+    or a matrix for multiple conditions via multi-threading, i.e., `size(x) = (n, d)`.
 
 ### Dataset
 - `SimpleDataset <: DecisionMakingDataset` is used for analytically-expressed cost functions.
@@ -159,4 +161,4 @@ considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
 - [1] [G. C. Calafiore, S. Gaubert, and C. Possieri, “Log-Sum-Exp Neural Networks and Posynomial Models for Convex and Log-Log-Convex Data,” IEEE Transactions on Neural Networks and Learning Systems, vol. 31, no. 3, pp. 827–838, Mar. 2020, doi: 10.1109/TNNLS.2019.2910417.](https://ieeexplore.ieee.org/abstract/document/8715799?casa_token=ptHxee1NJ30AAAAA:etAIY0UkR0yg6YK7mgtEzCzHavM0d6Cos1VNzpn0cw5hbiEnFnAxNDm1rflWjDAOa-iO6xU5Lg)
 - [2] [B. Amos, L. Xu, and J. Z. Kolter, “Input Convex Neural Networks,” in Proceedings of the 34th International Conference on Machine Learning, Sydney, Australia, Jul. 2017, pp. 146–155.](http://proceedings.mlr.press/v70/amos17b.html)
 - [3] [J. Kim and Y. Kim, “Parameterized Convex Universal Approximators for Decision-Making Problems,” IEEE Trans. Neural Netw. Learning Syst., accepted for publication, 2022, doi: 10.1109/TNNLS.2022.3190198.](https://ieeexplore.ieee.org/document/9833537)
-- [4] [TBD](https://ieeexplore.ieee.org/abstract/document/9032340)
+- [4] [G. C. Calafiore, S. Gaubert, and C. Possieri, “A Universal Approximation Result for Difference of Log-Sum-Exp Neural Networks,” IEEE Transactions on Neural Networks and Learning Systems, vol. 31, no. 12, pp. 5603–5612, Dec. 2020, doi: 10.1109/TNNLS.2020.2975051.](https://ieeexplore.ieee.org/abstract/document/9032340)
