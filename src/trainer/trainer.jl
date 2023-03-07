@@ -79,7 +79,7 @@ function Flux.train!(
         end
     end
     # plot
-    if fig_name != nothing:
+    if fig_name != nothing
         p = plot(; xlabel="epoch", ylabel="loss", yaxis=:log)
         plot!(p, 0:epochs, losses_train, label="train")
         plot!(p, 0:epochs, losses_validate, label="validate")
