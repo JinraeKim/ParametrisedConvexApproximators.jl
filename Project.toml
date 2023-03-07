@@ -1,27 +1,30 @@
 name = "ParametrisedConvexApproximators"
 uuid = "668502ff-1e8f-42bf-95c7-24f1e819f537"
 authors = ["JinraeKim <kjl950403@gmail.com> and contributors"]
-version = "0.1.1"
+version = "0.2.0"
 
 [deps]
 Convex = "f65535da-76fb-5f13-bab9-19810c17039a"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
+ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
+Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 SCS = "c946c3f1-0d1f-5ce8-9dea-7daa1f7e2d13"
 Transducers = "28d57a85-8fef-5791-bfe6-a80928e7c999"
-UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 
 [compat]
-Convex = "0.14"
-Flux = "0.12"
-Optim = "1.5"
-SCS = "0.8"
+Convex = "0.15"
+Flux = "0.13"
+Optim = "1.7"
+SCS = "1.1"
 Transducers = "0.4"
-UnPack = "1.0"
 julia = "1"
 
 [extras]
+FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
+JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["Test", "JLD2", "FileIO"]

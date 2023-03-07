@@ -4,12 +4,16 @@ struct PLSE <: ParametrisedConvexApproximator
     i_max::Int
     T::Real
     NN::Flux.Chain
-    function PLSE(n::Int, m::Int, i_max::Int, T::Real, h_array::Vector{Int}, act)
-        @assert T > 0
-        node_array = [n, h_array..., i_max*(m+1)]
-        new(n, m, i_max, T, construct_layer_array(node_array, act))
-    end
+    strict::Bool
 end
+
+
+function PLSE(n::Int, m::Int, i_max::Int, T::Real, h_array::Vector{Int}, act; strict=true)
+    @assert T > 0
+    node_array = [n, h_array..., i_max*(m+1)]
+    PLSE(n, m, i_max, T, construct_layer_array(node_array, act), strict)
+end
+
 
 """
     (nn::PLSE)(x, u)
@@ -23,7 +27,7 @@ x and u should be arrays.
 For example, u = [1] for the one-element case.
 """
 function (nn::PLSE)(x::AbstractArray, u::AbstractArray)
-    @unpack T = nn
+    (; T) = nn
     is_vector = length(size(x)) == 1
     @assert is_vector == (length(size(u)) == 1)
     x = is_vector ? reshape(x, :, 1) : x
@@ -35,7 +39,7 @@ function (nn::PLSE)(x::AbstractArray, u::AbstractArray)
 end
 
 function (nn::PLSE)(x::AbstractArray, u::Convex.AbstractExpr)
-    @unpack T = nn
+    (; T) = nn
     tmp = affine_map(nn, x, u)
     res = [T * Convex.logsumexp((1/T)*tmp)]
 end

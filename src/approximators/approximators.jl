@@ -38,3 +38,5 @@ end
 
 include("FNN.jl")
 include("parametrised_convex_approximators/parametrised_convex_approximators.jl")
+include("difference_of_convex_approximators/difference_of_convex_approximators.jl")
+include("normalized_approximators.jl")

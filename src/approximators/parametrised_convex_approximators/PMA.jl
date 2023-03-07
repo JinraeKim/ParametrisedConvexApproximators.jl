@@ -3,8 +3,6 @@ struct PMA <: ParametrisedConvexApproximator
     m::Int
     i_max::Int
     NN::Flux.Chain
-    # NN1::Flux.Chain
-    # NN2::Flux.Chain
 end
 
 """
