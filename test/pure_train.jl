@@ -1,6 +1,5 @@
 using Test
 using ParametrisedConvexApproximators
-using LinearAlgebra
 using Flux
 
 
@@ -16,7 +15,7 @@ T = 1.0
 # dataset
 X = rand(n, d)
 Y = rand(m, d)
-Z = hcat([norm(X[:, i])+norm(Y[:, i]) for i in 1:d]...)
+Z = hcat([sum(X[:, i].^2)+sum(Y[:, i].^2) for i in 1:d]...)
 # network construction
 
 
