@@ -14,10 +14,12 @@ struct PICNN <: ParametrisedConvexApproximator
     n::Int
     m::Int
     NN::Flux.Chain
-    function PICNN(n::Int, m::Int, u_array::Vector{Int}, z_array::Vector{Int}, g, g̃)
-        new(n, m, make_PICNN(n, m, u_array, z_array, g, g̃))
-    end
 end
+Flux.@functor PICNN (NN,)
+function PICNN(n::Int, m::Int, u_array::Vector{Int}, z_array::Vector{Int}, g, g̃)
+    PICNN(n, m, make_PICNN(n, m, u_array, z_array, g, g̃))
+end
+
 
 # """
 # # Notes
@@ -52,8 +54,8 @@ end
 ## PICNN_Layer
 struct PICNN_Layer
     # info
-    n_in  # not trainable; will not be tracked by Flux, automatically 
-    n_out  # not trainable; will not be tracked by Flux, automatically 
+    n_in::Int  # not trainable; will not be tracked by Flux, automatically 
+    n_out::Int  # not trainable; will not be tracked by Flux, automatically 
     # x-path
     W̃  #  params(m)[1]
     b̃  #  params(m)[2]
@@ -69,6 +71,7 @@ struct PICNN_Layer
     b  #  params(m)[10]
     g  # not trainable; will not be tracked by Flux, automatically 
 end
+Flux.@functor PICNN_Layer (W̃, b̃, Wz, Wzu, bz, Wy, Wyu, by, Wu, b)  # make "struct" compatible with Flux
 
 function PICNN_Layer(uin::Int, uout::Int, zin::Int, zout::Int, y::Int, g=Flux.identity, g̃=Flux.identity;
         initW = Flux.glorot_uniform, initb = zeros  # default initialisation method
@@ -82,7 +85,6 @@ function PICNN_Layer(uin::Int, uout::Int, zin::Int, zout::Int, y::Int, g=Flux.id
                        g,  # g (y-path activation)
                       )
 end
-Flux.@functor PICNN_Layer  # make "struct" compatible with Flux
 
 function Flux.relu(x::Convex.AbstractExpr)
     Convex.pos(x)
@@ -126,10 +128,11 @@ function Final_PICNN_Layer(input)
     return z
 end
 
-function project_nonnegative!(ps; ϵ=0.0)
-    ps .-= ps .* (ps .< ϵ)
-end
-
-function Flux.params(nn::PICNN)
-    Flux.params(nn.NN)
+function project_nonnegative!(approximator::PICNN; ϵ=0.0)
+    for layer in approximator.NN.layers
+        if isdefined(layer, :Wz)
+            layer.Wz .-= layer.Wz .* (layer.Wz .< ϵ)
+        end
+    end
+    return nothing
 end

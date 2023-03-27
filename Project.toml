@@ -5,6 +5,7 @@ version = "0.2.0"
 
 [deps]
 Convex = "f65535da-76fb-5f13-bab9-19810c17039a"
+ECOS = "e2685f51-7e38-5353-a97d-a921fd2c8199"
 Flux = "587475ba-b771-5e3f-ad9e-33799f191a9c"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 Optim = "429524aa-4258-5aef-a3af-852621145aeb"
@@ -16,11 +17,10 @@ Transducers = "28d57a85-8fef-5791-bfe6-a80928e7c999"
 [compat]
 Convex = "0.15"
 Flux = "0.13"
-Optim = "1.7"
 ForwardDiff = "0.10"
+Optim = "1.7"
 Plots = "1.38"
 SCS = "1.1"
-Transducers = "0.4"
 julia = "1"
 
 [extras]

@@ -6,7 +6,7 @@ function _construct_convex_approximator(α_is::AbstractVector, β_is::AbstractVe
     @assert length(β_is) == i_max
     _α_is = hcat(α_is...)'
     _β_is = hcat(β_is...)'
-    i_max, _α_is, _β_is
+    return i_max, _α_is, _β_is
 end
 
 function affine_map(nn::ConvexApproximator, z::AbstractArray)

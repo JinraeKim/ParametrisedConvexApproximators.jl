@@ -6,17 +6,18 @@
 Find a minimiser of `network::ParametrisedConvexApproximator` for given
 data point `x::AbstractVector`.
 Solve with Convex.jl [1].
-Available solvers include SCS [2], COSMO [3], Mosek [4], etc.
+Available solvers include SCS [2], COSMO [3], Mosek [4], ECOS [5], etc.
 # Refs.
 [1] https://github.com/jump-dev/Convex.jl
 [2] https://github.com/jump-dev/SCS.jl
 [3] https://github.com/oxfordcontrol/COSMO.jl
 [4] https://github.com/MOSEK/Mosek.jl
+[5] https://github.com/jump-dev/ECOS.jl
 """
 function _optimise(
         network::ParametrisedConvexApproximator, x::AbstractVector,
         u_min, u_max, initial_guess;
-        solver=SCS,
+        solver=ECOS,
     )
     (; m) = network
     u = Convex.Variable(m)
@@ -56,7 +57,7 @@ Basic DCA [1] is used.
 [2] https://github.com/Corrado-possieri/DLSE_neural_networks/commit/8883e5bcf1733b79b2dd3c432b31af30b4bba0a6#diff-aa888e053028cc6dbd9f0cfb1c30f61f1bde256be213f27b9a083b95292ec5ebR26
 """
 function _optimise(network::DifferenceOfConvexApproximator, x::AbstractVector, u_min, u_max, initial_guess;
-        solver=SCS,
+        solver=ECOS,
         max_iter=30,
         tol=1e-3,  # borrowed from [2]
     )

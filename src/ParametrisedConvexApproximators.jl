@@ -2,7 +2,8 @@ module ParametrisedConvexApproximators
 
 using Flux
 using Convex
-using SCS  # 120721; currently not compatible with apple silicon
+# using SCS  # 120721; currently not compatible with apple silicon
+using ECOS
 using Optim
 using Transducers
 using Random

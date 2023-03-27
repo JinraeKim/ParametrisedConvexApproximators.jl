@@ -2,10 +2,11 @@ struct FNN <: AbstractApproximator
     n::Int
     m::Int
     NN::Flux.Chain
-    function FNN(n::Int, m::Int, h_array::Vector{Int}, act)
-        node_array = [n+m, h_array..., 1]
-        new(n, m, construct_layer_array(node_array, act))
-    end
+end
+Flux.@functor FNN (NN,)
+function FNN(n::Int, m::Int, h_array::Vector{Int}, act)
+    node_array = [n+m, h_array..., 1]
+    FNN(n, m, construct_layer_array(node_array, act))
 end
 
 """
@@ -19,4 +20,4 @@ size(u) = (m, d)
 function (nn::FNN)(x, u)
     res = nn.NN(vcat(x, u))
 end
-Flux.params(approximator::FNN) = Flux.params(approximator.NN)
+# Flux.params(approximator::FNN) = Flux.params(approximator.NN)

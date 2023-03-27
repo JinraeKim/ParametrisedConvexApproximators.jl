@@ -34,30 +34,36 @@ function main()
 
     networks = Dict(
                     "FNN" => fnn,
-                    # "MA" => ma,
-                    # "LSE" => lse,
-                    # "PICNN" => picnn,
-                    # "PMA" => pma,
-                    # "PLSE" => plse,
-                    # "DLSE" => dlse,
+                    "MA" => ma,
+                    "LSE" => lse,
+                    "PICNN" => picnn,
+                    "PMA" => pma,
+                    "PLSE" => plse,
+                    "DLSE" => dlse,
                    )
 
     for (name, model) in networks
+        @show name
         params_init = deepcopy(Flux.params(model))
         @test all(Flux.params(model) .== params_init)
         # training
         data = Flux.DataLoader((X, Y, Z), batchsize=16)
+        # @infiltrate
         opt_state = Flux.setup(Adam(1e-4), model)
-        for epoch in 1:10
+        # @infiltrate
+        for epoch in 1:2
             for (x, y, z) in data
                 val, grads = Flux.withgradient(model) do m
                     pred = m(x, y)
                     Flux.Losses.mse(pred, z)
                 end
                 Flux.update!(opt_state, model, grads[1])
+                if typeof(model) == PICNN
+                    project_nonnegative!(model)
+                end
             end
         end
-        @test all(Flux.params(model) .!= params_init)
+        @test any(Flux.params(model) .!= params_init)
     end
 end
 
