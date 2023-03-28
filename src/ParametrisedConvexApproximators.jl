@@ -2,13 +2,11 @@ module ParametrisedConvexApproximators
 
 using Flux
 using Convex
-# using SCS  # 120721; currently not compatible with apple silicon
 using ECOS
 using Optim
-using Transducers
+using Transducers  # mostly for parallel optimization
 using Random
-using Plots  # for visualization; may be seperated in near future
-using ForwardDiff
+using ForwardDiff  # mostly for DLSE
 
 
 # approximators

@@ -41,12 +41,12 @@ function generate_networks()
                )
 
     networks = Dict(
-                    "FNN" => fnn,
-                    "MA" => ma,
-                    "LSE" => lse,
-                    "PICNN" => picnn,
-                    "PMA" => pma,
-                    "PLSE" => plse,
+                    # "FNN" => fnn,
+                    # "MA" => ma,
+                    # "LSE" => lse,
+                    # "PICNN" => picnn,
+                    # "PMA" => pma,
+                    # "PLSE" => plse,
                     "DLSE" => dlse,
                    )
     return networks
