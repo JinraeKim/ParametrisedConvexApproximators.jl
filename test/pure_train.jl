@@ -5,7 +5,8 @@ using Flux
 
 seed = 2022
 n, m = 3, 2
-d = 30
+d = 5_000
+d_test = 1_000
 h_array = [64, 64]
 z_array = [64, 64]
 u_array = vcat(64, z_array...)
@@ -13,13 +14,17 @@ act = Flux.leakyrelu
 i_max = 20
 T = 1.0
 # dataset
-X = rand(n, d)
-Y = rand(m, d)
+X = 2 * (2*rand(n, d) .- 1)
+Y = 2 * (2*rand(m, d) .- 1)
 Z = hcat([sum(X[:, i].^2)+sum(Y[:, i].^2) for i in 1:d]...)
+X_test = 2 * (2*rand(n, d_test) .- 1)
+Y_test = 2 * (2*rand(m, d_test) .- 1)
+Z_test = hcat([sum(X_test[:, i].^2)+sum(Y_test[:, i].^2) for i in 1:d_test]...)
+
 # network construction
 
 
-function main()
+function main(epochs=2, network=nothing)
     fnn = FNN(n, m, h_array, act)
     ma = MA(n, m, i_max)
     lse = LSE(n, m, i_max, T)
@@ -30,16 +35,19 @@ function main()
                 LSE(n, m, i_max, T),
                 LSE(n, m, i_max, T),
                )
-
     networks = Dict(
-                    "FNN" => fnn,
-                    "MA" => ma,
-                    "LSE" => lse,
-                    "PICNN" => picnn,
-                    "PMA" => pma,
-                    "PLSE" => plse,
-                    "DLSE" => dlse,
+                    :FNN => fnn,
+                    :MA => ma,
+                    :LSE => lse,
+                    :PICNN => picnn,
+                    :PMA => pma,
+                    :PLSE => plse,
+                    :DLSE => dlse,
                    )
+    if network != nothing
+        networks = Dict(network => networks[network])
+    end
+        
 
     for (name, model) in networks
         @show name
@@ -50,7 +58,9 @@ function main()
         # @infiltrate
         opt_state = Flux.setup(Adam(1e-4), model)
         # @infiltrate
-        for epoch in 1:2
+        for epoch in 1:epochs
+            @show epoch
+            @show Flux.Losses.mse(model(X_test, Y_test), Z_test)
             for (x, y, z) in data
                 val, grads = Flux.withgradient(model) do m
                     pred = m(x, y)
