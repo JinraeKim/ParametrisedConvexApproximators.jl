@@ -4,6 +4,7 @@ struct PMA <: ParametrisedConvexApproximator
     i_max::Int
     NN::Flux.Chain
 end
+Flux.@functor PMA (NN,)
 
 """
 Basic constructor PMA based on Flux.Chain.
@@ -42,5 +43,3 @@ function (nn::PMA)(x::AbstractArray, u::Convex.AbstractExpr)
     tmp = affine_map(nn, x, u)
     res = [maximum(tmp)]
 end
-
-Flux.params(approximator::PMA) = Flux.params(approximator.NN)

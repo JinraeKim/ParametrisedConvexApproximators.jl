@@ -44,6 +44,7 @@ function Flux.train!(
         trainer::SupervisedLearningTrainer;
         batchsize=16,
         epochs=200,
+        fig_name="loss.pdf",
     )
     (; loss, network, optimiser, dataset) = trainer
     parameters = Flux.params(network)
@@ -77,10 +78,13 @@ function Flux.train!(
             best_network = deepcopy(network)
         end
     end
-    # plot
-    p = plot(; xlabel="epoch", ylabel="loss", yaxis=:log)
-    plot!(p, 0:epochs, losses_train, label="train")
-    plot!(p, 0:epochs, losses_validate, label="validate")
-    savefig(p, "loss.pdf")  # TODO: better file name
+    # Deprecated to remove the dependency of Plots.jl
+    # # plot
+    # if fig_name != nothing
+    #     p = plot(; xlabel="epoch", ylabel="loss", yaxis=:log)
+    #     plot!(p, 0:epochs, losses_train, label="train")
+    #     plot!(p, 0:epochs, losses_validate, label="validate")
+    #     savefig(p, fig_name)
+    # end
     return best_network
 end

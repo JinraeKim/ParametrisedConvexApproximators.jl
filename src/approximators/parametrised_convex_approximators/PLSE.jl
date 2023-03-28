@@ -6,8 +6,7 @@ struct PLSE <: ParametrisedConvexApproximator
     NN::Flux.Chain
     strict::Bool
 end
-
-
+Flux.@functor PLSE (NN,)
 function PLSE(n::Int, m::Int, i_max::Int, T::Real, h_array::Vector{Int}, act; strict=true)
     @assert T > 0
     node_array = [n, h_array..., i_max*(m+1)]
@@ -43,5 +42,3 @@ function (nn::PLSE)(x::AbstractArray, u::Convex.AbstractExpr)
     tmp = affine_map(nn, x, u)
     res = [T * Convex.logsumexp((1/T)*tmp)]
 end
-
-Flux.params(approximator::PLSE) = Flux.params(approximator.NN)

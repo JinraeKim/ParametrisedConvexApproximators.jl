@@ -10,6 +10,7 @@ struct DLSE <: DifferenceOfConvexApproximator
     NN1::LSE
     NN2::LSE
 end
+Flux.@functor DLSE (NN1, NN2)
 
 
 function (nn::DLSE)(x::AbstractArray, u::AbstractArray)
@@ -17,9 +18,3 @@ function (nn::DLSE)(x::AbstractArray, u::AbstractArray)
     f2 = nn.NN2(x, u)
     return f1 - f2
 end
-
-
-Flux.params(approximator::DLSE) = Flux.params([
-                                               Flux.params(approximator.NN1)...,
-                                               Flux.params(approximator.NN2)...,
-                                              ])

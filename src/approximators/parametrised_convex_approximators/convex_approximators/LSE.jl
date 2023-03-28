@@ -20,17 +20,18 @@ struct LSE <: ConvexApproximator
     m::Int  # the second variable for bivariate function
     i_max::Int
     T::Real
-    _α_is::Matrix
-    _β_is::Matrix
-    function LSE(n::Int, m::Int, i_max::Int, T::Real)
-        @assert T > 0
-        α_is = 1:i_max |> Map(i -> Flux.glorot_uniform(n+m)) |> collect
-        β_is = 1:i_max |> Map(i -> Flux.glorot_uniform(1)) |> collect
-        i_max, _α_is, _β_is = _construct_convex_approximator(α_is, β_is)
-        new(n, m, i_max, T, _α_is, _β_is)
-    end
+    _α_is
+    _β_is
 end
 Flux.@functor LSE (_α_is, _β_is,)
+function LSE(n::Int, m::Int, i_max::Int, T::Real)
+    @assert T > 0
+    α_is = [Flux.glorot_uniform(n+m) for i in 1:i_max]
+    β_is = [Flux.glorot_uniform(1) for i in 1:i_max]
+    i_max, _α_is, _β_is = _construct_convex_approximator(α_is, β_is)
+    LSE(n, m, i_max, T, _α_is, _β_is)
+end
+
 
 
 """
