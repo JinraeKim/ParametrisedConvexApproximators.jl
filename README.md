@@ -139,7 +139,7 @@ the output of an approximator is **one-length vector**.
     - `PICNN::ParametrisedConvexApproximator`: partially input-convex neural network (PICNN) [2]
     - `PMA::ParametrisedConvexApproximator`: parametrised MA (PMA) network [3]
     - `PLSE::ParametrisedConvexApproximator`: parametrised LSE (PLSE) network [3]
-        - The default setting (`strict`) is slightly modified from [3], see [#37](https://github.com/JinraeKim/ParametrisedConvexApproximators.jl/pull/37).
+        - The default setting is `strict = false`.
     - `DLSE::DifferenceOfConvexApproximator`: difference of LSE (DLSE) network [4]
 
 ### Utilities

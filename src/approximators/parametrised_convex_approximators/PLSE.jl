@@ -7,7 +7,7 @@ struct PLSE <: ParametrisedConvexApproximator
     strict::Bool
 end
 Flux.@functor PLSE (NN,)
-function PLSE(n::Int, m::Int, i_max::Int, T::Real, h_array::Vector{Int}, act; strict=true)
+function PLSE(n::Int, m::Int, i_max::Int, T::Real, h_array::Vector{Int}, act; strict=false)
     @assert T > 0
     node_array = [n, h_array..., i_max*(m+1)]
     PLSE(n, m, i_max, T, construct_layer_array(node_array, act), strict)

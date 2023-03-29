@@ -58,7 +58,7 @@ function main(epochs=2, network=nothing)
         # @infiltrate
         opt_state = Flux.setup(Adam(1e-4), model)
         # @infiltrate
-        for epoch in 1:epochs
+        @time for epoch in 1:epochs
             @show epoch
             @show Flux.Losses.mse(model(X_test, Y_test), Z_test)
             for (x, y, z) in data
