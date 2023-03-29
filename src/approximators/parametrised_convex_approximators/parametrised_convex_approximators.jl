@@ -12,10 +12,14 @@ function affine_map(nn::ParametrisedConvexApproximator, x::AbstractArray, u::Abs
             dummy = zeros(1, m, d)
             dummy = hcat(dummy, ones(1, 1, d))
             dummy = vcat(dummy, ones(i_max-1, m+1, d))
-            X = X .* dummy
+            Y = X .* dummy
+        else
+            Y = X
         end
+    else
+        Y = X
     end
-    tmp = hcat([(X[:, 1:m, i]*u[:, i] .+ X[:, m+1, i]) for i in 1:d]...)
+    tmp = hcat([(Y[:, 1:m, i]*u[:, i] .+ Y[:, m+1, i]) for i in 1:d]...)
 end
 
 
@@ -28,11 +32,15 @@ function affine_map(nn::ParametrisedConvexApproximator, x::AbstractArray, u::Con
             dummy = zeros(1, m)
             dummy = hcat(dummy, ones(1, 1))
             dummy = vcat(dummy, ones(i_max-1, m+1))
-            X = X .* dummy
+            Y = X .* dummy
+        else
+            Y = X
         end
+    else
+        Y = X
     end
     tmp = (
-           X[:, 1:m] * u + (X[:, 1:m]*zeros(size(u)) .+ X[:, m+1])
+           Y[:, 1:m] * u + (Y[:, 1:m]*zeros(size(u)) .+ Y[:, m+1])
           )  # X1*zeros(size(u)) is for compatibility with Convex.jl
 end
 

@@ -6,17 +6,18 @@
 Find a minimiser of `network::ParametrisedConvexApproximator` for given
 data point `x::AbstractVector`.
 Solve with Convex.jl [1].
-Available solvers include SCS [2], COSMO [3], Mosek [4], etc.
+Available solvers include SCS [2], COSMO [3], Mosek [4], ECOS [5], etc.
 # Refs.
 [1] https://github.com/jump-dev/Convex.jl
 [2] https://github.com/jump-dev/SCS.jl
 [3] https://github.com/oxfordcontrol/COSMO.jl
 [4] https://github.com/MOSEK/Mosek.jl
+[5] https://github.com/jump-dev/ECOS.jl
 """
 function _optimise(
         network::ParametrisedConvexApproximator, x::AbstractVector,
         u_min, u_max, initial_guess;
-        solver=SCS,
+        solver=() -> ECOS.Optimizer(),  # See https://github.com/jump-dev/Convex.jl/issues/346
     )
     (; m) = network
     u = Convex.Variable(m)
@@ -37,7 +38,7 @@ function _optimise(
     if u_max != nothing
         problem.constraints += [u <= u_max]
     end
-    solve!(problem, solver.Optimizer(); verbose=false, silent_solver=true)
+    solve!(problem, solver(); verbose=false, silent_solver=true)
     minimiser = typeof(u.value) <: Number ? [u.value] : u.value[:]  # to make it a vector
     return minimiser
 end
@@ -56,7 +57,7 @@ Basic DCA [1] is used.
 [2] https://github.com/Corrado-possieri/DLSE_neural_networks/commit/8883e5bcf1733b79b2dd3c432b31af30b4bba0a6#diff-aa888e053028cc6dbd9f0cfb1c30f61f1bde256be213f27b9a083b95292ec5ebR26
 """
 function _optimise(network::DifferenceOfConvexApproximator, x::AbstractVector, u_min, u_max, initial_guess;
-        solver=SCS,
+        solver=() -> ECOS.Optimizer(),  # See https://github.com/jump-dev/Convex.jl/issues/346
         max_iter=30,
         tol=1e-3,  # borrowed from [2]
     )
@@ -97,7 +98,7 @@ function _optimise(network::DifferenceOfConvexApproximator, x::AbstractVector, u
         if u_max != nothing
             problem.constraints += [u <= u_max]
         end
-        solve!(problem, solver.Optimizer(); verbose=false, silent_solver=true)
+        solve!(problem, solver(); verbose=false, silent_solver=true)
         χ_next = typeof(u.value) <: Number ? [u.value] : u.value[:]  # to make it a vector
         if norm(χ_next - χ) / (1+norm(χ)) < tol || k == max_iter
             # @show k
@@ -122,7 +123,9 @@ Default solver is `IPNewton` in Optim.jl for box constraints [1].
 # Refs.
 [1] https://julianlsolvers.github.io/Optim.jl/stable/#examples/generated/ipnewton_basics/#box-minimzation
 """
-function _optimise(network::AbstractApproximator, x::AbstractVector, u_min, u_max, initial_guess)
+function _optimise(network::AbstractApproximator, x::AbstractVector, u_min, u_max, initial_guess;
+        solver=() -> IPNewton(),  # See https://github.com/jump-dev/Convex.jl/issues/346
+    )
     (; m) = network
     obj(u) = network(x, u)[1]
     if u_min == nothing
@@ -145,7 +148,7 @@ function _optimise(network::AbstractApproximator, x::AbstractVector, u_min, u_ma
         end
     end
     dfc = TwiceDifferentiableConstraints(u_min, u_max)
-    res = Optim.optimize(obj, dfc, initial_guess, IPNewton())
+    res = Optim.optimize(obj, dfc, initial_guess, solver())
     minimiser = prod(size(initial_guess)) == 1 ? res.minimizer[1] : res.minimizer
     return minimiser
 end

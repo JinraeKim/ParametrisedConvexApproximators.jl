@@ -78,12 +78,13 @@ function Flux.train!(
             best_network = deepcopy(network)
         end
     end
-    # plot
-    if fig_name != nothing
-        p = plot(; xlabel="epoch", ylabel="loss", yaxis=:log)
-        plot!(p, 0:epochs, losses_train, label="train")
-        plot!(p, 0:epochs, losses_validate, label="validate")
-        savefig(p, fig_name)
-    end
+    # Deprecated to remove the dependency of Plots.jl
+    # # plot
+    # if fig_name != nothing
+    #     p = plot(; xlabel="epoch", ylabel="loss", yaxis=:log)
+    #     plot!(p, 0:epochs, losses_train, label="train")
+    #     plot!(p, 0:epochs, losses_validate, label="validate")
+    #     savefig(p, fig_name)
+    # end
     return best_network
 end

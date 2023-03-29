@@ -21,6 +21,7 @@ struct MaxAbsNormalisedApproximator{T<:AbstractApproximator} <: NormalisedApprox
     decision_max_abs::Union{Array, Nothing}
     cost_max_abs::Union{Array, Nothing}
 end
+Flux.@functor MaxAbsNormalisedApproximator (network,)
 
 function MaxAbsNormalisedApproximator(
     network::AbstractApproximator,
@@ -58,6 +59,3 @@ function unnormalise(nn::MaxAbsNormalisedApproximator, z, which::Symbol)
     z = factor != nothing ? z .* factor : z
     return z
 end
-
-
-Flux.params(approximator::NormalisedApproximator) = Flux.params(approximator.network)
