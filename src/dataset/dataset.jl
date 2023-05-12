@@ -10,7 +10,8 @@ struct SimpleDataset <: DecisionMakingDataset
 end
 
 function SimpleDataset(
-        func;
+        target_function;
+        target_function_name=nothing,
         n::Int=1, m::Int=1,
         N::Int=1_000, seed=2022,
         ratio1=0.7, ratio2=0.2,
@@ -25,13 +26,13 @@ function SimpleDataset(
     Random.seed!(seed)
     train_idx, validate_idx, test_idx = split_data3(collect(1:N), ratio1, ratio2)
     # get data
-    f = target_function(func)
+    f = target_function
     conditions = sample_from_bounds(N, min_condition, max_condition, seed)
     decisions = sample_from_bounds(N, min_decision, max_decision, seed)
     costs = zip(conditions, decisions) |> MapSplat((x, u) -> f(x, u)) |> collect
     metadata = (;
                 target_function=f,
-                target_function_name=typeof(func) == Symbol ? func : nothing,
+                target_function_name=target_function_name,
                 split_ratio=(;
                              train=ratio1,
                              validate=ratio2,
@@ -124,7 +125,7 @@ Get a target function.
 [1] J. Kim and Y. Kim, “Parameterized Convex Universal Approximators for Decision-Making Problems,” IEEE Trans. Neural Netw. Learning Syst., 2022, doi: 10.1109/TNNLS.2022.3190198.
 [2] G. C. Calafiore, S. Gaubert, and C. Possieri, “A Universal Approximation Result for Difference of Log-Sum-Exp Neural Networks,” IEEE Transactions on Neural Networks and Learning Systems, vol. 31, no. 12, pp. 5603–5612, Dec. 2020, doi: 10.1109/TNNLS.2020.2975051.
 """
-function target_function(name)
+function example_target_function(name)
     if typeof(name) == Symbol
         if name == :quadratic
             func = (x::Vector, u::Vector) -> x'*x + u'*u

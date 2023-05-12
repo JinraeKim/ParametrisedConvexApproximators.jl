@@ -29,10 +29,10 @@ condition and decision vectors, usually denoted by `x` and `u`.
 ```julia
 using ParametrisedConvexApproximators
 using Flux
-using Random  # for random seed
+using Random  # to reproduce the following result
 
 # construction
-seed = 2022
+seed = 2023
 Random.seed!(seed)
 n, m = 3, 2
 i_max = 20
@@ -46,7 +46,7 @@ f̂ = network(x, u)
 ```
 
 ```julia
-f̂ = [2.995747603812025]  # size(f̂) = (1,)
+f̂ = [3.029994811790289]
 ```
 
 ### Prepare dataset
@@ -55,11 +55,13 @@ min_condition = -ones(n)
 max_condition = +ones(n)
 min_decision = -ones(m)
 max_decision = +ones(m)
-func_name = :quadratic  # f(x, u) = transpose(x)*x + transpose(u)*u
+target_function_name = :quadratic
+target_function = example_target_function(target_function_name)  # f(x, u) = x'*x + u'*u
 N = 5_000
 
 dataset = SimpleDataset(
-    func_name;
+    target_function;
+    target_function_name=:quadratic,  # just for metadata
     N=N, n=n, m=m, seed=seed,
     min_condition=min_condition,
     max_condition=max_condition,
@@ -79,23 +81,23 @@ Flux.train!(trainer; epochs=200)
 ```
 
 ```julia
-get_loss(trainer, :train) = 2.2485616017365517
-get_loss(trainer, :validate) = 2.2884594157659994
+get_loss(trainer, :train) = 2.2437410545162115
+get_loss(trainer, :validate) = 2.2849741432452193
 
 ...
 
 epoch: 199/200
-loss_train = 0.00020636060117068826
-loss_validate = 0.00027629941017224863
+loss_train = 0.0001664964550015733
+loss_validate = 0.0003002414225961646
 Best network found!
-minimum_loss_validate = 0.00027629941017224863
+minimum_loss_validate = 0.0003002414225961646
 epoch: 200/200
-loss_train = 0.00020551515617350474
-loss_validate = 0.0002751188168629372
+loss_train = 0.0001647995673689787
+loss_validate = 0.00029825480495257375
 Best network found!
-minimum_loss_validate = 0.0002751188168629372
+minimum_loss_validate = 0.00029825480495257375
 
-get_loss(trainer, :test) = 0.0002642962384649246
+get_loss(trainer, :test) = 0.00026774267336425705
 ```
 
 ### Conditional decision making via optimization (given `x`, find a minimizer `u` and optimal value)
@@ -103,16 +105,16 @@ get_loss(trainer, :test) = 0.0002642962384649246
 # optimization
 Random.seed!(seed)
 x = rand(n)  # any value
-minimiser = optimise(network, x; u_min=min_decision, u_max=max_decision)  # minimsation
+minimiser = minimise(network, x; u_min=min_decision, u_max=max_decision)  # out-of-box box-constrained minimization; you can define an optimization problem manually with Convex.jl
 @show minimiser
 @show network(x, minimiser)
 @show dataset[:train].metadata.target_function(x, minimiser)
 ```
 
 ```julia
-minimiser = [-0.00863654920254873, 0.014258700223990051]
-network(x, minimiser) = [1.1275475934947705]
-(dataset[:train]).metadata.target_function(x, minimiser) = 1.1027324438048691
+minimiser = [-0.003060366520019827, 0.007150205329478883]
+network(x, minimiser) = [0.9629849722035002]
+(dataset[:train]).metadata.target_function(x, minimiser) = 0.9666740244969058
 ```
 
 
