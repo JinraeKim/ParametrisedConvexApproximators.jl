@@ -1,7 +1,7 @@
 name = "ParametrisedConvexApproximators"
 uuid = "668502ff-1e8f-42bf-95c7-24f1e819f537"
 authors = ["JinraeKim <kjl950403@gmail.com> and contributors"]
-version = "0.2.2"
+version = "0.3.0"
 
 [deps]
 Convex = "f65535da-76fb-5f13-bab9-19810c17039a"

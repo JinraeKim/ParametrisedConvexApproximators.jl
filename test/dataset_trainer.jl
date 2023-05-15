@@ -43,9 +43,10 @@ function test_split_data3()
 end
 
 
-function test_SimpleDataset(func_name, split)
+function test_SimpleDataset(target_function, func_name, split)
     dataset = SimpleDataset(
-        func_name;
+        target_function;
+        target_function_name=func_name;
         N=N, n=n, m=m, seed=seed,
         min_condition=min_condition,
         max_condition=max_condition,
@@ -71,10 +72,11 @@ function test_dataset()
                       :quadratic,
                       :parameterized_convex_basic,
                       :quadratic_sin_sum,
-                      (x, u) -> sum(x)+sum(u),  # anonymous function example
                      ]
+        target_function = example_target_function(func_name)
         for split in [:train, :validate, :test]
-            test_SimpleDataset(func_name, split)
+            target_function = example_target_function(func_name)
+            test_SimpleDataset(target_function, func_name, split)
         end
     end
 end
