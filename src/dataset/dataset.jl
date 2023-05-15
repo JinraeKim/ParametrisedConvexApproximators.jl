@@ -1,7 +1,4 @@
-abstract type DecisionMakingDataset end
-
-
-struct SimpleDataset <: DecisionMakingDataset
+struct DecisionMakingDataset
     metadata::NamedTuple
     split::Symbol
     conditions::AbstractVector
@@ -9,7 +6,7 @@ struct SimpleDataset <: DecisionMakingDataset
     costs::AbstractVector
 end
 
-function SimpleDataset(
+function DecisionMakingDataset(
         target_function;
         target_function_name=nothing,
         n::Int=1, m::Int=1,

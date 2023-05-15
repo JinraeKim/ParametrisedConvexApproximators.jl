@@ -59,7 +59,7 @@ target_function_name = :quadratic
 target_function = example_target_function(target_function_name)  # f(x, u) = x'*x + u'*u
 N = 5_000
 
-dataset = SimpleDataset(
+dataset = DecisionMakingDataset(
     target_function;
     target_function_name=:quadratic,  # just for metadata
     N=N, n=n, m=m, seed=seed,
@@ -152,7 +152,7 @@ considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
     or a matrix for multiple conditions via multi-threading, i.e., `size(x) = (n, d)`.
 
 ### Dataset
-- `SimpleDataset <: DecisionMakingDataset` is used for analytically-expressed cost functions.
+- `DecisionMakingDataset` is used for analytically-expressed cost functions.
 
 ### Trainer
 - `SupervisedLearningTrainer`

@@ -20,7 +20,7 @@ export MaxAbsNormalisedApproximator
 # data manipulation
 export split_data2, split_data3
 # dataset
-export SimpleDataset
+export DecisionMakingDataset
 export example_target_function
 # trainer
 export SupervisedLearningTrainer

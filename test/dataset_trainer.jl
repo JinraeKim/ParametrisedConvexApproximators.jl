@@ -43,9 +43,9 @@ function test_split_data3()
 end
 
 
-function test_SimpleDataset(func_name, split)
+function test_DecisionMakingDataset(func_name, split)
     target_function = example_target_function(func_name)
-    dataset = SimpleDataset(
+    dataset = DecisionMakingDataset(
         target_function;
         target_function_name=func_name,
         N=N, n=n, m=m, seed=seed,
@@ -76,16 +76,16 @@ function test_dataset()
                      ]
         for split in [:train, :validate, :test]
             target_function = example_target_function(func_name)
-            test_SimpleDataset(func_name, split)
+            test_DecisionMakingDataset(func_name, split)
         end
     end
 end
 
 
 function test_trainer()
-    dataset = test_SimpleDataset(:quadratic, :full)  # for trainer
-    # dataset = test_SimpleDataset(:parameterized_convex_basic, :full)  # for trainer
-    # dataset = test_SimpleDataset(:quadratic_sin_sum, :full)  # for trainer
+    dataset = test_DecisionMakingDataset(:quadratic, :full)  # for trainer
+    # dataset = test_DecisionMakingDataset(:parameterized_convex_basic, :full)  # for trainer
+    # dataset = test_DecisionMakingDataset(:quadratic_sin_sum, :full)  # for trainer
     network = PLSE(n, m, i_max, T, h_array, act)
     # network = FNN(n, m, h_array, act)
     # network = LSE(n, m, i_max, T)
