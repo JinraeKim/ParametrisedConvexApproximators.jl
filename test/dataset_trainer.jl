@@ -43,16 +43,21 @@ function test_split_data3()
 end
 
 
-function test_DecisionMakingDataset(func_name, split)
-    target_function = example_target_function(func_name)
+function test_DecisionMakingDataset(name, split)
+    target_function = example_target_function(name)
+    conditions, decisions, costs, metadata = generate_dataset(
+                                                              target_function;
+                                                              N=100,
+                                                              min_condition=min_condition,
+                                                              max_condition=max_condition,
+                                                              min_decision=min_decision,
+                                                              max_decision=max_decision,
+                                                             )
     dataset = DecisionMakingDataset(
-        target_function;
-        target_function_name=func_name,
-        N=N, n=n, m=m, seed=seed,
-        min_condition=min_condition,
-        max_condition=max_condition,
-        min_decision=min_decision,
-        max_decision=max_decision,
+        conditions, decisions, costs;
+        metadata=metadata,
+        name=name,
+        seed=seed,
    )
     return dataset[split]
 end
@@ -69,14 +74,14 @@ end
 
 
 function test_dataset()
-    for func_name in [
-                      :quadratic,
-                      :parameterized_convex_basic,
-                      :quadratic_sin_sum,
-                     ]
+    for name in [
+                 :quadratic,
+                 :parameterized_convex_basic,
+                 :quadratic_sin_sum,
+                ]
         for split in [:train, :validate, :test]
-            target_function = example_target_function(func_name)
-            test_DecisionMakingDataset(func_name, split)
+            target_function = example_target_function(name)
+            test_DecisionMakingDataset(name, split)
         end
     end
 end
