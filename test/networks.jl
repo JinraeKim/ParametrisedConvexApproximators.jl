@@ -35,18 +35,19 @@ function generate_networks()
     picnn = PICNN(n, m, u_array, z_array, act, act)
     pma = PMA(n, m, i_max, h_array, act)
     plse = PLSE(n, m, i_max, T, h_array, act)
+    # plse_plus = PLSEPlus(n, m, i_max, T, h_array, act)
     dlse = DLSE(
                 LSE(n, m, i_max, T),
                 LSE(n, m, i_max, T),
                )
 
     networks = Dict(
-                    # "FNN" => fnn,
-                    # "MA" => ma,
-                    # "LSE" => lse,
-                    # "PICNN" => picnn,
-                    # "PMA" => pma,
-                    # "PLSE" => plse,
+                    "FNN" => fnn,
+                    "MA" => ma,
+                    "LSE" => lse,
+                    "PICNN" => picnn,
+                    "PMA" => pma,
+                    "PLSE" => plse,
                     "DLSE" => dlse,
                    )
     return networks
