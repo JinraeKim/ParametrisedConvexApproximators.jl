@@ -1,12 +1,20 @@
+include("implicit_diff.jl")
+
+
 """
-    _minimise(network::ParametrisedConvexApproximator, x::AbstractVector;
+    _minimise(network::PLSE, x::AbstractVector;
         u_min=nothing, u_max=nothing,
     )
 
-Find a minimiser of `network::ParametrisedConvexApproximator` for given
+Find a minimiser of `network::PLSE` for given
 data point `x::AbstractVector`.
 Solve with Convex.jl [1].
 Available solvers include SCS [2], COSMO [3], Mosek [4], ECOS [5], etc.
+
+# Notes
+For the differentiation of the minimiser,
+implicit differentation is used here.
+
 # Refs.
 [1] https://github.com/jump-dev/Convex.jl
 [2] https://github.com/jump-dev/SCS.jl
@@ -15,31 +23,15 @@ Available solvers include SCS [2], COSMO [3], Mosek [4], ECOS [5], etc.
 [5] https://github.com/jump-dev/ECOS.jl
 """
 function _minimise(
-        network::ParametrisedConvexApproximator, x::AbstractVector,
+        network::PLSE, x::AbstractVector,
         u_min, u_max, initial_guess;
         solver=() -> ECOS.Optimizer(),  # See https://github.com/jump-dev/Convex.jl/issues/346
     )
-    (; m) = network
+    (; m, T) = network
     u = Convex.Variable(m)
-    # initial guess
-    if initial_guess != nothing
-        u.value = initial_guess
-    end
-    if u_min != nothing
-        @assert length(u) == length(u_min)
-    end
-    if u_max != nothing
-        @assert length(u) == length(u_max)
-    end
-    problem = Convex.minimize(network(x, u)[1])
-    if u_min != nothing
-        problem.constraints += [u >= u_min]
-    end
-    if u_max != nothing
-        problem.constraints += [u <= u_max]
-    end
-    solve!(problem, solver(); verbose=false, silent_solver=true)
-    minimiser = typeof(u.value) <: Number ? [u.value] : u.value[:]  # to make it a vector
+    A, B = _affine_map(network, x, u)
+    θ = ComponentArray(A=A, B=B)
+    minimiser = implicit_lse_optim(θ; T=T, u_min=u_min, u_max=u_max, initial_guess=initial_guess, solver=solver)
     return minimiser
 end
 

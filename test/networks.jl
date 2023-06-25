@@ -48,8 +48,8 @@ function generate_networks()
                     "PICNN" => picnn,
                     "PMA" => pma,
                     "PLSE" => plse,
-                    "DLSE" => dlse,
                     "PLSEPlus" => plse_plus,
+                    "DLSE" => dlse,
                    )
     return networks
 end
@@ -67,17 +67,17 @@ end
 function test_minimise(network)
     println("test_minimise")
     x = xs[:, 1]
-    minimizer = minimise(network, x; u_min=u_min, u_max=u_max)
-    @test size(minimizer) == (m,)
-    @test size(network(x, minimizer)) == (1,)
+    minimiser = minimise(network, x; u_min=u_min, u_max=u_max)
+    @test size(minimiser) == (m,)
+    @test size(network(x, minimiser)) == (1,)
 end
 
 
 function test_minimise_multiple(network)
     println("test_minimise_multiple")
-    minimizers = minimise(network, xs; u_min=u_min, u_max=u_max)
-    @test size(minimizers) == (m, d)
-    @test size(network(xs, minimizers)) == (1, d)
+    minimisers = minimise(network, xs; u_min=u_min, u_max=u_max)
+    @test size(minimisers) == (m, d)
+    @test size(network(xs, minimisers)) == (1, d)
 end
 
 
@@ -110,10 +110,10 @@ function test_max_abs_normalised_network(network)
     fs = normalised_network(xs, us)
     @test fs_normalised .* f_max_abs == fs
     # optimization
-    minimizer = minimise(network, xs ./ x_max_abs; u_min=u_min ./ u_max_abs, u_max=u_max ./ u_max_abs, initial_guess=initial_guess ./ u_max_abs)
+    minimiser = minimise(network, xs ./ x_max_abs; u_min=u_min ./ u_max_abs, u_max=u_max ./ u_max_abs, initial_guess=initial_guess ./ u_max_abs)
     minimizer_normalized = minimise(normalised_network, xs; u_min=u_min, u_max=u_max, initial_guess=initial_guess)
-    @test minimizer .* u_max_abs ≈ minimizer_normalized
-    @test network(xs ./ x_max_abs, minimizer) .* f_max_abs ≈ normalised_network(xs, minimizer_normalized)
+    @test minimiser .* u_max_abs ≈ minimizer_normalized
+    @test network(xs ./ x_max_abs, minimiser) .* f_max_abs ≈ normalised_network(xs, minimizer_normalized)
 end
 
 

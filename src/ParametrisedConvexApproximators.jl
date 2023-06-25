@@ -7,6 +7,8 @@ using Optim
 using Transducers  # mostly for parallel optimization
 using Random
 using ForwardDiff  # mostly for DLSE
+using ImplicitDifferentiation  # for the differentiation of the minimiser
+using ComponentArrays
 
 
 # approximators
