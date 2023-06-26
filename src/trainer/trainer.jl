@@ -2,19 +2,19 @@ abstract type AbstractTrainer end
 
 
 struct SupervisedLearningTrainer <: AbstractTrainer
-    loss
     network::AbstractApproximator
-    optimiser
     dataset::DecisionMakingDataset
+    loss
+    optimiser
     function SupervisedLearningTrainer(
         dataset, network;
-        loss=(x, u, f) -> Flux.mse(network(x, u), f),
+        normalisation=nothing,
+        loss=Flux.Losses.mse,
         optimiser=Adam(1e-3),
-        normalisation=:max_abs,
     )
         network = retrieve_normalised_network(network, dataset, normalisation)
         @assert dataset.split == :full
-        new(loss, network, optimiser, dataset)
+        new(network, dataset, loss, optimiser)
     end
 end
 
@@ -34,8 +34,8 @@ end
 function get_loss(trainer::SupervisedLearningTrainer, split::Symbol)
     @assert split ∈ (:train, :validate, :test)
     dataset = trainer.dataset[split]
-    (; loss) = trainer
-    l = loss(hcat(dataset.conditions...), hcat(dataset.decisions...), hcat(dataset.costs...))
+    (; loss, network) = trainer
+    l = loss(network(hcat(dataset.conditions...), hcat(dataset.decisions...)), hcat(dataset.costs...))
     return l
 end
 
@@ -46,13 +46,13 @@ function Flux.train!(
         epochs=200,
         fig_name="loss.pdf",
     )
-    (; loss, network, optimiser, dataset) = trainer
-    parameters = Flux.params(network)
+    (; network, dataset, loss, optimiser) = trainer
     data_train = Flux.DataLoader((
         hcat(dataset[:train].conditions...),
         hcat(dataset[:train].decisions...),
         hcat(dataset[:train].costs...),
     ); batchsize=batchsize)
+    opt_state = Flux.setup(optimiser, network)
 
     losses_train = []
     losses_validate = []
@@ -63,7 +63,17 @@ function Flux.train!(
     for epoch in 0:epochs
         println("epoch: $(epoch)/$(epochs)")
         if epoch != 0
-            Flux.train!(loss, parameters, data_train, optimiser)
+            for (x, u, f) in data_train
+                val, grads = Flux.withgradient(network) do _network
+                    pred = _network(x, u)
+                    loss(pred, f)
+                end
+                # TODO
+                Flux.update!(opt_state, network, grads[1])
+                if typeof(network) == PICNN
+                    project_nonnegative!(network)
+                end
+            end
         end
         loss_train = get_loss(trainer, :train)
         push!(losses_train, loss_train)
