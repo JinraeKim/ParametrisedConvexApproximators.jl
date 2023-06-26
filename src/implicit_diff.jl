@@ -1,5 +1,6 @@
 function minimise_logsumexp(θ; T, u_min, u_max, initial_guess, solver=() -> ECOS.Optimizer())
-    (; A, B) = θ
+    A = θ[:, 1:end-1]
+    B = θ[:, end]
     m = size(A)[2]
     u = Convex.Variable(m)
     if initial_guess != nothing
@@ -21,7 +22,8 @@ end
 
 function forward_lse_optim(θ; kwargs...)
     u = minimise_logsumexp(θ; kwargs...)
-    return u
+    z = 0
+    return u, z
 end
 
 
@@ -35,18 +37,22 @@ function proj_hypercube(u; u_min, u_max)
     return u
 end
 
-function conditions_lse_optim(θ, u; kwargs...)
-    (; A, B) = θ
+function conditions_lse_optim(θ, u, z; kwargs...)
+    A = θ[:, 1:end-1]
+    B = θ[:, end]
     ∇₂f = A' * Flux.softmax(A*u+B)
     η = 0.1
     return u .- proj_hypercube(u .- η .* ∇₂f; kwargs...)
 end
 
 
+"""
+See https://github.com/gdalle/ImplicitDifferentiation.jl for details.
+"""
 function implicit_lse_optim(θ; T, u_min, u_max, initial_guess, solver)
     tmp = ImplicitFunction(
                            θ -> forward_lse_optim(θ; T, u_min, u_max, initial_guess, solver),
-                           (θ, u) -> conditions_lse_optim(θ, u; u_min, u_max),
+                           (θ, u, z) -> conditions_lse_optim(θ, u, z; u_min, u_max),
                           )
-    tmp(θ)
+    tmp(θ)[1]
 end

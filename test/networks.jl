@@ -2,7 +2,6 @@ using Test
 using Flux
 using ParametrisedConvexApproximators
 using ParametrisedConvexApproximators: sample_from_bounds
-using Transducers
 using Random
 
 
@@ -35,7 +34,7 @@ function generate_networks()
     picnn = PICNN(n, m, u_array, z_array, act, act)
     pma = PMA(n, m, i_max, h_array, act)
     plse = PLSE(n, m, i_max, T, h_array, act)
-    plse_plus = PLSE(n, m, i_max, T, h_array, act; strict=true)
+    plse_plus = PLSEplus(n, m, i_max, T, h_array, act)
     dlse = DLSE(
                 LSE(n, m, i_max, T),
                 LSE(n, m, i_max, T),

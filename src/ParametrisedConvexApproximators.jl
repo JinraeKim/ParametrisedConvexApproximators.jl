@@ -4,17 +4,17 @@ using Flux
 using Convex
 using ECOS
 using Optim
-using Transducers  # mostly for parallel optimization
 using Random
 using ForwardDiff  # mostly for DLSE
 using ImplicitDifferentiation  # for the differentiation of the minimiser
 using ComponentArrays
+using Distributed  # for pmap
 
 
 # approximators
 export AbstractApproximator, FNN
 export ConvexApproximator, MA, LSE
-export ParametrisedConvexApproximator, PMA, PLSE
+export ParametrisedConvexApproximator, PMA, PLSE, PLSEplus
 export PICNN, project_nonnegative!
 export DifferenceOfConvexApproximator, DLSE
 export minimise, number_of_parameters

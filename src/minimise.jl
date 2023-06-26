@@ -28,10 +28,8 @@ function _minimise(
         solver=() -> ECOS.Optimizer(),  # See https://github.com/jump-dev/Convex.jl/issues/346
     )
     (; m, T) = network
-    u = Convex.Variable(m)
-    A, B = _affine_map(network, x, u)
-    θ = ComponentArray(A=A, B=B)
-    minimiser = implicit_lse_optim(θ; T=T, u_min=u_min, u_max=u_max, initial_guess=initial_guess, solver=solver)
+    θ = _affine_map(network, x)
+    minimiser = implicit_lse_optim(θ; T, u_min, u_max, initial_guess, solver,)
     return minimiser
 end
 
@@ -174,19 +172,19 @@ end
     )
 
 Find a minimiser of `network::AbstractApproximator` for given
-data point `x::AbstractMatrix` using multi-thread computing (powered by Transducers.jl).
+data point `x::AbstractMatrix` using pmap.
 """
 function minimise(network::AbstractApproximator, x::AbstractMatrix;
         u_min=nothing, u_max=nothing,
         multithreading=true,
         initial_guess=nothing,
     )
-    collector = multithreading ? Transducers.tcollect : collect
+    _map = multithreading ? pmap : map
     d = size(x)[2]
     # initial guess
-    initial_guess = 1:d |> Map(i -> initial_guess == nothing ? nothing : initial_guess[:, i]) |> collect
+    initial_guess = _map(i -> initial_guess == nothing ? nothing : initial_guess[:, i], 1:d)
     # optimisation
-    minimisers = 1:d |> Map(i -> minimise(network, x[:, i]; u_min=u_min, u_max=u_max, initial_guess=initial_guess[i])) |> collector
+    minimisers = _map(i -> minimise(network, x[:, i]; u_min=u_min, u_max=u_max, initial_guess=initial_guess[i]), 1:d)
     minimiser_matrix = hcat(minimisers...)
     return minimiser_matrix
 end

@@ -1,8 +1,6 @@
 using Test
 using ParametrisedConvexApproximators
 using Flux
-using Transducers
-# using JLD2, FileIO
 
 
 n, m = 3, 2

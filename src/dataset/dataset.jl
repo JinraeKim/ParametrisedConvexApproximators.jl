@@ -20,7 +20,8 @@ function generate_dataset(
     f = target_function
     conditions = sample_from_bounds(N, min_condition, max_condition, seed)
     decisions = sample_from_bounds(N, min_decision, max_decision, seed)
-    costs = zip(conditions, decisions) |> MapSplat((x, u) -> f(x, u)) |> collect
+    # costs = zip(conditions, decisions) |> MapSplat((x, u) -> f(x, u)) |> collect
+    costs = [f(c, d) for (c, d) in zip(conditions, decisions)]
     metadata = (;
                 target_function=f,
                 min_condition=min_condition,

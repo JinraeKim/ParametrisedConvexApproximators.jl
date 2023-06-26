@@ -14,8 +14,8 @@ pkg> add ParametrisedConvexApproximator
 ```
 
 ### Notes
-- Activate multi-threading if available, e.g., `julia -t 7` enabling `7` threads.
-It will reduce computation time to obtain multiple minimizers.
+- For PLSE(plus), the differentiation of the minimiser is now available via implicit differentiation.
+  - Just use `minimise` as before :>
 - The benchmark result was reported in [ParametrisedConvexApproximator.jl v0.1.1](https://github.com/JinraeKim/ParametrisedConvexApproximators.jl/tree/v0.1.1) [3].
 
 
@@ -23,7 +23,7 @@ It will reduce computation time to obtain multiple minimizers.
 ParametrisedConvexApproximators.jl focuses on providing predefined approximators
 including parametrised convex approximators.
 Note that when approximators receive two arguments, the first and second arguments correspond to
-condition and decision vectors, usually denoted by `x` and `u`.
+condition and decision vectors, usually denoted by `x` and `u (or, `c` and `d`), respectively.
 
 ### Network construction
 ```julia
@@ -105,7 +105,7 @@ get_loss(trainer, :test) = 0.00026774267336425705
 # optimization
 Random.seed!(seed)
 x = rand(n)  # any value
-minimiser = minimise(network, x; u_min=min_decision, u_max=max_decision)  # out-of-box box-constrained minimization; you can define an optimization problem manually with Convex.jl
+minimiser = minimise(network, x; u_min=min_decision, u_max=max_decision)  # box-constrained minimization; you can define your own optimization problem manually.
 @show minimiser
 @show network(x, minimiser)
 @show dataset[:train].metadata.target_function(x, minimiser)
@@ -142,6 +142,7 @@ the output of an approximator is **one-length vector**.
     - `PMA::ParametrisedConvexApproximator`: parametrised MA (PMA) network [3]
     - `PLSE::ParametrisedConvexApproximator`: parametrised LSE (PLSE) network [3]
         - The default setting is `strict = false`.
+        - `PLSEPlus` = `PLSE` with `strict=true`
     - `DLSE::DifferenceOfConvexApproximator`: difference of LSE (DLSE) network [4]
 
 ### Utilities
@@ -152,7 +153,7 @@ considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
     or a matrix for multiple conditions via multi-threading, i.e., `size(x) = (n, d)`.
 
 ### Dataset
-- `DecisionMakingDataset` is used for analytically-expressed cost functions.
+- `DecisionMakingDataset`
 
 ### Trainer
 - `SupervisedLearningTrainer`
