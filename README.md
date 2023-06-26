@@ -145,7 +145,7 @@ the output of an approximator is **one-length vector**.
         - `PLSEPlus` = `PLSE` with `strict=true`
     - `DLSE::DifferenceOfConvexApproximator`: difference of LSE (DLSE) network [4]
 
-### Utilities
+### Interface
 - `(nn::approximator)(x, u)` gives an inference (approximate function value).
 - `minimiser = minimise(approximator, x; u_min=nothing, u_max=nothing)` provides the minimiser for given condition `x`
 considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
