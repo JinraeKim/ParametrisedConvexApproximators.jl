@@ -23,7 +23,7 @@ pkg> add ParametrisedConvexApproximator
 ParametrisedConvexApproximators.jl focuses on providing predefined approximators
 including parametrised convex approximators.
 Note that when approximators receive two arguments, the first and second arguments correspond to
-condition and decision vectors, usually denoted by `x` and `u (or, `c` and `d`), respectively.
+condition and decision vectors, usually denoted by `x` and `u` (or, `c` and `d`), respectively.
 
 ### Network construction
 ```julia
