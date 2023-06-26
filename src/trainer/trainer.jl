@@ -31,10 +31,10 @@ function retrieve_normalised_network(network::AbstractApproximator, dataset::Dec
 end
 
 
-function get_loss(trainer::SupervisedLearningTrainer, split::Symbol)
-    @assert split ∈ (:train, :validate, :test)
-    dataset = trainer.dataset[split]
-    (; loss, network) = trainer
+"""
+You must explicitly give "the network to be evaluated".
+"""
+function get_loss(network, dataset, loss)
     l = loss(network(hcat(dataset.conditions...), hcat(dataset.decisions...)), hcat(dataset.costs...))
     return l
 end
@@ -75,9 +75,9 @@ function Flux.train!(
                 end
             end
         end
-        loss_train = get_loss(trainer, :train)
+        loss_train = get_loss(trainer.network, trainer.dataset[:train], trainer.loss)
         push!(losses_train, loss_train)
-        loss_validate = get_loss(trainer, :validate)
+        loss_validate = get_loss(trainer.network, trainer.dataset[:validate], trainer.loss)
         push!(losses_validate, loss_validate)
         @show loss_train
         @show loss_validate
