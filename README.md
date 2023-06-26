@@ -74,15 +74,13 @@ dataset = DecisionMakingDataset(
 ```julia
 trainer = SupervisedLearningTrainer(dataset, network; optimiser=Adam(1e-4))
 
-@show get_loss(trainer, :train)
-@show get_loss(trainer, :validate)
-Flux.train!(trainer; epochs=200)
-@show get_loss(trainer, :test)
+@show get_loss(trainer.network, trainer.dataset[:train], trainer.loss)
+@show get_loss(trainer.network, trainer.dataset[:validate], trainer.loss)
+best_network = Flux.train!(trainer; epochs=200)
+@show get_loss(best_network, trainer.dataset[:test], trainer.loss)
 ```
 
 ```julia
-get_loss(trainer, :train) = 2.2437410545162115
-get_loss(trainer, :validate) = 2.2849741432452193
 
 ...
 
@@ -97,7 +95,6 @@ loss_validate = 0.00029825480495257375
 Best network found!
 minimum_loss_validate = 0.00029825480495257375
 
-get_loss(trainer, :test) = 0.00026774267336425705
 ```
 
 ### Conditional decision making via optimization (given `x`, find a minimizer `u` and optimal value)
