@@ -147,7 +147,7 @@ the output of an approximator is **one-length vector**.
 
 ### Utilities
 - `(nn::approximator)(x, u)` gives an inference (approximate function value).
-- `minimiser = optimize(approximator, x; u_min=nothing, u_max=nothing)` provides the minimiser for given condition `x`
+- `minimiser = minimise(approximator, x; u_min=nothing, u_max=nothing)` provides the minimiser for given condition `x`
 considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
     - The condition variable `x` can be a vector, i.e., `size(x) = (n,)`,
     or a matrix for multiple conditions via multi-threading, i.e., `size(x) = (n, d)`.
