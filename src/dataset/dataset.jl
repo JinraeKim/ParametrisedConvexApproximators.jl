@@ -48,6 +48,7 @@ function DecisionMakingDataset(
     train_idx, validate_idx, test_idx = split_data3(collect(1:N), ratio1, ratio2)
     # get data
     metadata = (;
+                metadata...,
                 name=name,
                 split_ratio=(;
                              train=ratio1,

@@ -139,7 +139,8 @@ function _minimise(network::AbstractApproximator, x::AbstractVector, u_min, u_ma
     end
     dfc = TwiceDifferentiableConstraints(u_min, u_max)
     res = Optim.optimize(obj, dfc, initial_guess, solver())
-    minimiser = prod(size(initial_guess)) == 1 ? res.minimizer[1] : res.minimizer
+    # minimiser = prod(size(initial_guess)) == 1 ? res.minimizer[1] : res.minimizer
+    minimiser = res.minimizer
     return minimiser
 end
 
