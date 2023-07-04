@@ -61,40 +61,38 @@ function Flux.train!(
     minimum_loss_validate = Inf
     best_network = nothing
     for epoch in 0:epochs
-        println("epoch: $(epoch)/$(epochs)")
         if epoch != 0
+            loss_train = 0.0
+            batch_size = 0
             for (x, u, f) in data_train
                 val, grads = Flux.withgradient(network) do _network
                     pred = _network(x, u)
                     loss(pred, f)
                 end
-                # TODO
+                loss_train += val
+                batch_size += 1
                 Flux.update!(opt_state, network, grads[1])
+                # TODO
                 if typeof(network) == PICNN
                     project_nonnegative!(network)
                 end
             end
+            loss_train = loss_train / batch_size
+        else
+            loss_train = get_loss(trainer.network, trainer.dataset[:train], trainer.loss)
         end
-        loss_train = get_loss(trainer.network, trainer.dataset[:train], trainer.loss)
         push!(losses_train, loss_train)
         loss_validate = get_loss(trainer.network, trainer.dataset[:validate], trainer.loss)
         push!(losses_validate, loss_validate)
-        @show loss_train
-        @show loss_validate
+        println("epoch: $(epoch)/$(epochs), train loss: $(Printf.@sprintf("%.4e", loss_train)), valid loss: $(Printf.@sprintf("%.4e", loss_validate))")
         if loss_validate < minimum_loss_validate
             println("Best network found!")
             minimum_loss_validate = loss_validate
-            @show minimum_loss_validate
             best_network = deepcopy(network)
         end
     end
-    # Deprecated to remove the dependency of Plots.jl
-    # # plot
-    # if fig_name != nothing
-    #     p = plot(; xlabel="epoch", ylabel="loss", yaxis=:log)
-    #     plot!(p, 0:epochs, losses_train, label="train")
-    #     plot!(p, 0:epochs, losses_validate, label="validate")
-    #     savefig(p, fig_name)
-    # end
-    return best_network
+    info = Dict()
+    info["train_loss"] = losses_train
+    info["valid_loss"] = losses_validate
+    return best_network, info
 end

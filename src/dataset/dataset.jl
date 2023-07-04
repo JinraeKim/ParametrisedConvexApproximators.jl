@@ -14,6 +14,7 @@ function generate_dataset(
         min_decision,
         max_decision,
         seed=2023,
+        kwargs...,
     )
     @assert all(min_condition .<= max_condition)
     @assert all(min_decision .<= max_decision)
@@ -28,6 +29,7 @@ function generate_dataset(
                 max_condition=max_condition,
                 min_decision=min_decision,
                 max_decision=max_decision,
+                kwargs...,
                )
     return conditions, decisions, costs, metadata
 end
