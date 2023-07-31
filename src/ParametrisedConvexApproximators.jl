@@ -10,6 +10,7 @@ using ImplicitDifferentiation  # for the differentiation of the minimiser
 using ComponentArrays
 using Distributed  # for pmap
 using Printf
+using ProgressMeter
 # using Infiltrator  # TODO
 
 

@@ -17,13 +17,13 @@ i_max = 20
 T = 1.0
 x_min = -ones(n)
 x_max = +ones(n)
-u_min = -ones(m)
-u_max = +ones(m)
+min_decision = -ones(m)
+max_decision = +ones(m)
 x_max_abs = max.(abs.(x_min), abs.(x_max))
-u_max_abs = max.(abs.(u_min), abs.(u_max))
+u_max_abs = max.(abs.(min_decision), abs.(max_decision))
 f_max_abs = [1e3]  # a random yet sufficiently large number
 xs = hcat(sample_from_bounds(d, x_min, x_max, seed)...)
-us = hcat(sample_from_bounds(d, u_min, u_max, seed)...)
+us = hcat(sample_from_bounds(d, min_decision, max_decision, seed)...)
 initial_guess = us
 
 
@@ -66,7 +66,7 @@ end
 function test_minimise(network)
     println("test_minimise")
     x = xs[:, 1]
-    minimiser = minimise(network, x; u_min=u_min, u_max=u_max)
+    minimiser = minimise(network, x; min_decision=min_decision, max_decision=max_decision)
     @test size(minimiser) == (m,)
     @test size(network(x, minimiser)) == (1,)
 end
@@ -74,7 +74,7 @@ end
 
 function test_minimise_multiple(network)
     println("test_minimise_multiple")
-    minimisers = minimise(network, xs; u_min=u_min, u_max=u_max)
+    minimisers = minimise(network, xs; min_decision=min_decision, max_decision=max_decision)
     @test size(minimisers) == (m, d)
     @test size(network(xs, minimisers)) == (1, d)
 end
@@ -109,8 +109,8 @@ function test_max_abs_normalised_network(network)
     fs = normalised_network(xs, us)
     @test fs_normalised .* f_max_abs == fs
     # optimization
-    minimiser = minimise(network, xs ./ x_max_abs; u_min=u_min ./ u_max_abs, u_max=u_max ./ u_max_abs, initial_guess=initial_guess ./ u_max_abs)
-    minimizer_normalized = minimise(normalised_network, xs; u_min=u_min, u_max=u_max, initial_guess=initial_guess)
+    minimiser = minimise(network, xs ./ x_max_abs; min_decision=min_decision ./ u_max_abs, max_decision=max_decision ./ u_max_abs, initial_guess=initial_guess ./ u_max_abs)
+    minimizer_normalized = minimise(normalised_network, xs; min_decision=min_decision, max_decision=max_decision, initial_guess=initial_guess)
     @test minimiser .* u_max_abs ≈ minimizer_normalized
     @test network(xs ./ x_max_abs, minimiser) .* f_max_abs ≈ normalised_network(xs, minimizer_normalized)
 end

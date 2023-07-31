@@ -1,4 +1,4 @@
-function minimise_logsumexp(θ; T, u_min, u_max, initial_guess, solver=() -> ECOS.Optimizer())
+function minimise_logsumexp(θ; T, min_decision, max_decision, initial_guess, solver=() -> ECOS.Optimizer())
     A = θ[:, 1:end-1]
     B = θ[:, end]
     m = size(A)[2]
@@ -8,11 +8,11 @@ function minimise_logsumexp(θ; T, u_min, u_max, initial_guess, solver=() -> ECO
     end
     obj = T * Convex.logsumexp((1/T)*(A*u + B))
     prob = Convex.minimize(obj)
-    if u_min != nothing
-        prob.constraints += [u >= u_min]
+    if min_decision != nothing
+        prob.constraints += [u >= min_decision]
     end
-    if u_max != nothing
-        prob.constraints += [u <= u_max]
+    if max_decision != nothing
+        prob.constraints += [u <= max_decision]
     end
     solve!(prob, solver(), silent_solver=true, verbose=false)
     minimiser = typeof(u.value) <: Number ? [u.value] : u.value[:]  # to make it a vector
@@ -27,12 +27,12 @@ function forward_lse_optim(θ; kwargs...)
 end
 
 
-function proj_hypercube(u; u_min, u_max)
-    if u_max != nothing
-        u = min.(u_max, u)
+function proj_hypercube(u; min_decision, max_decision)
+    if max_decision != nothing
+        u = min.(max_decision, u)
     end
-    if u_max != nothing
-        u = max.(u_min, u)
+    if max_decision != nothing
+        u = max.(min_decision, u)
     end
     return u
 end
@@ -49,10 +49,10 @@ end
 """
 See https://github.com/gdalle/ImplicitDifferentiation.jl for details.
 """
-function implicit_lse_optim(θ; T, u_min, u_max, initial_guess, solver)
+function implicit_lse_optim(θ; T, min_decision, max_decision, initial_guess, solver)
     tmp = ImplicitFunction(
-                           θ -> forward_lse_optim(θ; T, u_min, u_max, initial_guess, solver),
-                           (θ, u, z) -> conditions_lse_optim(θ, u, z; u_min, u_max),
+                           θ -> forward_lse_optim(θ; T, min_decision, max_decision, initial_guess, solver),
+                           (θ, u, z) -> conditions_lse_optim(θ, u, z; min_decision, max_decision),
                           )
     tmp(θ)[1]
 end

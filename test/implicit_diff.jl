@@ -9,8 +9,8 @@ i_max = 20
 T = 1e-0
 h_array = [64, 64]
 act = Flux.leakyrelu
-u_min = -2*ones(m)
-u_max = +2*ones(m)
+min_decision = -2*ones(m)
+max_decision = +2*ones(m)
 
 
 function main(; epochs=2, N=100, N_test=10,)
@@ -30,7 +30,7 @@ function main(; epochs=2, N=100, N_test=10,)
             for (x, u_true) in data
                 d = size(x)[2]
                 val, grads = Flux.withgradient(model) do _model
-                    u_star = minimise(_model, x; u_min, u_max, multithreading)
+                    u_star = minimise(_model, x; min_decision, max_decision, multithreading)
                     Flux.Losses.mse(u_star, u_true)
                 end
                 Flux.update!(opt_state, model, grads[1])

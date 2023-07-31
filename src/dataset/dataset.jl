@@ -21,8 +21,16 @@ function generate_dataset(
     f = target_function
     conditions = sample_from_bounds(N, min_condition, max_condition, seed)
     decisions = sample_from_bounds(N, min_decision, max_decision, seed)
-    # costs = zip(conditions, decisions) |> MapSplat((x, u) -> f(x, u)) |> collect
-    costs = [f(c, d) for (c, d) in zip(conditions, decisions)]
+    costs = Vector(undef, N)
+    p = Progress(N, "Generating dataset...")
+    Threads.@threads for i in 1:N
+        c = conditions[i]
+        d = decisions[i]
+        costs[i] = f(c, d)
+        next!(p)
+    end
+    finish!(p)
+    # costs = [f(c, d) for (c, d) in zip(conditions, decisions)]
     metadata = (;
                 target_function=f,
                 min_condition=min_condition,
