@@ -44,7 +44,6 @@ function Flux.train!(
         trainer::SupervisedLearningTrainer;
         batchsize=16,
         epochs=200,
-        fig_name="loss.pdf",
     )
     (; network, dataset, loss, optimiser) = trainer
     data_train = Flux.DataLoader((
