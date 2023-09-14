@@ -44,13 +44,19 @@ function Flux.train!(
         trainer::SupervisedLearningTrainer;
         batchsize=16,
         epochs=200,
+        rng=MersenneTwister(0),
     )
     (; network, dataset, loss, optimiser) = trainer
-    data_train = Flux.DataLoader((
-        hcat(dataset[:train].conditions...),
-        hcat(dataset[:train].decisions...),
-        hcat(dataset[:train].costs...),
-    ); batchsize=batchsize)
+    data_train = Flux.DataLoader(
+                                 (
+                                  hcat(dataset[:train].conditions...),
+                                  hcat(dataset[:train].decisions...),
+                                  hcat(dataset[:train].costs...),
+                                 );
+                                 batchsize=batchsize,
+                                 shuffle=true,
+                                 rng=rng,
+                                )
     opt_state = Flux.setup(optimiser, network)
 
     losses_train = []
@@ -70,9 +76,13 @@ function Flux.train!(
                 end
                 loss_train += val
                 batch_size += 1
-                Flux.update!(opt_state, network, grads[1])
-                # TODO
-                if typeof(network) == PICNN
+                if !any(isnan, getall(grads[1], AccessorsExtra.RecursiveOfType(Number)))
+                    # This will give an warning
+                    # https://github.com/gdalle/ImplicitDifferentiation.jl/issues/92
+                    # https://discourse.julialang.org/t/julia-nan-check-for-namedtuple/102583/4?u=ihany
+                    Flux.update!(opt_state, network, grads[1])
+                end
+                if typeof(network) == PICNN  # TODO: an automated solution required
                     project_nonnegative!(network)
                 end
             end

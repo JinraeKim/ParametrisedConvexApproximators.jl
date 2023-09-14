@@ -11,6 +11,7 @@ using ComponentArrays
 using Distributed  # for pmap
 using Printf
 using ProgressMeter
+using AccessorsExtra
 # using Infiltrator  # TODO
 
 
