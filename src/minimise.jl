@@ -102,11 +102,10 @@ function _minimise(network::DifferenceOfConvexApproximator, x::AbstractVector, m
 end
 
 
-function _minimise(eplse::EPLSE, x::AbstractVector, args...; kwargs...)
-    (; plse, min_decision, max_decision) = eplse
-    min_decision = haskey(kwargs, :min_decision) ? kwargs[:min_decision] : min_decision  # override
-    max_decision = haskey(kwargs, :max_decision) ? kwargs[:max_decision] : max_decision  # override
-    _minimise(plse, x, min_decision, max_decision, args...; kwargs...)
+function _minimise(eplse::EPLSE, x::AbstractVector, min_decision, max_decision; kwargs...)
+    min_decision = min_decision == nothing ? eplse.min_decision : min_decision  # override
+    max_decision = max_decision == nothing ? eplse.max_decision : max_decision  # override
+    _minimise(eplse.plse, x, min_decision, max_decision, args...; kwargs...)
 end
 
 
