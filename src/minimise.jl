@@ -102,6 +102,14 @@ function _minimise(network::DifferenceOfConvexApproximator, x::AbstractVector, m
 end
 
 
+function _minimise(eplse::EPLSE, x::AbstractVector, args...; kwargs...)
+    (; plse, min_decision, max_decision) = eplse
+    min_decision = haskey(kwargs, :min_decision) ? kwargs[:min_decision] : min_decision  # override
+    max_decision = haskey(kwargs, :max_decision) ? kwargs[:max_decision] : max_decision  # override
+    _minimise(plse, x, min_decision, max_decision, args...; kwargs...)
+end
+
+
 """
     _minimise(network::AbstractApproximator, x::AbstractVector;
         min_decision=nothing, max_decision=nothing,
@@ -195,12 +203,4 @@ function minimise(network::AbstractApproximator, x::AbstractMatrix;
     minimisers = _map(i -> minimise(network, x[:, i]; min_decision, max_decision, initial_guess=initial_guess[i]), 1:d)
     minimiser_matrix = hcat(minimisers...)
     return minimiser_matrix
-end
-
-
-function minimise(eplse::EPLSE, x::AbstractVector; kwargs...)
-    (; plse, min_decision, max_decision) = eplse
-    min_decision = haskey(kwargs, :min_decision) ? kwargs[:min_decision] : min_decision  # override
-    max_decision = haskey(kwargs, :max_decision) ? kwargs[:max_decision] : max_decision  # override
-    minimise(plse, x; min_decision, max_decision, kwargs...)
 end
