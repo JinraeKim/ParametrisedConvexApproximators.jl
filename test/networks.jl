@@ -39,6 +39,12 @@ function generate_networks()
                 LSE(n, m, i_max, T),
                 LSE(n, m, i_max, T),
                )
+    eplse = EPLSE(
+                  PLSEplus(n, m, i_max, T, h_array, act),
+                  FNN(n, m, h_array, act),
+                  min_decision,
+                  max_decision,
+                 )
 
     networks = Dict(
                     "FNN" => fnn,
@@ -49,6 +55,7 @@ function generate_networks()
                     "PLSE" => plse,
                     "PLSEPlus" => plse_plus,
                     "DLSE" => dlse,
+                    "EPLSE" => eplse,
                    )
     return networks
 end

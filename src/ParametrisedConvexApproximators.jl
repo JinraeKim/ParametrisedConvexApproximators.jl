@@ -12,7 +12,6 @@ using Distributed  # for pmap
 using Printf
 using ProgressMeter
 using AccessorsExtra
-# using Infiltrator  # TODO
 
 
 # approximators
@@ -21,6 +20,7 @@ export ConvexApproximator, MA, LSE
 export ParametrisedConvexApproximator, PMA, PLSE, PLSEplus
 export PICNN, project_nonnegative!
 export DifferenceOfConvexApproximator, DLSE
+export EPLSE
 export minimise, number_of_parameters
 export MaxAbsNormalisedApproximator
 # data manipulation

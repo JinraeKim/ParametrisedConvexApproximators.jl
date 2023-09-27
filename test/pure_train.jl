@@ -35,6 +35,13 @@ function main(epochs=2, network=nothing)
                 LSE(n, m, i_max, T),
                 LSE(n, m, i_max, T),
                )
+    eplse = EPLSE(
+                  PLSEplus(n, m, i_max, T, h_array, act),
+                  FNN(n, m, h_array, act),
+                  min_decision,
+                  max_decision,
+                 )
+
     networks = Dict(
                     :FNN => fnn,
                     :MA => ma,
@@ -43,6 +50,7 @@ function main(epochs=2, network=nothing)
                     :PMA => pma,
                     :PLSE => plse,
                     :DLSE => dlse,
+                    :EPLSE => eplse,
                    )
     if network != nothing
         networks = Dict(network => networks[network])
