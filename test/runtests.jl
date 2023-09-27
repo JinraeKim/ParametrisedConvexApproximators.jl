@@ -6,4 +6,5 @@ using Random
     include("networks.jl")
     include("pure_train.jl")
     include("dataset_trainer.jl")
+    include("implicit_diff.jl")
 end

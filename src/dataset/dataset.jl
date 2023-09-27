@@ -1,7 +1,4 @@
-abstract type DecisionMakingDataset end
-
-
-struct SimpleDataset <: DecisionMakingDataset
+struct DecisionMakingDataset
     metadata::NamedTuple
     split::Symbol
     conditions::AbstractVector
@@ -9,48 +6,75 @@ struct SimpleDataset <: DecisionMakingDataset
     costs::AbstractVector
 end
 
-function SimpleDataset(
-        func;
-        n::Int=1, m::Int=1,
-        N::Int=1_000, seed=2022,
-        ratio1=0.7, ratio2=0.2,
-        min_condition=-ones(n),
-        max_condition=+ones(n),
-        min_decision=-ones(m),
-        max_decision=+ones(m),
+function generate_dataset(
+        target_function;
+        N,
+        min_condition,
+        max_condition,
+        min_decision,
+        max_decision,
+        seed=2023,
+        kwargs...,
     )
     @assert all(min_condition .<= max_condition)
     @assert all(min_decision .<= max_decision)
+    f = target_function
+    conditions = sample_from_bounds(N, min_condition, max_condition, seed)
+    decisions = sample_from_bounds(N, min_decision, max_decision, seed)
+    costs = Vector(undef, N)
+    p = Progress(N, "Generating dataset...")
+    Threads.@threads for i in 1:N
+        c = conditions[i]
+        d = decisions[i]
+        costs[i] = f(c, d)
+        next!(p)
+    end
+    finish!(p)
+    # costs = [f(c, d) for (c, d) in zip(conditions, decisions)]
+    metadata = (;
+                target_function=f,
+                min_condition=min_condition,
+                max_condition=max_condition,
+                min_decision=min_decision,
+                max_decision=max_decision,
+                kwargs...,
+               )
+    return conditions, decisions, costs, metadata
+end
+
+
+function DecisionMakingDataset(
+        conditions, decisions, costs;
+        metadata=(;),  # prior metadata
+        name=nothing,
+        seed=2023,
+        ratio1=0.7, ratio2=0.2,
+    )
+    N = length(conditions)
+    @assert length(decisions) == N
+    @assert length(costs) == N
     # split indicies
     Random.seed!(seed)
     train_idx, validate_idx, test_idx = split_data3(collect(1:N), ratio1, ratio2)
     # get data
-    f = target_function(func)
-    conditions = sample_from_bounds(N, min_condition, max_condition, seed)
-    decisions = sample_from_bounds(N, min_decision, max_decision, seed)
-    costs = zip(conditions, decisions) |> MapSplat((x, u) -> f(x, u)) |> collect
     metadata = (;
-                target_function=f,
-                target_function_name=typeof(func) == Symbol ? func : nothing,
+                metadata...,
+                name=name,
                 split_ratio=(;
                              train=ratio1,
                              validate=ratio2,
                              test=1-(ratio1+ratio2),
                             ),
-                min_condition=min_condition,
-                max_condition=max_condition,
-                min_decision=min_decision,
-                max_decision=max_decision,
                 train_idx=train_idx,
                 validate_idx=validate_idx,
                 test_idx=test_idx,
                )
-    return SimpleDataset(metadata, :full, conditions, decisions, costs)
+    return DecisionMakingDataset(metadata, :full, conditions, decisions, costs)
 end
 
 
 
-function Base.getindex(dataset::SimpleDataset, split)
+function Base.getindex(dataset::DecisionMakingDataset, split)
     (; metadata, conditions, decisions, costs) = dataset
     @assert split in (:train, :validate, :test, :full)
     if split == :full
@@ -63,7 +87,7 @@ function Base.getindex(dataset::SimpleDataset, split)
         else
             idx = metadata.test_idx
         end
-        dataset_ = SimpleDataset(metadata, split, conditions[idx], decisions[idx], costs[idx])
+        dataset_ = DecisionMakingDataset(metadata, split, conditions[idx], decisions[idx], costs[idx])
     end
     return dataset_
 end
@@ -124,7 +148,7 @@ Get a target function.
 [1] J. Kim and Y. Kim, “Parameterized Convex Universal Approximators for Decision-Making Problems,” IEEE Trans. Neural Netw. Learning Syst., 2022, doi: 10.1109/TNNLS.2022.3190198.
 [2] G. C. Calafiore, S. Gaubert, and C. Possieri, “A Universal Approximation Result for Difference of Log-Sum-Exp Neural Networks,” IEEE Transactions on Neural Networks and Learning Systems, vol. 31, no. 12, pp. 5603–5612, Dec. 2020, doi: 10.1109/TNNLS.2020.2975051.
 """
-function target_function(name)
+function example_target_function(name)
     if typeof(name) == Symbol
         if name == :quadratic
             func = (x::Vector, u::Vector) -> x'*x + u'*u

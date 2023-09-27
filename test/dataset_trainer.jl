@@ -1,8 +1,6 @@
 using Test
 using ParametrisedConvexApproximators
 using Flux
-using Transducers
-# using JLD2, FileIO
 
 
 n, m = 3, 2
@@ -43,47 +41,54 @@ function test_split_data3()
 end
 
 
-function test_SimpleDataset(func_name, split)
-    dataset = SimpleDataset(
-        func_name;
-        N=N, n=n, m=m, seed=seed,
-        min_condition=min_condition,
-        max_condition=max_condition,
-        min_decision=min_decision,
-        max_decision=max_decision,
+function test_DecisionMakingDataset(name, split)
+    target_function = example_target_function(name)
+    conditions, decisions, costs, metadata = generate_dataset(
+                                                              target_function;
+                                                              N=100,
+                                                              min_condition=min_condition,
+                                                              max_condition=max_condition,
+                                                              min_decision=min_decision,
+                                                              max_decision=max_decision,
+                                                             )
+    dataset = DecisionMakingDataset(
+        conditions, decisions, costs;
+        metadata=metadata,
+        name=name,
+        seed=seed,
    )
     return dataset[split]
 end
 
 
 function test_SupervisedLearningTrainer(dataset, network; epochs=2)
-    trainer = SupervisedLearningTrainer(dataset, network; normalisation=:max_abs)
-    @show get_loss(trainer, :train)
-    @show get_loss(trainer, :validate)
-    best_network = Flux.train!(trainer; epochs=epochs)
-    @show get_loss(trainer, :test)
+    trainer = SupervisedLearningTrainer(dataset, network)
+    @show get_loss(trainer.network, trainer.dataset[:train], trainer.loss)
+    @show get_loss(trainer.network, trainer.dataset[:validate], trainer.loss)
+    best_network, info = Flux.train!(trainer; epochs=epochs)
+    @show get_loss(best_network, trainer.dataset[:test], trainer.loss)
     return best_network
 end
 
 
 function test_dataset()
-    for func_name in [
-                      :quadratic,
-                      :parameterized_convex_basic,
-                      :quadratic_sin_sum,
-                      (x, u) -> sum(x)+sum(u),  # anonymous function example
-                     ]
+    for name in [
+                 :quadratic,
+                 :parameterized_convex_basic,
+                 :quadratic_sin_sum,
+                ]
         for split in [:train, :validate, :test]
-            test_SimpleDataset(func_name, split)
+            target_function = example_target_function(name)
+            test_DecisionMakingDataset(name, split)
         end
     end
 end
 
 
 function test_trainer()
-    dataset = test_SimpleDataset(:quadratic, :full)  # for trainer
-    # dataset = test_SimpleDataset(:parameterized_convex_basic, :full)  # for trainer
-    # dataset = test_SimpleDataset(:quadratic_sin_sum, :full)  # for trainer
+    dataset = test_DecisionMakingDataset(:quadratic, :full)  # for trainer
+    # dataset = test_DecisionMakingDataset(:parameterized_convex_basic, :full)  # for trainer
+    # dataset = test_DecisionMakingDataset(:quadratic_sin_sum, :full)  # for trainer
     network = PLSE(n, m, i_max, T, h_array, act)
     # network = FNN(n, m, h_array, act)
     # network = LSE(n, m, i_max, T)

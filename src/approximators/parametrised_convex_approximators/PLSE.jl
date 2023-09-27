@@ -14,6 +14,11 @@ function PLSE(n::Int, m::Int, i_max::Int, T::Real, h_array::Vector{Int}, act; st
 end
 
 
+function PLSEplus(args...)
+    return PLSE(args...; strict=true)
+end
+
+
 """
     (nn::PLSE)(x, u)
 

@@ -14,8 +14,8 @@ pkg> add ParametrisedConvexApproximator
 ```
 
 ### Notes
-- Activate multi-threading if available, e.g., `julia -t 7` enabling `7` threads.
-It will reduce computation time to obtain multiple minimizers.
+- For PLSE(plus), the differentiation of the minimiser is now available via implicit differentiation.
+  - Just use `minimise` as before :>
 - The benchmark result was reported in [ParametrisedConvexApproximator.jl v0.1.1](https://github.com/JinraeKim/ParametrisedConvexApproximators.jl/tree/v0.1.1) [3].
 
 
@@ -23,16 +23,16 @@ It will reduce computation time to obtain multiple minimizers.
 ParametrisedConvexApproximators.jl focuses on providing predefined approximators
 including parametrised convex approximators.
 Note that when approximators receive two arguments, the first and second arguments correspond to
-condition and decision vectors, usually denoted by `x` and `u`.
+condition and decision vectors, usually denoted by `x` and `u` (or, `c` and `d`), respectively.
 
 ### Network construction
 ```julia
 using ParametrisedConvexApproximators
 using Flux
-using Random  # for random seed
+using Random  # to reproduce the following result
 
 # construction
-seed = 2022
+seed = 2023
 Random.seed!(seed)
 n, m = 3, 2
 i_max = 20
@@ -46,7 +46,7 @@ f̂ = network(x, u)
 ```
 
 ```julia
-f̂ = [2.995747603812025]  # size(f̂) = (1,)
+f̂ = [3.029994811790289]
 ```
 
 ### Prepare dataset
@@ -55,11 +55,13 @@ min_condition = -ones(n)
 max_condition = +ones(n)
 min_decision = -ones(m)
 max_decision = +ones(m)
-func_name = :quadratic  # f(x, u) = transpose(x)*x + transpose(u)*u
+target_function_name = :quadratic
+target_function = example_target_function(target_function_name)  # f(x, u) = x'*x + u'*u
 N = 5_000
 
-dataset = SimpleDataset(
-    func_name;
+dataset = DecisionMakingDataset(
+    target_function;
+    target_function_name=:quadratic,  # just for metadata
     N=N, n=n, m=m, seed=seed,
     min_condition=min_condition,
     max_condition=max_condition,
@@ -72,30 +74,27 @@ dataset = SimpleDataset(
 ```julia
 trainer = SupervisedLearningTrainer(dataset, network; optimiser=Adam(1e-4))
 
-@show get_loss(trainer, :train)
-@show get_loss(trainer, :validate)
-Flux.train!(trainer; epochs=200)
-@show get_loss(trainer, :test)
+@show get_loss(trainer.network, trainer.dataset[:train], trainer.loss)
+@show get_loss(trainer.network, trainer.dataset[:validate], trainer.loss)
+best_network = Flux.train!(trainer; epochs=200)
+@show get_loss(best_network, trainer.dataset[:test], trainer.loss)
 ```
 
 ```julia
-get_loss(trainer, :train) = 2.2485616017365517
-get_loss(trainer, :validate) = 2.2884594157659994
 
 ...
 
 epoch: 199/200
-loss_train = 0.00020636060117068826
-loss_validate = 0.00027629941017224863
+loss_train = 0.0001664964550015733
+loss_validate = 0.0003002414225961646
 Best network found!
-minimum_loss_validate = 0.00027629941017224863
+minimum_loss_validate = 0.0003002414225961646
 epoch: 200/200
-loss_train = 0.00020551515617350474
-loss_validate = 0.0002751188168629372
+loss_train = 0.0001647995673689787
+loss_validate = 0.00029825480495257375
 Best network found!
-minimum_loss_validate = 0.0002751188168629372
+minimum_loss_validate = 0.00029825480495257375
 
-get_loss(trainer, :test) = 0.0002642962384649246
 ```
 
 ### Conditional decision making via optimization (given `x`, find a minimizer `u` and optimal value)
@@ -103,16 +102,16 @@ get_loss(trainer, :test) = 0.0002642962384649246
 # optimization
 Random.seed!(seed)
 x = rand(n)  # any value
-minimiser = optimise(network, x; u_min=min_decision, u_max=max_decision)  # minimsation
+minimiser = minimise(network, x; u_min=min_decision, u_max=max_decision)  # box-constrained minimization; you can define your own optimization problem manually.
 @show minimiser
 @show network(x, minimiser)
 @show dataset[:train].metadata.target_function(x, minimiser)
 ```
 
 ```julia
-minimiser = [-0.00863654920254873, 0.014258700223990051]
-network(x, minimiser) = [1.1275475934947705]
-(dataset[:train]).metadata.target_function(x, minimiser) = 1.1027324438048691
+minimiser = [-0.003060366520019827, 0.007150205329478883]
+network(x, minimiser) = [0.9629849722035002]
+(dataset[:train]).metadata.target_function(x, minimiser) = 0.9666740244969058
 ```
 
 
@@ -140,17 +139,18 @@ the output of an approximator is **one-length vector**.
     - `PMA::ParametrisedConvexApproximator`: parametrised MA (PMA) network [3]
     - `PLSE::ParametrisedConvexApproximator`: parametrised LSE (PLSE) network [3]
         - The default setting is `strict = false`.
+        - `PLSEPlus` = `PLSE` with `strict=true`
     - `DLSE::DifferenceOfConvexApproximator`: difference of LSE (DLSE) network [4]
 
-### Utilities
+### Interface
 - `(nn::approximator)(x, u)` gives an inference (approximate function value).
-- `minimiser = optimize(approximator, x; u_min=nothing, u_max=nothing)` provides the minimiser for given condition `x`
+- `minimiser = minimise(approximator, x; u_min=nothing, u_max=nothing)` provides the minimiser for given condition `x`
 considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
     - The condition variable `x` can be a vector, i.e., `size(x) = (n,)`,
     or a matrix for multiple conditions via multi-threading, i.e., `size(x) = (n, d)`.
 
 ### Dataset
-- `SimpleDataset <: DecisionMakingDataset` is used for analytically-expressed cost functions.
+- `DecisionMakingDataset`
 
 ### Trainer
 - `SupervisedLearningTrainer`

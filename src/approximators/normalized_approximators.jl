@@ -40,25 +40,25 @@ end
 
 function (nn::NormalisedApproximator)(x, u)
     (; network, condition_max_abs, decision_max_abs, cost_max_abs) = nn
-    x_new = normalise(nn, x, :condition)
-    u_new = normalise(nn, u, :decision)
+    x_new = x ./ condition_max_abs  # normalise
+    u_new = u ./ decision_max_abs  # normalise
     f = network(x_new, u_new)
-    f_new = unnormalise(nn, f, :cost)
+    f_new = f .* cost_max_abs  # unnormalise
     return f_new
 end
 
 
-function normalise(nn::MaxAbsNormalisedApproximator, z, which::Symbol)
-    @assert which in (:condition, :decision, :cost)
-    factor = getproperty(nn, Symbol(String(which) * "_max_abs"))
-    z_new = factor != nothing ? z ./ factor : z
-    return z_new
-end
-
-
-function unnormalise(nn::MaxAbsNormalisedApproximator, z, which::Symbol)
-    @assert which in (:condition, :decision, :cost)
-    factor = getproperty(nn, Symbol(String(which) * "_max_abs"))
-    z_new = factor != nothing ? z .* factor : z
-    return z_new
-end
+# function normalise(nn::MaxAbsNormalisedApproximator, z, which::Symbol)
+#     @assert which in (:condition, :decision, :cost)
+#     factor = getproperty(nn, Symbol(String(which) * "_max_abs"))
+#     z_new = factor != nothing ? z ./ factor : z
+#     return z_new
+# end
+#
+#
+# function unnormalise(nn::MaxAbsNormalisedApproximator, z, which::Symbol)
+#     @assert which in (:condition, :decision, :cost)
+#     factor = getproperty(nn, Symbol(String(which) * "_max_abs"))
+#     z_new = factor != nothing ? z .* factor : z
+#     return z_new
+# end

@@ -4,23 +4,30 @@ using Flux
 using Convex
 using ECOS
 using Optim
-using Transducers  # mostly for parallel optimization
 using Random
 using ForwardDiff  # mostly for DLSE
+using ImplicitDifferentiation  # for the differentiation of the minimiser
+using ComponentArrays
+using Distributed  # for pmap
+using Printf
+using ProgressMeter
+using AccessorsExtra
 
 
 # approximators
 export AbstractApproximator, FNN
 export ConvexApproximator, MA, LSE
-export ParametrisedConvexApproximator, PMA, PLSE
+export ParametrisedConvexApproximator, PMA, PLSE, PLSEplus
 export PICNN, project_nonnegative!
 export DifferenceOfConvexApproximator, DLSE
-export optimise, number_of_parameters
+export EPLSE
+export minimise, number_of_parameters
 export MaxAbsNormalisedApproximator
 # data manipulation
 export split_data2, split_data3
 # dataset
-export SimpleDataset
+export generate_dataset, DecisionMakingDataset
+export example_target_function
 # trainer
 export SupervisedLearningTrainer
 export get_loss
@@ -29,7 +36,7 @@ export get_loss
 # approximators
 include("dataset/dataset.jl")
 include("approximators/approximators.jl")
-include("optimise.jl")
+include("minimise.jl")
 include("trainer/trainer.jl")
 
 
