@@ -70,8 +70,8 @@ function main(epochs=2, network=nothing)
             @show epoch
             @show Flux.Losses.mse(model(X_test, Y_test), Z_test)
             for (x, y, z) in data
-                val, grads = Flux.withgradient(model) do m
-                    pred = m(x, y)
+                val, grads = Flux.withgradient(model) do _model
+                    pred = _model(x, y)
                     Flux.Losses.mse(pred, z)
                 end
                 Flux.update!(opt_state, model, grads[1])
