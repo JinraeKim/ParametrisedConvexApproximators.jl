@@ -106,6 +106,6 @@ function visualize(; seed=2023, N=10)
   Random.seed!(seed)
   us_rand = [(2*rand(1)[1] - 1) for i in 1:N]
 
-  # visualize_PMA(us_rand)
+  visualize_PMA(us_rand)
   visualize_PLSE(us_rand)
 end
