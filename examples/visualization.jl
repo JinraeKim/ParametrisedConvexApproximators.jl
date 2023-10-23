@@ -26,6 +26,8 @@ function visualize_PMA(us_rand)
                ylim=(-1, 1),
                zlim=(-1, 1),
                legend=:topleft,
+               dpi=300,
+               size=(600, 600),
               )
     plot!(xs, us, target, st=:surface, alpha=0.5, colorbar=false)
 
@@ -75,6 +77,7 @@ function visualize_PLSE(us_rand)
                ylim=(-1, 1),
                zlim=(-1, 1),
                legend=:topleft,
+               size=(600, 600),
               )
     plot!(xs, us, target, st=:surface, alpha=0.5, colorbar=false)
 
@@ -90,7 +93,7 @@ function visualize_PLSE(us_rand)
     plot!(
           xs, us, plse_func; st=:surface, color=:blue, alpha=0.2, colorbar=false,
          )
-    annotate!(1, 1, 1, L"$T = 10^{%$(log10(T))}$")
+    annotate!(-1, 1, 1, (L"$T = 10^{%$(log10(T))}$", 40))
     frame(anim)
   end
   gif(anim, "anim_plse.gif"; fps=2,
@@ -103,6 +106,6 @@ function visualize(; seed=2023, N=10)
   Random.seed!(seed)
   us_rand = [(2*rand(1)[1] - 1) for i in 1:N]
 
-  visualize_PMA(us_rand)
+  # visualize_PMA(us_rand)
   visualize_PLSE(us_rand)
 end
