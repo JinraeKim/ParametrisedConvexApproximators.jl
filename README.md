@@ -163,6 +163,25 @@ considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
 ### PMA and PLSE networks illustration
 See `./examples/visualization.jl`.
 
+
+#### Comparison between MA and PMA networks
+- To construct an MA network[^1],
+any subgradient can arbitrarily be selected.
+
+<img src=./anim_ma_subgrad.gif width=50% height=50%>
+
+- To construct an PMA network[^1],
+the subdifferential, a function of parameter `x`, should carefully be defined so that it can be continuous and approximate the subdifferential function well.
+
+<img src=./anim_pma_subgrad.gif width=50% height=50%>
+
+#### MA network construction in theory
+- The following illustration shows the construction of MA network for given convex function.
+- See [^1].
+- **NOTICE**: the following illustration does not show the training progress.
+
+<img src=./anim_ma.gif width=50% height=50%>
+
 #### PMA network construction in theory
 - The following illustration shows the construction of PMA network for given parameterized convex function.
 - See [^3], Theorem 3.
