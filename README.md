@@ -199,6 +199,14 @@ the subdifferential function, a subgradient function of parameter `x`, should ca
 <img src=./anim_pma_subgrad.gif width=50% height=50%>
 
 
+### Notion of continuous approximate selection
+- Given multivalued function $f:X \to Y$,
+a single-valued function $g: X \to Y$ is said to be a *continuous approximate selection*
+if $\textup{Graph}(g) \subset \textup{Graph}(B(f, \epsilon))$.
+    - The following figure adopts $L_{1}$-norm for illustration.
+<img src=./continuous_approximate_selection.png width=50% height=50%>
+
+
 ## References
 [^1]: [G. C. Calafiore, S. Gaubert, and C. Possieri, “Log-Sum-Exp Neural Networks and Posynomial Models for Convex and Log-Log-Convex Data,” IEEE Transactions on Neural Networks and Learning Systems, vol. 31, no. 3, pp. 827–838, Mar. 2020, doi: 10.1109/TNNLS.2019.2910417.](https://ieeexplore.ieee.org/abstract/document/8715799?casa_token=ptHxee1NJ30AAAAA:etAIY0UkR0yg6YK7mgtEzCzHavM0d6Cos1VNzpn0cw5hbiEnFnAxNDm1rflWjDAOa-iO6xU5Lg)
 [^2]: [B. Amos, L. Xu, and J. Z. Kolter, “Input Convex Neural Networks,” in Proceedings of the 34th International Conference on Machine Learning, Sydney, Australia, Jul. 2017, pp. 146–155.](http://proceedings.mlr.press/v70/amos17b.html)

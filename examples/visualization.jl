@@ -326,7 +326,47 @@ function visualize_PLSE(u_rands)
 end
 
 
+function visualize_continuous_approximate_selection()
+  fig = plot(;
+            )
+  xs1 = -1:0.01:0
+  xs2 = 0:0.01:+1
+  plot!(xs1, -1*ones(length(xs1));
+        label="multivalued function",
+        line=(:red, 2),
+       )
+  plot!(xs2, +1*ones(length(xs2));
+        label=nothing,
+        line=(:red, 2),
+       )
+  plot!(zeros(length(xs1)), LinRange(-1, 1, length(xs1));
+        label=nothing,
+        line=(:red, 2),
+       )
+  xs = [-1.1, +0.1, +0.1, +1.1, +1.1, -0.1, -0.1, -1.1]
+  ys = [-1.1, -1.1, +0.9, +0.9, +1.1, +1.1, -0.9, -0.9]
+  plot!(
+        Shape(xs, ys),
+        st=:shape,
+        label=nothing,
+        alpha=0.2,
+        color=:black,
+       )
+  sigmoid = function (x; a=35)
+    2*((1 / (1+exp(-a*x))) - 0.5)
+  end
+  plot!(
+        [xs1..., xs2...], sigmoid,
+        label=L"$\epsilon$" * "-selection",
+        line=(:blue, :dash, 2)
+       )
+  savefig("continuous_approximate_selection.pdf")
+  savefig("continuous_approximate_selection.png")
+end
+
+
 function visualize()
   visualize_PMA(u_rands)
   visualize_PLSE(u_rands)
 end
+
