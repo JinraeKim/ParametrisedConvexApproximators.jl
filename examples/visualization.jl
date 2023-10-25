@@ -328,6 +328,7 @@ end
 
 function visualize_continuous_approximate_selection()
   fig = plot(;
+             aspect_ratio=1,
             )
   xs1 = -1:0.01:0
   xs2 = 0:0.01:+1
