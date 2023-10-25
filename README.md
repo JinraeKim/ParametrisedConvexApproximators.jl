@@ -192,14 +192,18 @@ any subgradient can arbitrarily be selected.
 
 <img src=./anim_ma_subgrad.gif width=50% height=50%>
 
-#### Subdifferential function selection in PMA network
+#### Subgradient function selection in PMA network
 - To construct an PMA network[^1],
-the subdifferential function, a subgradient function of parameter `x`, should carefully be defined so that it can be continuous and approximate the subdifferential function well.
+the subgradient function, a function of parameter `x`,
+should carefully be considered so that it can be continuous and represent (approximate)
+the subgradient function well.
+    - As shown in the following, the subgradient function may be multivalued.
 
 <img src=./anim_pma_subgrad.gif width=50% height=50%>
 
+The subgradient function can be approximated by a continuous approximate selection.
 
-### Notion of continuous approximate selection
+##### Notion of continuous approximate selection
 - Given multivalued function $f:X \to Y$,
 a single-valued function $g: X \to Y$ is said to be a *continuous approximate selection*
 if $\textup{Graph}(g) \subset \textup{Graph}(B(f, \epsilon))$.
