@@ -164,17 +164,6 @@ considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
 See `./examples/visualization.jl`.
 
 
-#### Comparison between MA and PMA networks
-- To construct an MA network[^1],
-any subgradient can arbitrarily be selected.
-
-<img src=./anim_ma_subgrad.gif width=50% height=50%>
-
-- To construct an PMA network[^1],
-the subdifferential, a function of parameter `x`, should carefully be defined so that it can be continuous and approximate the subdifferential function well.
-
-<img src=./anim_pma_subgrad.gif width=50% height=50%>
-
 #### MA network construction in theory
 - The following illustration shows the construction of MA network for given convex function.
 - See [^1].
@@ -194,6 +183,20 @@ the subdifferential, a function of parameter `x`, should carefully be defined so
 - See [^3], Corollary 1.
 
 <img src=./anim_plse.gif width=50% height=50%>
+
+
+### Comparison between MA and PMA networks
+#### Subgradient selection in MA network
+- To construct an MA network[^1],
+any subgradient can arbitrarily be selected.
+
+<img src=./anim_ma_subgrad.gif width=50% height=50%>
+
+#### Subdifferential function selection in PMA network
+- To construct an PMA network[^1],
+the subdifferential function, a subgradient function of parameter `x`, should carefully be defined so that it can be continuous and approximate the subdifferential function well.
+
+<img src=./anim_pma_subgrad.gif width=50% height=50%>
 
 
 ## References
