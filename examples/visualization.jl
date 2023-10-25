@@ -36,7 +36,9 @@ function visualize_MA(u_rands)
                size=(600, 600),
                label=nothing,
               )
-    plot!(us, u->target(0, u), alpha=0.5, lc=:red, label=nothing)
+    plot!(us, u->target(0, u), alpha=0.5, lc=:red, label=nothing,
+          lw=2,
+         )
 
     function ma_func(x, u)
       maximum([target(0, u_rands[i]) + target_gradient(0, u_rands[i]) * (u - u_rands[i])] for i in 1:idx-1)[1]
@@ -45,6 +47,7 @@ function visualize_MA(u_rands)
       plot!(
             us, u -> ma_func(0, u); lc=:blue, alpha=0.2,
             label=nothing,
+            lw=2,
            )
       frame(anim)
     end
@@ -53,6 +56,7 @@ function visualize_MA(u_rands)
           u_rand * ones(length(us)), LinRange(-1, target(0, u_rand), length(us));
           lc=:black,
           label=nothing,
+          lw=2,
          )
     frame(anim)
     function MA_tmp(x, u)
@@ -60,8 +64,9 @@ function visualize_MA(u_rands)
     end
     plot!(
           us, u -> MA_tmp(0, u); alpha=0.5,
-          lc=:red,
+          lc=:purple,
           label=nothing,
+          lw=2,
          )
     frame(anim)
   end
@@ -90,12 +95,15 @@ function visualize_MA_subgrad()
                size=(600, 600),
                label=nothing,
               )
-    plot!(us, u->target_abs(0, u), alpha=0.5, lc=:red, label=nothing)
+    plot!(us, u->target_abs(0, u), alpha=0.5, lc=:red, label=nothing,
+          lw=2,
+         )
 
     plot!(
           0 * ones(length(us)), LinRange(-1, target(0, 0), length(us));
           lc=:black,
           label=nothing,
+          lw=2,
          )
     function MA_tmp(x, u)
       target(0, 0) + u_grad * (u - 0)
@@ -104,6 +112,7 @@ function visualize_MA_subgrad()
           us, u -> MA_tmp(0, u); alpha=0.5,
           lc=:purple,
           label=nothing,
+          lw=2,
          )
     frame(anim)
   end
@@ -151,7 +160,7 @@ function visualize_PMA(u_rands)
       target(x, u_rands[idx]) + target_gradient(x, u_rands[idx]) * (u - u_rands[idx])
     end
     plot!(
-          xs, us, PMA_tmp; st=:surface, alpha=0.5, colorbar=false,
+          xs, us, PMA_tmp; st=:surface, color=:purple, alpha=0.5, colorbar=false,
           # label=L"$f(x, u_{i}) + \langle \hat{u}^{*}_{\epsilon, i}, u - u_{i} \rangle$",
          )
     frame(anim)
@@ -200,7 +209,7 @@ function visualize_PMA_subgrad(; seed=2023)
       target_abs(x, 0) + u_grad(x) * (u - 0)
     end
     plot!(
-          xs, us, PMA_tmp; st=:surface, color=:blue, alpha=0.5, colorbar=false,
+          xs, us, PMA_tmp; st=:surface, color=:purple, alpha=0.5, colorbar=false,
          )
     frame(anim)
   end
