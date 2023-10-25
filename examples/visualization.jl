@@ -66,6 +66,7 @@ function visualize_MA(u_rands)
     plot!(
           u_rand * ones(length(us)), LinRange(-1, target(0, u_rand), length(us));
           lc=:black,
+          ls=:dash,
           label=nothing,
           lw=2,
          )
@@ -96,6 +97,7 @@ function visualize_MA_subgrad()
 
 
   for (idx, u_grad) in enumerate(u_grads)
+    println("$(idx)/$(length(u_grads))")
     fig = plot(;
                xlabel=L"$u$",
                ylabel=L"$f$",
@@ -113,6 +115,7 @@ function visualize_MA_subgrad()
     plot!(
           0 * ones(length(us)), LinRange(-1, target(0, 0), length(us));
           lc=:black,
+          ls=:dash,
           label=nothing,
           lw=2,
          )
@@ -164,6 +167,7 @@ function visualize_PMA(u_rands)
     plot!(
           xs, repeat([u_rand], length(xs)), target.(xs, repeat([u_rand], length(xs)));
           lc=:black,
+          ls=:dash,
           label=nothing,
          )
     frame(anim)
@@ -223,12 +227,14 @@ function visualize_PMA_subgrad(; seed=2023)
     plot!(
           fig,
           _x * ones(length(us)), us, z, line=(:red, 5, 0.2),
+          label=nothing,
           subplot=1,
          )
 
     plot!(
           xs, repeat([0], length(xs)), target_abs.(xs, repeat([0], length(xs)));
           lc=:black,
+          ls=:dash,
           label=nothing,
          )
     plot!(
@@ -248,6 +254,7 @@ function visualize_PMA_subgrad(; seed=2023)
     plot!(
           0 * ones(length(us)), LinRange(-2, target_abs(_x, 0), length(us));
           lc=:black,
+          ls=:dash,
           label=nothing,
           lw=2,
           subplot=2,
@@ -289,6 +296,7 @@ function visualize_PLSE(u_rands)
                ylim=(-1, 1),
                zlim=(-2, 2),
                legend=:topleft,
+               dpi=300,
                size=(600, 600),
               )
     plot!(xs, us, target, st=:surface, alpha=0.5, colorbar=false)
