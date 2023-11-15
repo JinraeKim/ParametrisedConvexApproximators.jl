@@ -163,6 +163,14 @@ considering box constraints of `u >= u_min` and `u <= u_max` (element-wise).
 ### PMA and PLSE networks illustration
 See `./examples/visualization.jl`.
 
+
+#### MA network construction in theory
+- The following illustration shows the construction of MA network for given convex function.
+- See [^1].
+- **NOTICE**: the following illustration does not show the training progress.
+
+<img src=./anim_ma.gif width=50% height=50%>
+
 #### PMA network construction in theory
 - The following illustration shows the construction of PMA network for given parameterized convex function.
 - See [^3], Theorem 3.
@@ -175,6 +183,32 @@ See `./examples/visualization.jl`.
 - See [^3], Corollary 1.
 
 <img src=./anim_plse.gif width=50% height=50%>
+
+
+### Comparison between MA and PMA networks
+#### Subgradient selection in MA network
+- To construct an MA network[^1],
+any subgradient can arbitrarily be selected.
+
+<img src=./anim_ma_subgrad.gif width=50% height=50%>
+
+#### Subgradient function selection in PMA network
+- To construct an PMA network[^1],
+the subgradient function, a function of parameter `x`,
+should carefully be considered so that it can be continuous and represent (approximate)
+the subgradient function well.
+    - As shown in the following, the subgradient function may be multivalued.
+
+<img src=./anim_pma_subgrad.gif width=50% height=50%>
+
+The subgradient function can be approximated by a continuous approximate selection.
+
+##### Notion of continuous approximate selection
+- Given multivalued function $f:X \to Y$,
+a single-valued function $g: X \to Y$ is said to be a *continuous approximate selection*
+if $\textup{Graph}(g) \subset \textup{Graph}(B(f, \epsilon))$.
+    - The following figure adopts $L_{1}$-norm for illustration.
+<img src=./continuous_approximate_selection.png width=50% height=50%>
 
 
 ## References
