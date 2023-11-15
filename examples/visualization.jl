@@ -18,6 +18,13 @@ N_PMA_subgrads = 41
 u_rands = [(2*rand(1)[1] - 1) for i in 1:N]
 
 
+Random.seed!(2023)
+N = 10
+N_MA_subgrads = 11
+N_PMA_subgrads = 41
+u_rands = [(2*rand(1)[1] - 1) for i in 1:N]
+
+
 function target(x, u)
   return -x^2 + u^2
 end
