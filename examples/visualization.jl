@@ -11,6 +11,13 @@ N_PMA_subgrads = 41
 u_rands = [(2*rand(1)[1] - 1) for i in 1:N]
 
 
+Random.seed!(2023)
+N = 10
+N_MA_subgrads = 11
+N_PMA_subgrads = 41
+u_rands = [(2*rand(1)[1] - 1) for i in 1:N]
+
+
 function target(x, u)
   return -x^2 + u^2
 end
@@ -21,66 +28,6 @@ end
 
 function target_abs(x, u)
   return abs(u - x)
-end
-
-
-# function visualize_minimizer_approx()
-#   target_f = (x, u) -> 5*(x^2-u)^2
-#   xs = -1:0.01:1
-#   us = -1:0.01:1
-#   fig = plot(;
-#              xlabel=L"$x$",
-#              ylabel=L"$u$",
-#              size=(450, 450),
-#             )
-#   plot!(
-#         xs, us, target_f;
-#         st=:contourf,
-#         colorbar=false,
-#        )
-#   u_stars = [x^2 for x in xs]
-#   plot!(
-#         xs, u_stars;
-#         line=(:red),
-#         label=L"$u^{\star}$",
-#        )
-#   savefig("minimizer_function_approximation.pdf")
-#   savefig("minimizer_function_approximation.png")
-#   display(fig)
-# end
-
-
-function visualize_objective_approx()
-  target_f = (x, u) -> (x^2-u)^2  # TODO: make it non-convex?
-  xs = -1:0.01:1
-  us = -1:0.01:1
-  fig = plot(;
-             xlabel=L"$x$",
-             ylabel=L"$u$",
-             zlabel=L"$f$",
-             size=(450, 450),
-            )
-  plot!(
-        xs, us, target_f;
-        st=:surface,
-        colorbar=false,
-             alpha=0.5,
-       )
-  u_stars = [x^2 for x in xs]
-  plot!(
-        xs, u_stars, [target_f(x, u) for (x, u) in zip(xs, u_stars)];
-        line=(:red),
-        label=L"$u^{\star}$",
-       )
-  savefig("objective_function_approximation.pdf")
-  savefig("objective_function_approximation.png")
-  display(fig)
-end
-
-
-function visualize_AO()
-  visualize_minimizer_approx()
-  visualize_objective_approx()
 end
 
 
