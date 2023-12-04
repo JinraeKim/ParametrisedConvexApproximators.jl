@@ -332,7 +332,7 @@ function visualize_PLSE(u_rands)
     plot!(
           xs, us, plse_func; st=:surface, color=:blue, alpha=0.2, colorbar=false,
          )
-    annotate!(-1, 1, 1, (L"$T = 10^{%$(log10(T))}$", 40))
+    annotate!(-1, 1, 1, (L"$T = 10^{%$(log10(T))}$", 25))
     frame(anim)
   end
   gif(anim, "anim_plse.gif"; fps=2,
@@ -344,11 +344,13 @@ end
 function visualize_continuous_approximate_selection()
   fig = plot(;
              aspect_ratio=1,
+             dpi=300,
             )
   xs1 = -1:0.01:0
   xs2 = 0:0.01:+1
   plot!(xs1, -1*ones(length(xs1));
-        label="multivalued function",
+        # label="multivalued function",
+        label=nothing,
         line=(:red, 2),
        )
   plot!(xs2, +1*ones(length(xs2));
@@ -373,7 +375,8 @@ function visualize_continuous_approximate_selection()
   end
   plot!(
         [xs1..., xs2...], sigmoid,
-        label=L"$\epsilon$" * "-selection",
+        # label=L"$\epsilon$" * "-selection",
+        label=nothing,
         line=(:blue, :dash, 2)
        )
   savefig("continuous_approximate_selection.pdf")
