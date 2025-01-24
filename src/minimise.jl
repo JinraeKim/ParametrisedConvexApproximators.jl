@@ -25,7 +25,7 @@ implicit differentation is used here.
 function _minimise(
         network::PLSE, x::AbstractVector,
         min_decision, max_decision, initial_guess;
-        solver=() -> ECOS.Optimizer(),  # See https://github.com/jump-dev/Convex.jl/issues/346
+        solver=ECOS.Optimizer,  # See https://github.com/jump-dev/Convex.jl/issues/346
     )
     (; m, T) = network
     θ = _affine_map(network, x)
@@ -47,7 +47,7 @@ Basic DCA [1] is used.
 [2] https://github.com/Corrado-possieri/DLSE_neural_networks/commit/8883e5bcf1733b79b2dd3c432b31af30b4bba0a6#diff-aa888e053028cc6dbd9f0cfb1c30f61f1bde256be213f27b9a083b95292ec5ebR26
 """
 function _minimise(network::DifferenceOfConvexApproximator, x::AbstractVector, min_decision, max_decision, initial_guess;
-        solver=() -> ECOS.Optimizer(),  # See https://github.com/jump-dev/Convex.jl/issues/346
+        solver=ECOS.Optimizer,  # See https://github.com/jump-dev/Convex.jl/issues/346
         max_iter=30,
         tol=1e-3,  # borrowed from [2]
     )
@@ -60,15 +60,15 @@ function _minimise(network::DifferenceOfConvexApproximator, x::AbstractVector, m
         @assert length(u) == length(max_decision)
     end
     # initial guess
-    if initial_guess == nothing
-        if min_decision != nothing && max_decision != nothing
+    if isnothing(initial_guess)
+        if !isnothing(min_decision) && !isnothing(max_decision)
             initial_guess = min_decision + (max_decision - min_decision) .* rand(size(min_decision)...)
         else
             initial_guess = randn(m)
-            if min_decision != nothing
+            if !isnothing(min_decision)
                 initial_guess = maximum(hcat(min_decision, initial_guess); dims=2)[:]
             end
-            if max_decision != nothing
+            if !isnothing(max_decision)
                 initial_guess = minimum(hcat(max_decision, initial_guess); dims=2)[:]
             end
         end
@@ -82,13 +82,15 @@ function _minimise(network::DifferenceOfConvexApproximator, x::AbstractVector, m
         k = k + 1
         v = grad_NN2(χ)  # BE CAREFUL: CONSIDER THAT IT IS FOR BIVARIATE FUNCTION
         problem = Convex.minimize(network.NN1(x, u)[1] - v'*u)
-        if min_decision != nothing
-            problem.constraints += [u >= min_decision]
+        if !isnothing(min_decision)
+            # problem.constraints += [u >= min_decision]
+            push!(problem.constraints, u >= min_decision)
         end
-        if max_decision != nothing
-            problem.constraints += [u <= max_decision]
+        if !isnothing(max_decision)
+            # problem.constraints += [u <= max_decision]
+            push!(problem.constraints, u <= max_decision)
         end
-        solve!(problem, solver(); verbose=false, silent_solver=true)
+        solve!(problem, solver; silent=true)
         χ_next = typeof(u.value) <: Number ? [u.value] : u.value[:]  # to make it a vector
         if norm(χ_next - χ) / (1+norm(χ)) < tol || k == max_iter
             # @show k
@@ -125,13 +127,13 @@ function _minimise(network::AbstractApproximator, x::AbstractVector, min_decisio
     )
     (; m) = network
     obj(u) = network(x, u)[1]
-    if min_decision == nothing
+    if isnothing(min_decision)
         min_decision = Float64[]  # no constraint
     end
-    if max_decision == nothing
+    if isnothing(max_decision)
         max_decision = Float64[]  # no constraint
     end
-    if initial_guess == nothing
+    if isnothing(initial_guess)
         if min_decision != Float64[] && max_decision != Float64[]
             initial_guess = (min_decision+eps()*ones(m)) + ((max_decision-eps()*ones(m)) - (min_decision+eps()*ones(m))) .* rand(size(min_decision)...)
         else
@@ -144,7 +146,7 @@ function _minimise(network::AbstractApproximator, x::AbstractVector, min_decisio
             end
         end
     end
-    dfc = TwiceDifferentiableConstraints(min_decision, max_decision)
+    dfc = Optim.TwiceDifferentiableConstraints(min_decision, max_decision)
     res = Optim.optimize(obj, dfc, initial_guess, solver())
     # minimiser = prod(size(initial_guess)) == 1 ? res.minimizer[1] : res.minimizer
     minimiser = res.minimizer

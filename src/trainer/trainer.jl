@@ -10,7 +10,7 @@ struct SupervisedLearningTrainer <: AbstractTrainer
         dataset, network;
         normalisation=nothing,
         loss=Flux.Losses.mse,
-        optimiser=Adam(1e-3),
+        optimiser=Flux.Adam(1e-3),
     )
         network = retrieve_normalised_network(network, dataset, normalisation)
         @assert dataset.split == :full

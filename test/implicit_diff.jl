@@ -23,7 +23,7 @@ function main(; epochs=2, N=100, N_test=10,)
     data = Flux.DataLoader((X, U_true), batchsize=16)
     for multithreading in [false, true]
         @show multithreading
-        params_init = deepcopy(Flux.params(model))
+        params_init = deepcopy(Flux.trainables(model))
         @time for epoch in 1:epochs
             @show epoch
             @show Flux.Losses.mse(minimise(model, X_test), U_true_test)
@@ -36,7 +36,7 @@ function main(; epochs=2, N=100, N_test=10,)
                 Flux.update!(opt_state, model, grads[1])
             end
         end
-        @test any(Flux.params(model) .!= params_init)
+        @test any(Flux.trainables(model) .!= params_init)
     end
 end
 

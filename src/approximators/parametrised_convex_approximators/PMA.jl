@@ -4,7 +4,7 @@ struct PMA <: ParametrisedConvexApproximator
     i_max::Int
     NN::Flux.Chain
 end
-Flux.@functor PMA (NN,)
+Flux.@layer PMA trainable=(NN,)
 
 """
 Basic constructor PMA based on Flux.Chain.

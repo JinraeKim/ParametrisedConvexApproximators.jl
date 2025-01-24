@@ -6,7 +6,7 @@ struct PLSE <: ParametrisedConvexApproximator
     NN::Flux.Chain
     strict::Bool
 end
-Flux.@functor PLSE (NN,)
+Flux.@layer PLSE trainable=(NN,)
 function PLSE(n::Int, m::Int, i_max::Int, T::Real, h_array::Vector{Int}, act; strict=false)
     @assert T > 0
     node_array = [n, h_array..., i_max*(m+1)]

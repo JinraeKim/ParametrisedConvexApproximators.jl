@@ -21,7 +21,7 @@ struct MA <: ConvexApproximator
     _α_is
     _β_is
 end
-Flux.@functor MA (_α_is, _β_is)
+Flux.@layer MA trainable=(_α_is, _β_is)
 function MA(n::Int, m::Int, i_max::Int)
     α_is = [Flux.glorot_uniform(n+m) for i in 1:i_max]
     β_is = [Flux.glorot_uniform(1) for i in 1:i_max]

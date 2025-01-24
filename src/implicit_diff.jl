@@ -3,18 +3,18 @@ function minimise_logsumexp(θ; T, min_decision, max_decision, initial_guess, so
     B = θ[:, end]
     m = size(A)[2]
     u = Convex.Variable(m)
-    if initial_guess != nothing
+    if !isnothing(initial_guess)
         u.value = initial_guess
     end
     obj = T * Convex.logsumexp((1/T)*(A*u + B))
     prob = Convex.minimize(obj)
-    if min_decision != nothing
-        prob.constraints += [u >= min_decision]
+    if !isnothing(min_decision)
+        push!(prob.constraints, u >= min_decision)
     end
-    if max_decision != nothing
-        prob.constraints += [u <= max_decision]
+    if !isnothing(max_decision)
+        push!(prob.constraints, u <= max_decision)
     end
-    solve!(prob, solver(), silent_solver=true, verbose=false)
+    solve!(prob, solver, silent=true)
     minimiser = typeof(u.value) <: Number ? [u.value] : u.value[:]  # to make it a vector
     return minimiser
 end
