@@ -54,7 +54,7 @@ function main(epochs=2, network=nothing)
                     :DLSE => dlse,
                     :EPLSE => eplse,
                    )
-    if network != nothing
+    if !isnothing(network)
         networks = Dict(network => networks[network])
     end
         
@@ -65,9 +65,7 @@ function main(epochs=2, network=nothing)
         @test all(Flux.trainables(model) .== params_init)
         # training
         data = Flux.DataLoader((X, Y, Z), batchsize=16)
-        # @infiltrate
         opt_state = Flux.setup(Adam(1e-4), model)
-        # @infiltrate
         @time for epoch in 1:epochs
             @show epoch
             @show Flux.Losses.mse(model(X_test, Y_test), Z_test)
@@ -82,7 +80,7 @@ function main(epochs=2, network=nothing)
                 end
             end
         end
-        @test any(Flux.params(model) .!= params_init)
+        @test any(Flux.trainables(model) .!= params_init)
     end
 end
 

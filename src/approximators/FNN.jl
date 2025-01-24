@@ -20,4 +20,3 @@ size(u) = (m, d)
 function (nn::FNN)(x, u)
     res = nn.NN(vcat(x, u))
 end
-# Flux.params(approximator::FNN) = Flux.params(approximator.NN)
