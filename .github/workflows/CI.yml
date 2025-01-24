@@ -19,18 +19,12 @@ jobs:
           Xvfb -ac ${{ env.DISPLAY }} -screen 0 1280x780x24 &
       - uses: julia-actions/setup-julia@v1
         with:
-          version: 1.10
-      - name: Print Julia version
-        run: julia --version
-      - uses: actions/cache@v3
-        env:
-          cache-name: cache-artifacts
+          version: 1
+      - uses: actions/cache@v2
         with:
           path: ~/.julia/artifacts
-          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+          key: ${{ runner.os }}-julia-${{ hashFiles('**/Project.toml') }}
           restore-keys: |
-            ${{ runner.os }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-test-
-            ${{ runner.os }}-
+            ${{ runner.os }}-julia-
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
