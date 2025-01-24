@@ -19,7 +19,7 @@ jobs:
           Xvfb -ac ${{ env.DISPLAY }} -screen 0 1280x780x24 &
       - uses: julia-actions/setup-julia@v1
         with:
-          version: 1
+          version: 1.10
       - uses: actions/cache@v2
         with:
           path: ~/.julia/artifacts
