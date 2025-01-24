@@ -19,16 +19,16 @@ jobs:
           Xvfb -ac ${{ env.DISPLAY }} -screen 0 1280x780x24 &
       - uses: julia-actions/setup-julia@v1
         with:
-          version: 1
-      - uses: actions/cache@v1
-        env:
-          cache-name: cache-artifacts
+          # Warning: It is strongly recommended to wrap this value in quotes.
+          #          Otherwise, the YAML parser used by GitHub Actions parses certain
+          #          versions as numbers which causes the wrong version to be selected.
+          #          For example, `1.10` may be parsed as `1.1`.
+          version: '1.10'
+      - uses: actions/cache@v2
         with:
           path: ~/.julia/artifacts
-          key: ${{ runner.os }}-test-${{ env.cache-name }}-${{ hashFiles('**/Project.toml') }}
+          key: ${{ runner.os }}-julia-${{ hashFiles('**/Project.toml') }}
           restore-keys: |
-            ${{ runner.os }}-test-${{ env.cache-name }}-
-            ${{ runner.os }}-test-
-            ${{ runner.os }}-
+            ${{ runner.os }}-julia-
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1

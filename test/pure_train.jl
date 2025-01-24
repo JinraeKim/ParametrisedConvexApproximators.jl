@@ -20,6 +20,8 @@ Z = hcat([sum(X[:, i].^2)+sum(Y[:, i].^2) for i in 1:d]...)
 X_test = 2 * (2*rand(n, d_test) .- 1)
 Y_test = 2 * (2*rand(m, d_test) .- 1)
 Z_test = hcat([sum(X_test[:, i].^2)+sum(Y_test[:, i].^2) for i in 1:d_test]...)
+min_decision = -ones(m)
+max_decision = +ones(m)
 
 # network construction
 
@@ -52,20 +54,18 @@ function main(epochs=2, network=nothing)
                     :DLSE => dlse,
                     :EPLSE => eplse,
                    )
-    if network != nothing
+    if !isnothing(network)
         networks = Dict(network => networks[network])
     end
         
 
     for (name, model) in networks
         @show name
-        params_init = deepcopy(Flux.params(model))
-        @test all(Flux.params(model) .== params_init)
+        params_init = deepcopy(Flux.trainables(model))
+        @test all(Flux.trainables(model) .== params_init)
         # training
         data = Flux.DataLoader((X, Y, Z), batchsize=16)
-        # @infiltrate
         opt_state = Flux.setup(Adam(1e-4), model)
-        # @infiltrate
         @time for epoch in 1:epochs
             @show epoch
             @show Flux.Losses.mse(model(X_test, Y_test), Z_test)
@@ -80,7 +80,7 @@ function main(epochs=2, network=nothing)
                 end
             end
         end
-        @test any(Flux.params(model) .!= params_init)
+        @test any(Flux.trainables(model) .!= params_init)
     end
 end
 

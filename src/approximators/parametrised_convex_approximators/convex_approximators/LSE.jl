@@ -23,7 +23,7 @@ struct LSE <: ConvexApproximator
     _α_is
     _β_is
 end
-Flux.@functor LSE (_α_is, _β_is,)
+Flux.@layer LSE trainable=(_α_is, _β_is,)
 function LSE(n::Int, m::Int, i_max::Int, T::Real)
     @assert T > 0
     α_is = [Flux.glorot_uniform(n+m) for i in 1:i_max]

@@ -32,7 +32,8 @@ function construct_layer_array(node_array, act; act_terminal=Flux.identity)
 end
 
 function number_of_parameters(approximator::AbstractApproximator)
-    Flux.params(approximator) |> Map(length) |> sum
+    # Flux.params(approximator) |> Map(length) |> sum
+    sum([length(params) for params in Flux.trainables(approximator)])
 end
 
 

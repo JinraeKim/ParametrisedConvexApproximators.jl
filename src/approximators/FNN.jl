@@ -3,7 +3,7 @@ struct FNN <: AbstractApproximator
     m::Int
     NN::Flux.Chain
 end
-Flux.@functor FNN (NN,)
+Flux.@layer FNN trainable=(NN,)
 function FNN(n::Int, m::Int, h_array::Vector{Int}, act)
     node_array = [n+m, h_array..., 1]
     FNN(n, m, construct_layer_array(node_array, act))
@@ -20,4 +20,3 @@ size(u) = (m, d)
 function (nn::FNN)(x, u)
     res = nn.NN(vcat(x, u))
 end
-# Flux.params(approximator::FNN) = Flux.params(approximator.NN)

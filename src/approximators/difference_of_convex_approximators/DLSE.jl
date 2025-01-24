@@ -10,7 +10,7 @@ struct DLSE <: DifferenceOfConvexApproximator
     NN1::LSE
     NN2::LSE
 end
-Flux.@functor DLSE (NN1, NN2)
+Flux.@layer DLSE trainable=(NN1, NN2)
 
 
 function (nn::DLSE)(x::AbstractArray, u::AbstractArray)

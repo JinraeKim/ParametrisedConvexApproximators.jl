@@ -15,7 +15,7 @@ struct PICNN <: ParametrisedConvexApproximator
     m::Int
     NN::Flux.Chain
 end
-Flux.@functor PICNN (NN,)
+Flux.@layer PICNN trainable=(NN,)
 function PICNN(n::Int, m::Int, u_array::Vector{Int}, z_array::Vector{Int}, g, g̃)
     PICNN(n, m, make_PICNN(n, m, u_array, z_array, g, g̃))
 end
@@ -71,7 +71,7 @@ struct PICNN_Layer
     b  #  params(m)[10]
     g  # not trainable; will not be tracked by Flux, automatically 
 end
-Flux.@functor PICNN_Layer (W̃, b̃, Wz, Wzu, bz, Wy, Wyu, by, Wu, b)  # make "struct" compatible with Flux
+Flux.@layer PICNN_Layer trainable=(W̃, b̃, Wz, Wzu, bz, Wy, Wyu, by, Wu, b)  # make "struct" compatible with Flux
 
 function PICNN_Layer(uin::Int, uout::Int, zin::Int, zout::Int, y::Int, g=Flux.identity, g̃=Flux.identity;
         initW = Flux.glorot_uniform, initb = zeros  # default initialisation method
@@ -92,6 +92,7 @@ end
 function Flux.leakyrelu(x::Convex.AbstractExpr)
     Convex.max(x, 0.1*x)
 end
+
 function (nn::PICNN_Layer)(input)
     u, z, y = input
     # network params
@@ -110,8 +111,10 @@ function (nn::PICNN_Layer)(input)
     else
         u_next = g̃.(W̃*u .+ b̃)
         z_next = g.(
-            Wz * dot(*)(z, max.(Wzu*u .+ bz, 0.0))  # dot(*) is Hadamard product in Convex
-            + Wy * dot(*)(y, (Wyu*u .+ by))
+            # Wz * dot(*)(z, max.(Wzu*u .+ bz, 0.0))  # dot(*) is Hadamard product in Convex
+            # + Wy * dot(*)(y, (Wyu*u .+ by))
+            Wz * (z .* max.(Wzu*u .+ bz, 0.0))  # dot(*) is not supported by Flux anymore
+            + Wy * (y .* (Wyu*u .+ by))
             + (Wu * u .+ b)
         )
     end

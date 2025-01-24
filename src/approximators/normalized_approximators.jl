@@ -21,7 +21,7 @@ struct MaxAbsNormalisedApproximator{T<:AbstractApproximator} <: NormalisedApprox
     decision_max_abs::Union{Array, Nothing}
     cost_max_abs::Union{Array, Nothing}
 end
-Flux.@functor MaxAbsNormalisedApproximator (network,)
+Flux.@layer MaxAbsNormalisedApproximator trainable=(network,)
 
 function MaxAbsNormalisedApproximator(
     network::AbstractApproximator,
