@@ -20,7 +20,7 @@ end
 
 
 function retrieve_normalised_network(network::AbstractApproximator, dataset::DecisionMakingDataset, normalisation)
-    if normalisation == nothing
+    if isnothing(normalisation)
         normalised_network = network
     elseif normalisation == :max_abs
         normalised_network = MaxAbsNormalisedApproximator(network, dataset)
@@ -69,7 +69,7 @@ function Flux.train!(
         if epoch != 0
             loss_train = 0.0
             batch_size = 0
-            for (x, u, f) in data_train
+            @showprogress for (x, u, f) in data_train
                 val, grads = Flux.withgradient(network) do _network
                     pred = _network(x, u)
                     loss(pred, f)

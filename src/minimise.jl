@@ -105,8 +105,8 @@ end
 
 
 function _minimise(eplse::EPLSE, x::AbstractVector, min_decision, max_decision, initial_guess; kwargs...)
-    min_decision = min_decision == nothing ? eplse.min_decision : min_decision  # override
-    max_decision = max_decision == nothing ? eplse.max_decision : max_decision  # override
+    min_decision = isnothing(min_decision) ? eplse.min_decision : min_decision  # override
+    max_decision = isnothing(max_decision) ? eplse.max_decision : max_decision  # override
     _minimise(eplse.plse, x, min_decision, max_decision, initial_guess; kwargs...)
 end
 
@@ -173,10 +173,10 @@ end
 
 
 function minimise(network::AbstractApproximator, x::AbstractVector;
-        min_decision=nothing, max_decision=nothing, initial_guess=nothing
+        min_decision=nothing, max_decision=nothing, initial_guess=nothing, kwargs...
     )
-    minimiser = _minimise(network, x, min_decision, max_decision, initial_guess)
-    if minimiser == nothing
+    minimiser = _minimise(network, x, min_decision, max_decision, initial_guess; kwargs...)
+    if isnothing(minimiser)
         (; m) = network
         minimiser = repeat([nothing], m)
     end

@@ -14,9 +14,9 @@ end
 Flux.@layer EPLSE trainable=(plse, nn,)
 
 
-function (network::EPLSE)(x, u; initial_guess=nothing,)
+function (network::EPLSE)(x, u; initial_guess=nothing, kwargs...)
     (; plse, nn, min_decision, max_decision) = network
-    u_star = minimise(network, x; min_decision, max_decision, initial_guess,)
+    u_star = minimise(network, x; min_decision, max_decision, initial_guess, kwargs...)
     plse(x, u) + max.(nn(x, u) - nn(x, u_star), 0)
 end
 

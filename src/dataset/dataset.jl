@@ -126,12 +126,12 @@ function split_data3(dataset, ratio1, ratio2; seed=2022)
 end
 
 
-function sample_from_bounds(N, min_value, max_value, seed)
+function sample_from_bounds(N, min_value, max_value; rng=default_rng())
     samples = []
     for i in 1:N
         sampled_value = (
              min_value
-             + (max_value - min_value) .* rand(size(min_value)...)
+             + (max_value - min_value) .* rand(rng, size(min_value)...)
         )
         push!(samples, sampled_value)
     end
