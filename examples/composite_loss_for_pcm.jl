@@ -3,6 +3,8 @@ using Flux
 using Plots
 using Random
 using ParameterSchedulers
+using Statistics: mean
+using CUDA, CuDNN
 
 
 seed = 2022
@@ -21,14 +23,25 @@ max_decision = +1 * ones(m)
 
 function loss_mse(pred, f)
     l = Flux.Losses.mse(pred, f)
+    # l = Flux.Losses.mae(pred, f)
     return l
 end
 
 function loss_minorant(pred, f)
-    tmp = max.(0, pred .- f)
-    # tmp = act.(pred .- f)
-    l = 1000 * Flux.Losses.mae(tmp, zeros(size(tmp)))  # the last term is for pred >= f
+    # ReLU-like approach
+    l = 50 * mean(Flux.relu(pred .- f))
+    # l = 1000 * mean(Flux.relu(pred .- f) .* 2)
+
+    # LeakyReLU approach
+    # l = 100 * mean(Flux.leakyrelu(pred .- f, 0.001))
+    # l = 100 * mean(Flux.leakyrelu(pred .- f, 0.001) .* 2)
+    # l = 10 * mean(Flux.gelu(pred .- f))
+    # l = 10 * mean(Flux.mish(pred .- f))
     return l
+end
+
+function loss_minorant_true(pred, f)
+    return mean(Flux.relu(pred .- f))
 end
 
 function composite_loss(pred, f)
@@ -61,25 +74,38 @@ function main(epochs=2)
         dataset, model;
         loss=composite_loss,
         optimiser=Flux.Adam(1e-3),
-        scheduler=ParameterSchedulers.Exp(start=1e-3, decay=0.99),
+        # scheduler=ParameterSchedulers.Exp(start=1e-3, decay=0.99),
     )
 
     anim = Animation()
 
+    ls_mse = []
+    ls_minorant = []
+    ls_minorant_true = []
     function callback(epoch)
-        @show get_loss(model, dataset[:test], loss_mse)
-        @show get_loss(model, dataset[:test], loss_minorant)
+        @show l_mse = get_loss(model, dataset[:test], loss_mse)
+        @show l_minorant = get_loss(model, dataset[:test], loss_minorant)
+        @show l_minorant_true = get_loss(model, dataset[:test], loss_minorant_true)
+        push!(ls_mse, l_mse)
+        push!(ls_minorant, l_minorant)
+        push!(ls_minorant_true, l_minorant_true)
         c_plot = range(min_condition[1], stop=max_condition[1]; length=100)
         d_plot = range(min_decision[1], stop=max_decision[1]; length=100)
-        fig = plot(; xlabel="c", ylabel="d")
+        fig_vis = plot(; xlabel="c", ylabel="d")
         plot!(c_plot, d_plot, (c, d) -> target_function([c], [d]); st=:surface, alpha=0.5)
         plot!(c_plot, d_plot, (c, d) -> model([c], [d])[1]; st=:surface, alpha=0.5)
         # frame(anim)
+        fig_loss = plot(; ylabel="Test loss", ylim=(-0.5, 2.5))
+        plot!(1:length(ls_mse), ls_mse; label="MSE")
+        plot!(1:length(ls_minorant), ls_minorant; label="Minorant (loss)")
+        plot!(1:length(ls_minorant), ls_minorant_true; label="Minorant (true)")
+        plot!(1:length(ls_minorant), ls_mse + ls_minorant; label="Total")
+        fig = plot(fig_vis, fig_loss; layout=(1, 2))
         display(fig)
     end
     Flux.train!(
         trainer;
-        batchsize=16,
+        batchsize=128,
         epochs=200,
         callback,
     )
