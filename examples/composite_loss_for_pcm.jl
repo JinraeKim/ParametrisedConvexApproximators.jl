@@ -72,11 +72,10 @@ end
 function composite_loss_new(model::LooslyCoupledModel, x, u, f)
     (; pcm, nn) = model
     pred_pcm = pcm(x, u)
-    # pred_gap = Flux.leakyrelu(nn(x, u) .- 0)
     pred_gap = nn(x, u)
     pred = pred_pcm + pred_gap
     l_minorant = 100.0 * mean(Flux.relu(pred_pcm .- f))
-    l_mse = 100 * Flux.Losses.mse(pred, f)
+    l_mse = 100.0 * Flux.Losses.mse(pred, f)
     l_tight_gap = 1.0 * mean(Flux.mse(pred_gap, 0))
     return l_minorant + l_mse + l_tight_gap
 end
@@ -114,13 +113,16 @@ function main(epochs=2)
     ls_mse = []
     ls_minorant = []
     ls_minorant_true = []
+    ls_total = []
     function callback(epoch)
         # @show l_mse = get_loss(model, dataset[:test], loss_mse)
         # @show l_minorant = get_loss(model, dataset[:test], loss_minorant)
         # @show l_minorant_true = get_loss(model.pcm, dataset[:test], loss_minorant_true)
+        @show l_total = get_loss(model, dataset[:test], composite_loss_new)
         # push!(ls_mse, l_mse)
         # push!(ls_minorant, l_minorant)
         # push!(ls_minorant_true, l_minorant_true)
+        push!(ls_total, l_total)
         c_plot = range(min_condition[1], stop=max_condition[1]; length=100)
         d_plot = range(min_decision[1], stop=max_decision[1]; length=100)
         fig_vis1 = plot(; title="model", xlabel="c", ylabel="d")
@@ -131,11 +133,14 @@ function main(epochs=2)
         plot!(fig_vis2, c_plot, d_plot, (c, d) -> model.pcm([c], [d])[1]; st=:surface, alpha=0.5)
         fig_vis = plot(fig_vis1, fig_vis2; layout=(2, 1))
         # frame(anim)
-        fig_loss = plot(; ylabel="Test loss", ylim=(-0.5, 2.5))
+        fig_loss = plot(;
+            ylabel="Test loss",
+            ylim=(-0.5, 2.5),
+        )
         plot!(1:length(ls_mse), ls_mse; label="MSE")
         plot!(1:length(ls_minorant), ls_minorant; label="Minorant (loss)")
         plot!(1:length(ls_minorant), ls_minorant_true; label="Minorant (true)")
-        plot!(1:length(ls_minorant), ls_mse + ls_minorant; label="Total")
+        plot!(1:length(ls_total), ls_total; label="Total")
         fig = plot(fig_vis, fig_loss; layout=(1, 2))
         display(fig)
     end
