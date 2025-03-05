@@ -4,7 +4,7 @@ using Plots
 using Random
 using ParameterSchedulers
 using Statistics: mean
-using CUDA, CuDNN
+# using CUDA
 
 
 seed = 2022
@@ -21,14 +21,31 @@ min_decision = -1 * ones(m)
 max_decision = +1 * ones(m)
 
 
-function loss_mse(pred, f)
+struct LooslyCoupledModel <: AbstractApproximator
+    pcm
+    nn
+end
+
+
+function (model::LooslyCoupledModel)(x, u)
+    (; pcm, nn) = model
+    pred_pcm = pcm(x, u)
+    # pred_gap = Flux.leakyrelu(nn(x, u) .- 0)
+    pred_gap = nn(x, u)
+    return pred_pcm + pred_gap
+end
+
+
+function loss_mse(model, x, u, f)
+    pred = model(x, u)
     l = Flux.Losses.mse(pred, f)
     # l = Flux.Losses.mae(pred, f)
     return l
 end
 
-function loss_minorant(pred, f)
+function loss_minorant(model, x, u, f)
     # ReLU-like approach
+    pred = model(x, u)
     l = 50 * mean(Flux.relu(pred .- f))
     # l = 1000 * mean(Flux.relu(pred .- f) .* 2)
 
@@ -40,20 +57,35 @@ function loss_minorant(pred, f)
     return l
 end
 
-function loss_minorant_true(pred, f)
+function loss_minorant_true(model, x, u, f)
+    pred = model(x, u)
     return mean(Flux.relu(pred .- f))
 end
 
-function composite_loss(pred, f)
+function composite_loss(model, x, u, f)
     l = 0.0
-    l += loss_mse(pred, f)
-    l += loss_minorant(pred, f)
+    l += loss_mse(model, x, u, f)
+    l += loss_minorant(model, x, u, f)
     return l
+end
+
+function composite_loss_new(model::LooslyCoupledModel, x, u, f)
+    (; pcm, nn) = model
+    pred_pcm = pcm(x, u)
+    # pred_gap = Flux.leakyrelu(nn(x, u) .- 0)
+    pred_gap = nn(x, u)
+    pred = pred_pcm + pred_gap
+    l_minorant = 100.0 * mean(Flux.relu(pred_pcm .- f))
+    l_mse = 100 * Flux.Losses.mse(pred, f)
+    l_tight_gap = 1.0 * mean(Flux.mse(pred_gap, 0))
+    return l_minorant + l_mse + l_tight_gap
 end
 
 
 function main(epochs=2)
-    model = PLSE(n, m, i_max, T, h_array, act)
+    pcm = PLSE(n, m, i_max, T, h_array, act)
+    nn = FNN(n, m, h_array, act)
+    model = LooslyCoupledModel(pcm, nn)
 
     target_function = example_target_function(:quadratic_sin_sum)
     conditions, decisions, costs, metadata = generate_dataset(
@@ -72,7 +104,7 @@ function main(epochs=2)
     )
     trainer = SupervisedLearningTrainer(
         dataset, model;
-        loss=composite_loss,
+        loss=composite_loss_new,
         optimiser=Flux.Adam(1e-3),
         # scheduler=ParameterSchedulers.Exp(start=1e-3, decay=0.99),
     )
@@ -83,17 +115,21 @@ function main(epochs=2)
     ls_minorant = []
     ls_minorant_true = []
     function callback(epoch)
-        @show l_mse = get_loss(model, dataset[:test], loss_mse)
-        @show l_minorant = get_loss(model, dataset[:test], loss_minorant)
-        @show l_minorant_true = get_loss(model, dataset[:test], loss_minorant_true)
-        push!(ls_mse, l_mse)
-        push!(ls_minorant, l_minorant)
-        push!(ls_minorant_true, l_minorant_true)
+        # @show l_mse = get_loss(model, dataset[:test], loss_mse)
+        # @show l_minorant = get_loss(model, dataset[:test], loss_minorant)
+        # @show l_minorant_true = get_loss(model.pcm, dataset[:test], loss_minorant_true)
+        # push!(ls_mse, l_mse)
+        # push!(ls_minorant, l_minorant)
+        # push!(ls_minorant_true, l_minorant_true)
         c_plot = range(min_condition[1], stop=max_condition[1]; length=100)
         d_plot = range(min_decision[1], stop=max_decision[1]; length=100)
-        fig_vis = plot(; xlabel="c", ylabel="d")
-        plot!(c_plot, d_plot, (c, d) -> target_function([c], [d]); st=:surface, alpha=0.5)
-        plot!(c_plot, d_plot, (c, d) -> model([c], [d])[1]; st=:surface, alpha=0.5)
+        fig_vis1 = plot(; title="model", xlabel="c", ylabel="d")
+        fig_vis2 = plot(; title="pcm", xlabel="c", ylabel="d")
+        plot!(fig_vis1, c_plot, d_plot, (c, d) -> target_function([c], [d]); st=:surface, alpha=0.5)
+        plot!(fig_vis1, c_plot, d_plot, (c, d) -> model([c], [d])[1]; st=:surface, alpha=0.5)
+        plot!(fig_vis2, c_plot, d_plot, (c, d) -> target_function([c], [d]); st=:surface, alpha=0.5)
+        plot!(fig_vis2, c_plot, d_plot, (c, d) -> model.pcm([c], [d])[1]; st=:surface, alpha=0.5)
+        fig_vis = plot(fig_vis1, fig_vis2; layout=(2, 1))
         # frame(anim)
         fig_loss = plot(; ylabel="Test loss", ylim=(-0.5, 2.5))
         plot!(1:length(ls_mse), ls_mse; label="MSE")

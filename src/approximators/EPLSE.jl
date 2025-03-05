@@ -11,7 +11,7 @@ struct EPLSE <: AbstractApproximator
     min_decision
     max_decision
 end
-Flux.@layer EPLSE trainable=(plse, nn,)
+Flux.@layer EPLSE trainable = (plse, nn,)
 
 
 function (network::EPLSE)(x, u; initial_guess=nothing,)
@@ -19,4 +19,3 @@ function (network::EPLSE)(x, u; initial_guess=nothing,)
     u_star = minimise(network, x; min_decision, max_decision, initial_guess,)
     plse(x, u) + max.(nn(x, u) - nn(x, u_star), 0)
 end
-

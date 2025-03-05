@@ -37,7 +37,9 @@ end
 You must explicitly give "the network to be evaluated".
 """
 function get_loss(network, dataset, loss)
-    l = loss(network(hcat(dataset.conditions...), hcat(dataset.decisions...)), hcat(dataset.costs...))
+    l = loss(network,
+        hcat(dataset.conditions...), hcat(dataset.decisions...), hcat(dataset.costs...)
+    )
     return l
 end
 
@@ -84,8 +86,7 @@ function Flux.train!(
             batch_size = 0
             @showprogress for (x, u, f) in data_train
                 val, grads = Flux.withgradient(network) do _network
-                    pred = _network(x, u)
-                    loss(pred, f)
+                    loss(_network, x, u, f)
                 end
                 loss_train += val
                 batch_size += 1
