@@ -30,8 +30,7 @@ end
 function (model::LooslyCoupledModel)(x, u)
     (; pcm, nn) = model
     pred_pcm = pcm(x, u)
-    # pred_gap = Flux.leakyrelu(nn(x, u) .- 0)
-    pred_gap = Flux.softplus(nn(x, u))
+    pred_gap = nn(x, u)
     return pred_pcm + pred_gap
 end
 
@@ -48,12 +47,6 @@ function loss_minorant(model, x, u, f)
     pred = model(x, u)
     l = 50 * mean(Flux.relu(pred .- f))
     # l = 1000 * mean(Flux.relu(pred .- f) .* 2)
-
-    # LeakyReLU approach
-    # l = 100 * mean(Flux.leakyrelu(pred .- f, 0.001))
-    # l = 100 * mean(Flux.leakyrelu(pred .- f, 0.001) .* 2)
-    # l = 10 * mean(Flux.gelu(pred .- f))
-    # l = 10 * mean(Flux.mish(pred .- f))
     return l
 end
 
@@ -72,7 +65,7 @@ end
 function composite_loss_new(model::LooslyCoupledModel, x, u, f)
     (; pcm, nn) = model
     pred_pcm = pcm(x, u)
-    pred_gap = Flux.softplus(nn(x, u))
+    pred_gap = nn(x, u)
     pred = pred_pcm + pred_gap
     l_minorant = 100.0 * mean(Flux.relu(pred_pcm .- f))
     l_mse = 100.0 * Flux.Losses.mse(pred, f)
@@ -126,7 +119,7 @@ function main(epochs=2)
         # @show l_minorant = get_loss(model, dataset[:test], loss_minorant)
         # @show l_minorant_true = get_loss(model.pcm, dataset[:test], loss_minorant_true)
         @show l_total = get_loss(model, dataset[:test], composite_loss_new)
-        @show l_nonnegativity_violation = get_loss((x, u) -> Flux.softplus(model.nn(x, u)), dataset[:test], loss_nonnegativity_violation)
+        @show l_nonnegativity_violation = get_loss(model.nn, dataset[:test], loss_nonnegativity_violation)
         # push!(ls_mse, l_mse)
         # push!(ls_minorant, l_minorant)
         # push!(ls_minorant_true, l_minorant_true)
@@ -151,7 +144,7 @@ function main(epochs=2)
         plot!(1:length(ls_nonnegativity_violation), ls_nonnegativity_violation; label="Nonnegativity violation")
         plot!(1:length(ls_total), ls_total; label="Total")
         fig = plot(fig_vis, fig_loss; layout=(1, 2))
-        frame(anim)
+        # frame(anim)
         display(fig)
     end
     Flux.train!(
@@ -160,5 +153,5 @@ function main(epochs=2)
         epochs,
         callback,
     )
-    gif(anim, "composite_loss_for_pcm.gif", fps=10)
+    # gif(anim, "composite_loss_for_pcm.gif", fps=10)
 end
