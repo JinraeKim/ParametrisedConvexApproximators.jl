@@ -31,7 +31,7 @@ function (model::LooslyCoupledModel)(x, u)
     (; pcm, nn) = model
     pred_pcm = pcm(x, u)
     # pred_gap = Flux.leakyrelu(nn(x, u) .- 0)
-    pred_gap = nn(x, u)
+    pred_gap = Flux.softplus(nn(x, u))
     return pred_pcm + pred_gap
 end
 
@@ -72,7 +72,7 @@ end
 function composite_loss_new(model::LooslyCoupledModel, x, u, f)
     (; pcm, nn) = model
     pred_pcm = pcm(x, u)
-    pred_gap = nn(x, u)
+    pred_gap = Flux.softplus(nn(x, u))
     pred = pred_pcm + pred_gap
     l_minorant = 100.0 * mean(Flux.relu(pred_pcm .- f))
     l_mse = 100.0 * Flux.Losses.mse(pred, f)
@@ -126,7 +126,7 @@ function main(epochs=2)
         # @show l_minorant = get_loss(model, dataset[:test], loss_minorant)
         # @show l_minorant_true = get_loss(model.pcm, dataset[:test], loss_minorant_true)
         @show l_total = get_loss(model, dataset[:test], composite_loss_new)
-        @show l_nonnegativity_violation = get_loss(model.nn, dataset[:test], loss_nonnegativity_violation)
+        @show l_nonnegativity_violation = get_loss((x, u) -> Flux.softplus(model.nn(x, u)), dataset[:test], loss_nonnegativity_violation)
         # push!(ls_mse, l_mse)
         # push!(ls_minorant, l_minorant)
         # push!(ls_minorant_true, l_minorant_true)
