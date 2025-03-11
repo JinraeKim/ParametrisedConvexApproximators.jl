@@ -80,6 +80,12 @@ function composite_loss_new(model::LooslyCoupledModel, x, u, f)
     return l_minorant + l_mse + l_tight_gap
 end
 
+function loss_nonnegativity_violation(model, x, u, f)
+    pred = model(x, u)
+    l = mean(Flux.relu(-pred))
+    return l
+end
+
 
 function main(epochs=2)
     pcm = PLSE(n, m, i_max, T, h_array, act)
@@ -114,15 +120,18 @@ function main(epochs=2)
     ls_minorant = []
     ls_minorant_true = []
     ls_total = []
+    ls_nonnegativity_violation = []
     function callback(epoch)
         # @show l_mse = get_loss(model, dataset[:test], loss_mse)
         # @show l_minorant = get_loss(model, dataset[:test], loss_minorant)
         # @show l_minorant_true = get_loss(model.pcm, dataset[:test], loss_minorant_true)
         @show l_total = get_loss(model, dataset[:test], composite_loss_new)
+        @show l_nonnegativity_violation = get_loss(model.nn, dataset[:test], loss_nonnegativity_violation)
         # push!(ls_mse, l_mse)
         # push!(ls_minorant, l_minorant)
         # push!(ls_minorant_true, l_minorant_true)
         push!(ls_total, l_total)
+        push!(ls_nonnegativity_violation, l_nonnegativity_violation)
         c_plot = range(min_condition[1], stop=max_condition[1]; length=100)
         d_plot = range(min_decision[1], stop=max_decision[1]; length=100)
         fig_vis1 = plot(; title="model", xlabel="c", ylabel="d")
@@ -132,7 +141,7 @@ function main(epochs=2)
         plot!(fig_vis2, c_plot, d_plot, (c, d) -> target_function([c], [d]); st=:surface, alpha=0.5)
         plot!(fig_vis2, c_plot, d_plot, (c, d) -> model.pcm([c], [d])[1]; st=:surface, alpha=0.5)
         fig_vis = plot(fig_vis1, fig_vis2; layout=(2, 1))
-        # frame(anim)
+        frame(anim)
         fig_loss = plot(;
             ylabel="Test loss",
             ylim=(-0.5, 2.5),
@@ -140,6 +149,7 @@ function main(epochs=2)
         plot!(1:length(ls_mse), ls_mse; label="MSE")
         plot!(1:length(ls_minorant), ls_minorant; label="Minorant (loss)")
         plot!(1:length(ls_minorant), ls_minorant_true; label="Minorant (true)")
+        plot!(1:length(ls_nonnegativity_violation), ls_nonnegativity_violation; label="Nonnegativity violation")
         plot!(1:length(ls_total), ls_total; label="Total")
         fig = plot(fig_vis, fig_loss; layout=(1, 2))
         display(fig)
@@ -147,8 +157,8 @@ function main(epochs=2)
     Flux.train!(
         trainer;
         batchsize=128,
-        epochs=200,
+        epochs,
         callback,
     )
-    # gif(anim, "composite_loss_for_pcm.gif", fps=10)
+    gif(anim, "composite_loss_for_pcm.gif", fps=10)
 end
