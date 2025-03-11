@@ -141,7 +141,6 @@ function main(epochs=2)
         plot!(fig_vis2, c_plot, d_plot, (c, d) -> target_function([c], [d]); st=:surface, alpha=0.5)
         plot!(fig_vis2, c_plot, d_plot, (c, d) -> model.pcm([c], [d])[1]; st=:surface, alpha=0.5)
         fig_vis = plot(fig_vis1, fig_vis2; layout=(2, 1))
-        frame(anim)
         fig_loss = plot(;
             ylabel="Test loss",
             ylim=(-0.5, 2.5),
@@ -152,6 +151,7 @@ function main(epochs=2)
         plot!(1:length(ls_nonnegativity_violation), ls_nonnegativity_violation; label="Nonnegativity violation")
         plot!(1:length(ls_total), ls_total; label="Total")
         fig = plot(fig_vis, fig_loss; layout=(1, 2))
+        frame(anim)
         display(fig)
     end
     Flux.train!(
