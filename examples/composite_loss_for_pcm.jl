@@ -1,5 +1,6 @@
 using ParametrisedConvexApproximators
 using Flux
+using CUDA
 using Plots
 using Random
 using ParameterSchedulers
@@ -114,12 +115,15 @@ function main(epochs=2)
     ls_minorant_true = []
     ls_total = []
     ls_nonnegativity_violation = []
-    function callback(epoch)
-        # @show l_mse = get_loss(model, dataset[:test], loss_mse)
-        # @show l_minorant = get_loss(model, dataset[:test], loss_minorant)
-        # @show l_minorant_true = get_loss(model.pcm, dataset[:test], loss_minorant_true)
-        @show l_total = get_loss(model, dataset[:test], composite_loss_new)
-        @show l_nonnegativity_violation = get_loss(model.nn, dataset[:test], loss_nonnegativity_violation)
+    """
+    Argument `network` is necessary. This will be converted into cpu by default.
+    """
+    function callback(network, epoch)
+        # @show l_mse = get_loss(network, dataset[:test], loss_mse)
+        # @show l_minorant = get_loss(network, dataset[:test], loss_minorant)
+        # @show l_minorant_true = get_loss(network.pcm, dataset[:test], loss_minorant_true)
+        @show l_total = get_loss(network, dataset[:test], composite_loss_new)
+        @show l_nonnegativity_violation = get_loss(network.nn, dataset[:test], loss_nonnegativity_violation)
         # push!(ls_mse, l_mse)
         # push!(ls_minorant, l_minorant)
         # push!(ls_minorant_true, l_minorant_true)
@@ -127,12 +131,12 @@ function main(epochs=2)
         push!(ls_nonnegativity_violation, l_nonnegativity_violation)
         c_plot = range(min_condition[1], stop=max_condition[1]; length=100)
         d_plot = range(min_decision[1], stop=max_decision[1]; length=100)
-        fig_vis1 = plot(; title="model", xlabel="c", ylabel="d")
+        fig_vis1 = plot(; title="network", xlabel="c", ylabel="d")
         fig_vis2 = plot(; title="pcm", xlabel="c", ylabel="d")
         plot!(fig_vis1, c_plot, d_plot, (c, d) -> target_function([c], [d]); st=:surface, alpha=0.5)
-        plot!(fig_vis1, c_plot, d_plot, (c, d) -> model([c], [d])[1]; st=:surface, alpha=0.5)
+        plot!(fig_vis1, c_plot, d_plot, (c, d) -> network([c], [d])[1]; st=:surface, alpha=0.5)
         plot!(fig_vis2, c_plot, d_plot, (c, d) -> target_function([c], [d]); st=:surface, alpha=0.5)
-        plot!(fig_vis2, c_plot, d_plot, (c, d) -> model.pcm([c], [d])[1]; st=:surface, alpha=0.5)
+        plot!(fig_vis2, c_plot, d_plot, (c, d) -> network.pcm([c], [d])[1]; st=:surface, alpha=0.5)
         fig_vis = plot(fig_vis1, fig_vis2; layout=(2, 1))
         fig_loss = plot(;
             ylabel="Test loss",
@@ -149,9 +153,12 @@ function main(epochs=2)
     end
     Flux.train!(
         trainer;
-        batchsize=128,
+        # batchsize=1024,
+        batchsize=16,
         epochs,
         callback,
+        # device=gpu,
+        device=cpu,
     )
     # gif(anim, "composite_loss_for_pcm.gif", fps=10)
 end

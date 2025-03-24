@@ -50,8 +50,11 @@ function Flux.train!(
     epochs=200,
     rng=Random.default_rng(),
     callback=nothing,
+    device=cpu_device(),
 )
-    (; network, dataset, loss, optimiser, scheduler) = trainer
+    @show device
+    (; dataset, loss, optimiser, scheduler) = trainer
+    network = trainer.network |> device
     data_train = Flux.DataLoader(
         (
             hcat(dataset[:train].conditions...),
@@ -80,41 +83,42 @@ function Flux.train!(
             eta, _ = iterate(scheduler)
             Flux.Optimisers.adjust!(opt_state, eta)
             if !isnothing(callback)
-                callback(epoch)
+                callback(network |> cpu, epoch)
             end
             loss_train = 0.0
             batch_size = 0
-            @showprogress for (x, u, f) in data_train
+            @showprogress for xuf_cpu in data_train
+                x, u, f = xuf_cpu |> device
                 val, grads = Flux.withgradient(network) do _network
                     loss(_network, x, u, f)
                 end
                 loss_train += val
                 batch_size += 1
-                if !any(isnan, getall(grads[1], AccessorsExtra.RecursiveOfType(Number)))
-                    # This will give an warning
-                    # https://github.com/gdalle/ImplicitDifferentiation.jl/issues/92
-                    # https://discourse.julialang.org/t/julia-nan-check-for-namedtuple/102583/4?u=ihany
-                    opt_state, network = Flux.update!(opt_state, network, grads[1])
-                end
+                # if !any(isnan, getall(grads[1], AccessorsExtra.RecursiveOfType(Number)))
+                # This will give an warning
+                # https://github.com/gdalle/ImplicitDifferentiation.jl/issues/92
+                # https://discourse.julialang.org/t/julia-nan-check-for-namedtuple/102583/4?u=ihany
+                opt_state, network = Flux.update!(opt_state, network, grads[1])
+                # end
                 if typeof(network) == PICNN  # TODO: an automated solution required
                     project_nonnegative!(network)
                 end
             end
             loss_train = loss_train / batch_size
         else
-            loss_train = get_loss(trainer.network, trainer.dataset[:train], trainer.loss)
+            loss_train = get_loss(network |> cpu, trainer.dataset[:train], trainer.loss)
         end
         push!(losses_train, loss_train)
-        loss_validate = get_loss(trainer.network, trainer.dataset[:validate], trainer.loss)
+        loss_validate = get_loss(network |> cpu, trainer.dataset[:validate], trainer.loss)
         push!(losses_validate, loss_validate)
         println("epoch: $(epoch)/$(epochs), train loss: $(Printf.@sprintf("%.4e", loss_train)), valid loss: $(Printf.@sprintf("%.4e", loss_validate)) (learning rate: $(eta))")
         if loss_validate < minimum_loss_validate
             println("Best network found!")
             minimum_loss_validate = loss_validate
-            best_network = deepcopy(network)
+            best_network = deepcopy(network |> cpu)
         end
     end
-    loss_test = get_loss(trainer.network, trainer.dataset[:test], trainer.loss)
+    loss_test = get_loss(best_network, trainer.dataset[:test], trainer.loss)
     info = Dict()
     info["train_loss"] = losses_train
     info["valid_loss"] = losses_validate
