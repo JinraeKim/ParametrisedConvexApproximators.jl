@@ -1,6 +1,5 @@
 module ParametrisedConvexApproximators
 
-using Infiltrator  # tmp
 using Flux
 using Convex
 using ECOS
