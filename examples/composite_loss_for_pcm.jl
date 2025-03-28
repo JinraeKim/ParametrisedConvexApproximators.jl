@@ -1,11 +1,10 @@
 using ParametrisedConvexApproximators
 using Flux
-using CUDA
+# using CUDA
 using Plots
 using Random
 using ParameterSchedulers
 using Statistics: mean
-# using CUDA
 
 
 seed = 2022
@@ -86,7 +85,8 @@ function main(epochs=2)
     nn = FNN(n, m, h_array, act)
     model = LooslyCoupledModel(pcm, nn)
 
-    target_function = example_target_function(:quadratic_sin_sum)
+    # target_function = example_target_function(:quadratic_sin_sum)
+    target_function = (x, u) -> x[1]^2 + (u[1]^4 - u[1]^2)
     conditions, decisions, costs, metadata = generate_dataset(
         target_function;
         N,
@@ -131,6 +131,7 @@ function main(epochs=2)
         push!(ls_nonnegativity_violation, l_nonnegativity_violation)
         c_plot = range(min_condition[1], stop=max_condition[1]; length=100)
         d_plot = range(min_decision[1], stop=max_decision[1]; length=100)
+        # 3d plot
         fig_vis1 = plot(; title="network", xlabel="c", ylabel="d")
         fig_vis2 = plot(; title="pcm", xlabel="c", ylabel="d")
         plot!(fig_vis1, c_plot, d_plot, (c, d) -> target_function([c], [d]); st=:surface, alpha=0.5)
@@ -138,16 +139,24 @@ function main(epochs=2)
         plot!(fig_vis2, c_plot, d_plot, (c, d) -> target_function([c], [d]); st=:surface, alpha=0.5)
         plot!(fig_vis2, c_plot, d_plot, (c, d) -> network.pcm([c], [d])[1]; st=:surface, alpha=0.5)
         fig_vis = plot(fig_vis1, fig_vis2; layout=(2, 1))
+        # contour
+        fig_ctr = plot(; title="contour", xlabel="c", ylabel="d")
+        plot!(fig_ctr, c_plot, d_plot, (c, d) -> target_function([c], [d]); st=:contour, alpha=0.5)
+        cs_ctr = -1:0.1:1
+        plot!(fig_ctr, cs_ctr, hcat([minimise(network.pcm, [c]) for c in cs_ctr]...)'; label="optimal from pcm")
+        # loss
         fig_loss = plot(;
             ylabel="Test loss",
             ylim=(-0.5, 2.5),
         )
-        plot!(1:length(ls_mse), ls_mse; label="MSE")
-        plot!(1:length(ls_minorant), ls_minorant; label="Minorant (loss)")
-        plot!(1:length(ls_minorant), ls_minorant_true; label="Minorant (true)")
-        plot!(1:length(ls_nonnegativity_violation), ls_nonnegativity_violation; label="Nonnegativity violation")
-        plot!(1:length(ls_total), ls_total; label="Total")
-        fig = plot(fig_vis, fig_loss; layout=(1, 2))
+        plot!(fig_loss, 1:length(ls_mse), ls_mse; label="MSE")
+        plot!(fig_loss, 1:length(ls_minorant), ls_minorant; label="Minorant (loss)")
+        plot!(fig_loss, 1:length(ls_minorant), ls_minorant_true; label="Minorant (true)")
+        plot!(fig_loss, 1:length(ls_nonnegativity_violation), ls_nonnegativity_violation; label="Nonnegativity violation")
+        plot!(fig_loss, 1:length(ls_total), ls_total; label="Total")
+        fig_ctr_loss = plot(fig_ctr, fig_loss; layout=(2, 1))
+        # total
+        fig = plot(fig_vis, fig_ctr_loss; layout=(1, 2))
         # frame(anim)
         display(fig)
     end
