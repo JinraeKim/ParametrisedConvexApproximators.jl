@@ -80,13 +80,26 @@ function loss_nonnegativity_violation(model, x, u, f)
 end
 
 
-function main(epochs=2)
+"""
+model_name: :eplse or :cplse (Extended PLSE or Composite PLSE)
+func_name: :symm or :asymm (symmetric or asymmetric)
+"""
+function main(epochs=2; model_name=:eplse, gen_anim=false, func_name=:asymm)
+    @show model_name
+    @show func_name
     pcm = PLSE(n, m, i_max, T, h_array, act)
     nn = FNN(n, m, h_array, act)
-    model = LooslyCoupledModel(pcm, nn)
+    if model_name == :eplse
+        model = EPLSE(pcm, nn, min_decision, max_decision)
+    elseif model_name == :cplse
+        model = LooslyCoupledModel(pcm, nn)
+    end
 
-    # target_function = example_target_function(:quadratic_sin_sum)
-    target_function = (x, u) -> x[1]^2 + (u[1]^4 - u[1]^2)
+    if func_name == :symm
+        target_function = example_target_function(:quadratic_sin_sum)
+    elseif func_name == :asymm
+        target_function = (x, u) -> x[1]^2 + (u[1]^4 - u[1]^2)
+    end
     conditions, decisions, costs, metadata = generate_dataset(
         target_function;
         N,
@@ -101,14 +114,23 @@ function main(epochs=2)
         metadata, rng=Xoshiro(2),
         ratio1=0.7, ratio2=0.2,
     )
+    if model_name == :eplse
+        loss = loss_mse
+    elseif model_name == :cplse
+        loss = composite_loss_new
+    else
+        error("Invalid model")
+    end
     trainer = SupervisedLearningTrainer(
         dataset, model;
-        loss=composite_loss_new,
+        loss,
         optimiser=Flux.Adam(1e-3),
         # scheduler=ParameterSchedulers.Exp(start=1e-3, decay=0.99),
     )
 
-    anim = Animation()
+    if gen_anim
+        anim = Animation()
+    end
 
     ls_mse = []
     ls_minorant = []
@@ -122,42 +144,64 @@ function main(epochs=2)
         # @show l_mse = get_loss(network, dataset[:test], loss_mse)
         # @show l_minorant = get_loss(network, dataset[:test], loss_minorant)
         # @show l_minorant_true = get_loss(network.pcm, dataset[:test], loss_minorant_true)
-        @show l_total = get_loss(network, dataset[:test], composite_loss_new)
-        @show l_nonnegativity_violation = get_loss(network.nn, dataset[:test], loss_nonnegativity_violation)
+        if model_name == :eplse
+            @show l_mse = get_loss(network, dataset[:test], loss_mse)
+        elseif model_name == :cplse
+            @show l_total = get_loss(network, dataset[:test], composite_loss_new)
+            @show l_nonnegativity_violation = get_loss(network.nn, dataset[:test], loss_nonnegativity_violation)
+        end
         # push!(ls_mse, l_mse)
         # push!(ls_minorant, l_minorant)
         # push!(ls_minorant_true, l_minorant_true)
-        push!(ls_total, l_total)
-        push!(ls_nonnegativity_violation, l_nonnegativity_violation)
+        if model_name == :eplse
+            push!(ls_total, l_mse)
+        elseif model_name == :cplse
+            push!(ls_total, l_total)
+            push!(ls_nonnegativity_violation, l_nonnegativity_violation)
+        end
         c_plot = range(min_condition[1], stop=max_condition[1]; length=100)
         d_plot = range(min_decision[1], stop=max_decision[1]; length=100)
         # 3d plot
-        fig_vis1 = plot(; title="network", xlabel="c", ylabel="d")
+        fig_vis1 = plot(; title="network: $(model_name)", xlabel="c", ylabel="d")
         fig_vis2 = plot(; title="pcm", xlabel="c", ylabel="d")
         plot!(fig_vis1, c_plot, d_plot, (c, d) -> target_function([c], [d]); st=:surface, alpha=0.5)
         plot!(fig_vis1, c_plot, d_plot, (c, d) -> network([c], [d])[1]; st=:surface, alpha=0.5)
         plot!(fig_vis2, c_plot, d_plot, (c, d) -> target_function([c], [d]); st=:surface, alpha=0.5)
-        plot!(fig_vis2, c_plot, d_plot, (c, d) -> network.pcm([c], [d])[1]; st=:surface, alpha=0.5)
+        if model_name == :eplse
+            plot!(fig_vis2, c_plot, d_plot, (c, d) -> network.plse([c], [d])[1]; st=:surface, alpha=0.5)
+        elseif model_name == :cplse
+            plot!(fig_vis2, c_plot, d_plot, (c, d) -> network.pcm([c], [d])[1]; st=:surface, alpha=0.5)
+        end
         fig_vis = plot(fig_vis1, fig_vis2; layout=(2, 1))
         # contour
         fig_ctr = plot(; title="contour", xlabel="c", ylabel="d")
         plot!(fig_ctr, c_plot, d_plot, (c, d) -> target_function([c], [d]); st=:contour, alpha=0.5)
         cs_ctr = -1:0.1:1
-        plot!(fig_ctr, cs_ctr, hcat([minimise(network.pcm, [c]) for c in cs_ctr]...)'; label="optimal from pcm")
+        if model_name == :eplse
+            plot!(fig_ctr, cs_ctr, hcat([minimise(network, [c]) for c in cs_ctr]...)'; label="solution by pcm")
+        elseif model_name == :cplse
+            plot!(fig_ctr, cs_ctr, hcat([minimise(network.pcm, [c]) for c in cs_ctr]...)'; label="solution by pcm")
+        end
         # loss
         fig_loss = plot(;
             ylabel="Test loss",
             ylim=(-0.5, 2.5),
         )
-        plot!(fig_loss, 1:length(ls_mse), ls_mse; label="MSE")
-        plot!(fig_loss, 1:length(ls_minorant), ls_minorant; label="Minorant (loss)")
-        plot!(fig_loss, 1:length(ls_minorant), ls_minorant_true; label="Minorant (true)")
-        plot!(fig_loss, 1:length(ls_nonnegativity_violation), ls_nonnegativity_violation; label="Nonnegativity violation")
-        plot!(fig_loss, 1:length(ls_total), ls_total; label="Total")
+        if model_name == :eplse
+            plot!(fig_loss, 1:length(ls_mse), ls_mse; label="MSE")
+        elseif model_name == :cplse
+            plot!(fig_loss, 1:length(ls_mse), ls_mse; label="MSE")
+            plot!(fig_loss, 1:length(ls_minorant), ls_minorant; label="Minorant (loss)")
+            plot!(fig_loss, 1:length(ls_minorant), ls_minorant_true; label="Minorant (true)")
+            plot!(fig_loss, 1:length(ls_nonnegativity_violation), ls_nonnegativity_violation; label="Nonnegativity violation")
+            plot!(fig_loss, 1:length(ls_total), ls_total; label="Total")
+        end
         fig_ctr_loss = plot(fig_ctr, fig_loss; layout=(2, 1))
         # total
         fig = plot(fig_vis, fig_ctr_loss; layout=(1, 2))
-        # frame(anim)
+        if gen_anim
+            frame(anim)
+        end
         display(fig)
     end
     Flux.train!(
@@ -169,5 +213,7 @@ function main(epochs=2)
         # device=gpu,
         device=cpu,
     )
-    # gif(anim, "composite_loss_for_pcm.gif", fps=10)
+    if gen_anim
+        gif(anim, "composite_loss_for_pcm.gif", fps=10)
+    end
 end
