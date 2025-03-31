@@ -84,7 +84,7 @@ end
 model_name: :eplse or :cplse (Extended PLSE or Composite PLSE)
 func_name: :symm or :asymm (symmetric or asymmetric)
 """
-function main(epochs=2; model_name=:eplse, gen_anim=false, func_name=:asymm)
+function main(epochs=2; model_name=:eplse, gen_anim=true, func_name=:asymm)
     @show model_name
     @show func_name
     pcm = PLSE(n, m, i_max, T, h_array, act)
@@ -95,9 +95,9 @@ function main(epochs=2; model_name=:eplse, gen_anim=false, func_name=:asymm)
         model = LooslyCoupledModel(pcm, nn)
     end
 
-    if func_name == :symm
+    if func_name == :asymm
         target_function = example_target_function(:quadratic_sin_sum)
-    elseif func_name == :asymm
+    elseif func_name == :symm
         target_function = (x, u) -> x[1]^2 + (u[1]^4 - u[1]^2)
     end
     conditions, decisions, costs, metadata = generate_dataset(
@@ -178,9 +178,9 @@ function main(epochs=2; model_name=:eplse, gen_anim=false, func_name=:asymm)
         plot!(fig_ctr, c_plot, d_plot, (c, d) -> target_function([c], [d]); st=:contour, alpha=0.5)
         cs_ctr = -1:0.1:1
         if model_name == :eplse
-            plot!(fig_ctr, cs_ctr, hcat([minimise(network, [c]) for c in cs_ctr]...)'; label="solution by pcm")
+            plot!(fig_ctr, cs_ctr, hcat([minimise(network, [c], min_decision, max_decision) for c in cs_ctr]...)'; label="solution by pcm")
         elseif model_name == :cplse
-            plot!(fig_ctr, cs_ctr, hcat([minimise(network.pcm, [c]) for c in cs_ctr]...)'; label="solution by pcm")
+            plot!(fig_ctr, cs_ctr, hcat([minimise(network.pcm, [c]; min_decision, max_decision) for c in cs_ctr]...)'; label="solution by pcm")
         end
         # loss
         fig_loss = plot(;
