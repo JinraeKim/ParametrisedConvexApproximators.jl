@@ -178,7 +178,7 @@ function main(epochs=2; model_name=:eplse, gen_anim=true, func_name=:asymm)
         plot!(fig_ctr, c_plot, d_plot, (c, d) -> target_function([c], [d]); st=:contour, alpha=0.5)
         cs_ctr = -1:0.1:1
         if model_name == :eplse
-            plot!(fig_ctr, cs_ctr, hcat([minimise(network, [c], min_decision, max_decision) for c in cs_ctr]...)'; label="solution by pcm")
+            plot!(fig_ctr, cs_ctr, hcat([minimise(network, [c]; min_decision, max_decision) for c in cs_ctr]...)'; label="solution by pcm")
         elseif model_name == :cplse
             plot!(fig_ctr, cs_ctr, hcat([minimise(network.pcm, [c]; min_decision, max_decision) for c in cs_ctr]...)'; label="solution by pcm")
         end
