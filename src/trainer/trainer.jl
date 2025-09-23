@@ -4,15 +4,16 @@ abstract type AbstractTrainer end
 struct SupervisedLearningTrainer <: AbstractTrainer
     network::AbstractApproximator
     dataset::DecisionMakingDataset
-    loss
-    optimiser
-    scheduler
+    loss::Any
+    optimiser::Any
+    scheduler::Any
     function SupervisedLearningTrainer(
-        dataset, network;
-        normalisation=nothing,
-        loss=Flux.Losses.mse,
-        optimiser=Flux.Adam(1e-3),
-        scheduler=nothing,
+        dataset,
+        network;
+        normalisation = nothing,
+        loss = Flux.Losses.mse,
+        optimiser = Flux.Adam(1e-3),
+        scheduler = nothing,
     )
         network = retrieve_normalised_network(network, dataset, normalisation)
         @assert dataset.split == :full
@@ -21,7 +22,11 @@ struct SupervisedLearningTrainer <: AbstractTrainer
 end
 
 
-function retrieve_normalised_network(network::AbstractApproximator, dataset::DecisionMakingDataset, normalisation)
+function retrieve_normalised_network(
+    network::AbstractApproximator,
+    dataset::DecisionMakingDataset,
+    normalisation,
+)
     if isnothing(normalisation)
         normalised_network = network
     elseif normalisation == :max_abs
@@ -37,8 +42,11 @@ end
 You must explicitly give "the network to be evaluated".
 """
 function get_loss(network, dataset, loss)
-    l = loss(network,
-        hcat(dataset.conditions...), hcat(dataset.decisions...), hcat(dataset.costs...)
+    l = loss(
+        network,
+        hcat(dataset.conditions...),
+        hcat(dataset.decisions...),
+        hcat(dataset.costs...),
     )
     return l
 end
@@ -46,11 +54,11 @@ end
 
 function Flux.train!(
     trainer::SupervisedLearningTrainer;
-    batchsize=16,
-    epochs=200,
-    rng=Random.default_rng(),
-    callback=nothing,
-    device=cpu_device(),
+    batchsize = 16,
+    epochs = 200,
+    rng = Random.default_rng(),
+    callback = nothing,
+    device = cpu_device(),
 )
     @show device
     (; dataset, loss, optimiser, scheduler) = trainer
@@ -61,9 +69,9 @@ function Flux.train!(
             hcat(dataset[:train].decisions...),
             hcat(dataset[:train].costs...),
         );
-        batchsize=batchsize,
-        shuffle=true,
-        rng=rng,
+        batchsize = batchsize,
+        shuffle = true,
+        rng = rng,
     )
     opt_state = Flux.setup(optimiser, network)
 
@@ -74,11 +82,11 @@ function Flux.train!(
     minimum_loss_validate = Inf
     best_network = nothing
     if isnothing(scheduler)
-        scheduler = [optimiser.eta for _ in 1:epochs]
+        scheduler = [optimiser.eta for _ = 1:epochs]
     end
     scheduler = Iterators.Stateful(scheduler)
     eta = nothing
-    for epoch in 0:epochs
+    @showprogress 1 "Processing..." for epoch = 0:epochs
         if epoch != 0
             eta, _ = iterate(scheduler)
             Flux.Optimisers.adjust!(opt_state, eta)
@@ -111,7 +119,9 @@ function Flux.train!(
         push!(losses_train, loss_train)
         loss_validate = get_loss(network |> cpu, trainer.dataset[:validate], trainer.loss)
         push!(losses_validate, loss_validate)
-        println("epoch: $(epoch)/$(epochs), train loss: $(Printf.@sprintf("%.4e", loss_train)), valid loss: $(Printf.@sprintf("%.4e", loss_validate)) (learning rate: $(eta))")
+        println(
+            "epoch: $(epoch)/$(epochs), train loss: $(Printf.@sprintf("%.4e", loss_train)), valid loss: $(Printf.@sprintf("%.4e", loss_validate)) (learning rate: $(eta))",
+        )
         if loss_validate < minimum_loss_validate
             println("Best network found!")
             minimum_loss_validate = loss_validate

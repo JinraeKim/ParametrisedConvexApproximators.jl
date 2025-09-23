@@ -18,13 +18,13 @@ struct MA <: ConvexApproximator
     n::Int  # the first variable for bivariate function
     m::Int  # the second variable for bivariate function
     i_max::Int
-    _α_is
-    _β_is
+    _α_is::Any
+    _β_is::Any
 end
-Flux.@layer MA trainable=(_α_is, _β_is)
+Flux.@layer MA trainable = (_α_is, _β_is)
 function MA(n::Int, m::Int, i_max::Int)
-    α_is = [Flux.glorot_uniform(n+m) for i in 1:i_max]
-    β_is = [Flux.glorot_uniform(1) for i in 1:i_max]
+    α_is = [Flux.glorot_uniform(n + m) for i = 1:i_max]
+    β_is = [Flux.glorot_uniform(1) for i = 1:i_max]
     i_max, _α_is, _β_is = _construct_convex_approximator(α_is, β_is)
     MA(n, m, i_max, _α_is, _β_is)
 end
@@ -33,7 +33,7 @@ end
 function (nn::MA)(z::Array)
     is_vector = length(size(z)) == 1
     z_affine = affine_map(nn, z)
-    _res = maximum(z_affine; dims=1)
+    _res = maximum(z_affine; dims = 1)
     res = is_vector ? reshape(_res, 1) : _res
 end
 

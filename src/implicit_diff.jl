@@ -1,4 +1,11 @@
-function minimise_logsumexp(θ; T, min_decision, max_decision, initial_guess, solver=() -> ECOS.Optimizer())
+function minimise_logsumexp(
+    θ;
+    T,
+    min_decision,
+    max_decision,
+    initial_guess,
+    solver = () -> ECOS.Optimizer(),
+)
     A = θ[:, 1:end-1]
     B = θ[:, end]
     m = size(A)[2]
@@ -6,7 +13,7 @@ function minimise_logsumexp(θ; T, min_decision, max_decision, initial_guess, so
     if !isnothing(initial_guess)
         u.value = initial_guess
     end
-    obj = T * Convex.logsumexp((1/T)*(A*u + B))
+    obj = T * Convex.logsumexp((1 / T) * (A * u + B))
     prob = Convex.minimize(obj)
     if !isnothing(min_decision)
         push!(prob.constraints, u >= min_decision)
@@ -14,7 +21,7 @@ function minimise_logsumexp(θ; T, min_decision, max_decision, initial_guess, so
     if !isnothing(max_decision)
         push!(prob.constraints, u <= max_decision)
     end
-    solve!(prob, solver, silent=true)
+    solve!(prob, solver, silent = true)
     minimiser = typeof(u.value) <: Number ? [u.value] : u.value[:]  # to make it a vector
     return minimiser
 end
@@ -40,7 +47,7 @@ end
 function conditions_lse_optim(θ, u, z; kwargs...)
     A = θ[:, 1:end-1]
     B = θ[:, end]
-    ∇₂f = A' * Flux.softmax(A*u+B)
+    ∇₂f = A' * Flux.softmax(A * u + B)
     η = 0.1
     return u .- proj_hypercube(u .- η .* ∇₂f; kwargs...)
 end
@@ -51,8 +58,8 @@ See https://github.com/gdalle/ImplicitDifferentiation.jl for details.
 """
 function implicit_lse_optim(θ; T, min_decision, max_decision, initial_guess, solver)
     tmp = ImplicitFunction(
-                           θ -> forward_lse_optim(θ; T, min_decision, max_decision, initial_guess, solver),
-                           (θ, u, z) -> conditions_lse_optim(θ, u, z; min_decision, max_decision),
-                          )
+        θ -> forward_lse_optim(θ; T, min_decision, max_decision, initial_guess, solver),
+        (θ, u, z) -> conditions_lse_optim(θ, u, z; min_decision, max_decision),
+    )
     tmp(θ)[1]
 end

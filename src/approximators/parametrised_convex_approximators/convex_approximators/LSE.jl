@@ -20,14 +20,14 @@ struct LSE <: ConvexApproximator
     m::Int  # the second variable for bivariate function
     i_max::Int
     T::Real
-    _α_is
-    _β_is
+    _α_is::Any
+    _β_is::Any
 end
-Flux.@layer LSE trainable=(_α_is, _β_is,)
+Flux.@layer LSE trainable = (_α_is, _β_is)
 function LSE(n::Int, m::Int, i_max::Int, T::Real)
     @assert T > 0
-    α_is = [Flux.glorot_uniform(n+m) for i in 1:i_max]
-    β_is = [Flux.glorot_uniform(1) for i in 1:i_max]
+    α_is = [Flux.glorot_uniform(n + m) for i = 1:i_max]
+    β_is = [Flux.glorot_uniform(1) for i = 1:i_max]
     i_max, _α_is, _β_is = _construct_convex_approximator(α_is, β_is)
     LSE(n, m, i_max, T, _α_is, _β_is)
 end
@@ -41,14 +41,14 @@ function (nn::LSE)(z::AbstractArray)
     is_vector = length(size(z)) == 1
     (; T) = nn
     z_affine = affine_map(nn, z)
-    _res = T * Flux.logsumexp((1/T)*z_affine; dims=1)
+    _res = T * Flux.logsumexp((1 / T) * z_affine; dims = 1)
     res = is_vector ? reshape(_res, 1) : _res
 end
 
 function (nn::LSE)(z::Convex.AbstractExpr)
     (; T) = nn
     z_affine = affine_map(nn, z)
-    _res = [T * Convex.logsumexp((1/T)*z_affine)]
+    _res = [T * Convex.logsumexp((1 / T) * z_affine)]
 end
 
 """

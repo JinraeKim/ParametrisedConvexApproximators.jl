@@ -4,13 +4,13 @@ struct PMA <: ParametrisedConvexApproximator
     i_max::Int
     NN::Flux.Chain
 end
-Flux.@layer PMA trainable=(NN,)
+Flux.@layer PMA trainable = (NN,)
 
 """
 Basic constructor PMA based on Flux.Chain.
 """
 function PMA(n::Int, m::Int, i_max::Int, h_array::Vector{Int}, act)
-    node_array = [n, h_array..., i_max*(m+1)]
+    node_array = [n, h_array..., i_max * (m + 1)]
     PMA(n, m, i_max, construct_layer_array(node_array, act))
 end
 
@@ -32,7 +32,7 @@ function (nn::PMA)(x::AbstractArray, u::AbstractArray)
     u = is_vector ? reshape(u, :, 1) : u
     @assert size(x)[2] == size(u)[2]
     tmp = affine_map(nn, x, u)
-    _res = maximum(tmp, dims=1)
+    _res = maximum(tmp, dims = 1)
     res = is_vector ? reshape(_res, 1) : _res
 end
 

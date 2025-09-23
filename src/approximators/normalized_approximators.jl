@@ -1,6 +1,9 @@
 abstract type NormalisedApproximator <: AbstractApproximator end
 
-function (nn::NormalisedApproximator)(network::AbstractApproximator, dataset::DecisionMakingDataset)
+function (nn::NormalisedApproximator)(
+    network::AbstractApproximator,
+    dataset::DecisionMakingDataset,
+)
     error("Specify the normalisation method from dataset")
 end
 
@@ -17,11 +20,11 @@ end
 
 struct MaxAbsNormalisedApproximator{T<:AbstractApproximator} <: NormalisedApproximator
     network::T
-    condition_max_abs::Union{Array, Nothing}
-    decision_max_abs::Union{Array, Nothing}
-    cost_max_abs::Union{Array, Nothing}
+    condition_max_abs::Union{Array,Nothing}
+    decision_max_abs::Union{Array,Nothing}
+    cost_max_abs::Union{Array,Nothing}
 end
-Flux.@layer MaxAbsNormalisedApproximator trainable=(network,)
+Flux.@layer MaxAbsNormalisedApproximator trainable = (network,)
 
 function MaxAbsNormalisedApproximator(
     network::AbstractApproximator,
@@ -31,9 +34,9 @@ function MaxAbsNormalisedApproximator(
     c = hcat(conditions...)
     d = hcat(decisions...)
     J = hcat(costs...)
-    condition_max_abs = maximum(abs.(c), dims=length(size(c)))
-    decision_max_abs = maximum(abs.(d), dims=length(size(d)))
-    cost_max_abs = maximum(abs.(J), dims=length(size(J)))
+    condition_max_abs = maximum(abs.(c), dims = length(size(c)))
+    decision_max_abs = maximum(abs.(d), dims = length(size(d)))
+    cost_max_abs = maximum(abs.(J), dims = length(size(J)))
     MaxAbsNormalisedApproximator(network, condition_max_abs, decision_max_abs, cost_max_abs)
 end
 
