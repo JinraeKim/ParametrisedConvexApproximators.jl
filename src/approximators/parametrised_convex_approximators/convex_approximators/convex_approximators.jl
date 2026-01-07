@@ -16,7 +16,7 @@ end
 
 function affine_map(nn::ConvexApproximator, z::Convex.AbstractExpr)
     (; _α_is, _β_is) = nn
-    _α_is * z + (_α_is*zeros(size(z)) .+ _β_is)
+    _α_is * z + (_α_is * zeros(size(z)) .+ _β_is)
 end
 
 

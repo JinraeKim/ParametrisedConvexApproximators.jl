@@ -15,7 +15,7 @@ struct PICNN <: ParametrisedConvexApproximator
     m::Int
     NN::Flux.Chain
 end
-Flux.@layer PICNN trainable=(NN,)
+Flux.@layer PICNN trainable = (NN,)
 function PICNN(n::Int, m::Int, u_array::Vector{Int}, z_array::Vector{Int}, g, g̃)
     PICNN(n, m, make_PICNN(n, m, u_array, z_array, g, g̃))
 end
@@ -35,9 +35,12 @@ function make_PICNN(n, m, u_array, z_array, g, g̃)
     PICNN_Layers = []
     _u_array = [n, u_array...]
     _z_array = [1, z_array..., 1]
-    for i in 1:length(_u_array)-1
-        _g = i == length(_u_array)-1 ? Flux.identity : g
-        push!(PICNN_Layers, PICNN_Layer(_u_array[i], _u_array[i+1], _z_array[i], _z_array[i+1], m, _g, g̃))
+    for i = 1:length(_u_array)-1
+        _g = i == length(_u_array) - 1 ? Flux.identity : g
+        push!(
+            PICNN_Layers,
+            PICNN_Layer(_u_array[i], _u_array[i+1], _z_array[i], _z_array[i+1], m, _g, g̃),
+        )
     end
     Chain(Init_PICNN_Layer, PICNN_Layers..., Final_PICNN_Layer)
 end
@@ -57,40 +60,56 @@ struct PICNN_Layer
     n_in::Int  # not trainable; will not be tracked by Flux, automatically 
     n_out::Int  # not trainable; will not be tracked by Flux, automatically 
     # x-path
-    W̃  #  params(m)[1]
-    b̃  #  params(m)[2]
-    g̃  # not trainable; will not be tracked by Flux, automatically 
+    W̃::Any  #  params(m)[1]
+    b̃::Any  #  params(m)[2]
+    g̃::Any  # not trainable; will not be tracked by Flux, automatically 
     # y-path
-    Wz  #  params(m)[3] >= 0 (element-wise)
-    Wzu  #  params(m)[4]
-    bz  #  params(m)[5]
-    Wy  #  params(m)[6]
-    Wyu  #  params(m)[7]
-    by  #  params(m)[8]
-    Wu  #  params(m)[9]
-    b  #  params(m)[10]
-    g  # not trainable; will not be tracked by Flux, automatically 
+    Wz::Any  #  params(m)[3] >= 0 (element-wise)
+    Wzu::Any  #  params(m)[4]
+    bz::Any  #  params(m)[5]
+    Wy::Any  #  params(m)[6]
+    Wyu::Any  #  params(m)[7]
+    by::Any  #  params(m)[8]
+    Wu::Any  #  params(m)[9]
+    b::Any  #  params(m)[10]
+    g::Any  # not trainable; will not be tracked by Flux, automatically 
 end
-Flux.@layer PICNN_Layer trainable=(W̃, b̃, Wz, Wzu, bz, Wy, Wyu, by, Wu, b)  # make "struct" compatible with Flux
+Flux.@layer PICNN_Layer trainable = (W̃, b̃, Wz, Wzu, bz, Wy, Wyu, by, Wu, b)  # make "struct" compatible with Flux
 
-function PICNN_Layer(uin::Int, uout::Int, zin::Int, zout::Int, y::Int, g=Flux.identity, g̃=Flux.identity;
-        initW = Flux.glorot_uniform, initb = zeros  # default initialisation method
-    )
+function PICNN_Layer(
+    uin::Int,
+    uout::Int,
+    zin::Int,
+    zout::Int,
+    y::Int,
+    g = Flux.identity,
+    g̃ = Flux.identity;
+    initW = Flux.glorot_uniform,
+    initb = zeros,  # default initialisation method
+)
     layer = PICNN_Layer(
-                       uin, y,  # in & out
-                       initW(uout, uin), initb(uout), g̃,  # W̃, b̃, g̃ (x-path)
-                       max.(initW(zout, zin), 0.0), initW(zin, uin), initb(zin),  # Wz > 0, Wzu, bz
-                       initW(zout, y), initW(y, uin), initb(y),  # Wy, Wyu, by
-                       initW(zout, uin), initb(zout),  # Wu, b
-                       g,  # g (y-path activation)
-                      )
+        uin,
+        y,  # in & out
+        initW(uout, uin),
+        initb(uout),
+        g̃,  # W̃, b̃, g̃ (x-path)
+        max.(initW(zout, zin), 0.0),
+        initW(zin, uin),
+        initb(zin),  # Wz > 0, Wzu, bz
+        initW(zout, y),
+        initW(y, uin),
+        initb(y),  # Wy, Wyu, by
+        initW(zout, uin),
+        initb(zout),  # Wu, b
+        g,  # g (y-path activation)
+    )
 end
 
 function Flux.relu(x::Convex.AbstractExpr)
     Convex.pos(x)
 end
 function Flux.leakyrelu(x::Convex.AbstractExpr)
-    Convex.max(x, 0.1*x)
+    Convex.max(x, 0.1 * x)
 end
 
 function (nn::PICNN_Layer)(input)
@@ -102,21 +121,24 @@ function (nn::PICNN_Layer)(input)
     Wu, b = nn.Wu, nn.b
     g = nn.g
     if typeof(y) <: Convex.AbstractExpr
-        u_next = g̃.(W̃*u .+ b̃)
+        u_next = g̃.(W̃ * u .+ b̃)
         z_next = g(
-            Wz * dot(*)(z, max.(Wzu*u .+ bz, 0.0))  # dot(*) is Hadamard product in Convex
-            + Wy * dot(*)(y, (Wyu*u .+ by))
-            + (Wu * u .+ b)
+            Wz * dot(*)(z, max.(Wzu * u .+ bz, 0.0))  # dot(*) is Hadamard product in Convex
+            +
+            Wy * dot(*)(y, (Wyu * u .+ by)) +
+            (Wu * u .+ b),
         )  # broadcasting is not supported by Convex.jl
     else
-        u_next = g̃.(W̃*u .+ b̃)
-        z_next = g.(
-            # Wz * dot(*)(z, max.(Wzu*u .+ bz, 0.0))  # dot(*) is Hadamard product in Convex
-            # + Wy * dot(*)(y, (Wyu*u .+ by))
-            Wz * (z .* max.(Wzu*u .+ bz, 0.0))  # dot(*) is not supported by Flux anymore
-            + Wy * (y .* (Wyu*u .+ by))
-            + (Wu * u .+ b)
-        )
+        u_next = g̃.(W̃ * u .+ b̃)
+        z_next =
+            g.(
+                # Wz * dot(*)(z, max.(Wzu*u .+ bz, 0.0))  # dot(*) is Hadamard product in Convex
+                # + Wy * dot(*)(y, (Wyu*u .+ by))
+                Wz * (z .* max.(Wzu * u .+ bz, 0.0))  # dot(*) is not supported by Flux anymore
+                +
+                Wy * (y .* (Wyu * u .+ by)) +
+                (Wu * u .+ b)
+            )
     end
     return u_next, z_next, y
 end
@@ -131,7 +153,7 @@ function Final_PICNN_Layer(input)
     return z
 end
 
-function project_nonnegative!(approximator::PICNN; ϵ=0.0)
+function project_nonnegative!(approximator::PICNN; ϵ = 0.0)
     for layer in approximator.NN.layers
         if isdefined(layer, :Wz)
             layer.Wz .-= layer.Wz .* (layer.Wz .< ϵ)

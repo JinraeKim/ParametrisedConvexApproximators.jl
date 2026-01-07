@@ -23,13 +23,16 @@ implicit differentation is used here.
 [5] https://github.com/jump-dev/ECOS.jl
 """
 function _minimise(
-        network::PLSE, x::AbstractVector,
-        min_decision, max_decision, initial_guess;
-        solver=ECOS.Optimizer,  # See https://github.com/jump-dev/Convex.jl/issues/346
-    )
+    network::PLSE,
+    x::AbstractVector,
+    min_decision,
+    max_decision,
+    initial_guess;
+    solver = ECOS.Optimizer,  # See https://github.com/jump-dev/Convex.jl/issues/346
+)
     (; m, T) = network
     θ = _affine_map(network, x)
-    minimiser = implicit_lse_optim(θ; T, min_decision, max_decision, initial_guess, solver,)
+    minimiser = implicit_lse_optim(θ; T, min_decision, max_decision, initial_guess, solver)
     return minimiser
 end
 
@@ -46,11 +49,16 @@ Basic DCA [1] is used.
 [1] H. A. Le Thi and T. Pham Dinh, “DC programming and DCA: thirty years of developments,” Math. Program., vol. 169, no. 1, pp. 5–68, May 2018, doi: 10.1007/s10107-018-1235-y.
 [2] https://github.com/Corrado-possieri/DLSE_neural_networks/commit/8883e5bcf1733b79b2dd3c432b31af30b4bba0a6#diff-aa888e053028cc6dbd9f0cfb1c30f61f1bde256be213f27b9a083b95292ec5ebR26
 """
-function _minimise(network::DifferenceOfConvexApproximator, x::AbstractVector, min_decision, max_decision, initial_guess;
-        solver=ECOS.Optimizer,  # See https://github.com/jump-dev/Convex.jl/issues/346
-        max_iter=30,
-        tol=1e-3,  # borrowed from [2]
-    )
+function _minimise(
+    network::DifferenceOfConvexApproximator,
+    x::AbstractVector,
+    min_decision,
+    max_decision,
+    initial_guess;
+    solver = ECOS.Optimizer,  # See https://github.com/jump-dev/Convex.jl/issues/346
+    max_iter = 30,
+    tol = 1e-3,  # borrowed from [2]
+)
     (; m) = network.NN1
     u = Convex.Variable(m)
     if min_decision != nothing
@@ -62,14 +70,15 @@ function _minimise(network::DifferenceOfConvexApproximator, x::AbstractVector, m
     # initial guess
     if isnothing(initial_guess)
         if !isnothing(min_decision) && !isnothing(max_decision)
-            initial_guess = min_decision + (max_decision - min_decision) .* rand(size(min_decision)...)
+            initial_guess =
+                min_decision + (max_decision - min_decision) .* rand(size(min_decision)...)
         else
             initial_guess = randn(m)
             if !isnothing(min_decision)
-                initial_guess = maximum(hcat(min_decision, initial_guess); dims=2)[:]
+                initial_guess = maximum(hcat(min_decision, initial_guess); dims = 2)[:]
             end
             if !isnothing(max_decision)
-                initial_guess = minimum(hcat(max_decision, initial_guess); dims=2)[:]
+                initial_guess = minimum(hcat(max_decision, initial_guess); dims = 2)[:]
             end
         end
     end
@@ -81,7 +90,7 @@ function _minimise(network::DifferenceOfConvexApproximator, x::AbstractVector, m
     while true
         k = k + 1
         v = grad_NN2(χ)  # BE CAREFUL: CONSIDER THAT IT IS FOR BIVARIATE FUNCTION
-        problem = Convex.minimize(network.NN1(x, u)[1] - v'*u)
+        problem = Convex.minimize(network.NN1(x, u)[1] - v' * u)
         if !isnothing(min_decision)
             # problem.constraints += [u >= min_decision]
             push!(problem.constraints, u >= min_decision)
@@ -90,9 +99,9 @@ function _minimise(network::DifferenceOfConvexApproximator, x::AbstractVector, m
             # problem.constraints += [u <= max_decision]
             push!(problem.constraints, u <= max_decision)
         end
-        solve!(problem, solver; silent=true)
+        solve!(problem, solver; silent = true)
         χ_next = typeof(u.value) <: Number ? [u.value] : u.value[:]  # to make it a vector
-        if norm(χ_next - χ) / (1+norm(χ)) < tol || k == max_iter
+        if norm(χ_next - χ) / (1 + norm(χ)) < tol || k == max_iter
             # @show k
             # @show χ, χ_next
             break
@@ -104,10 +113,17 @@ function _minimise(network::DifferenceOfConvexApproximator, x::AbstractVector, m
 end
 
 
-function _minimise(eplse::EPLSE, x::AbstractVector, min_decision, max_decision, initial_guess; kwargs...)
-    min_decision = min_decision == nothing ? eplse.min_decision : min_decision  # override
-    max_decision = max_decision == nothing ? eplse.max_decision : max_decision  # override
-    _minimise(eplse.plse, x, min_decision, max_decision, initial_guess; kwargs...)
+function _minimise(
+    eplse::EPLSE,
+    x::AbstractVector,
+    min_decision,
+    max_decision,
+    initial_guess;
+    kwargs...,
+)
+    min_decision = isnothing(min_decision) ? eplse.min_decision : min_decision  # override
+    max_decision = isnothing(max_decision) ? eplse.max_decision : max_decision  # override
+    return _minimise(eplse.plse, x, min_decision, max_decision, initial_guess; kwargs...)
 end
 
 
@@ -122,9 +138,14 @@ Default solver is `IPNewton` in Optim.jl for box constraints [1].
 # Refs.
 [1] https://julianlsolvers.github.io/Optim.jl/stable/#examples/generated/ipnewton_basics/#box-minimzation
 """
-function _minimise(network::AbstractApproximator, x::AbstractVector, min_decision, max_decision, initial_guess;
-        solver=() -> IPNewton(),  # See https://github.com/jump-dev/Convex.jl/issues/346
-    )
+function _minimise(
+    network::AbstractApproximator,
+    x::AbstractVector,
+    min_decision,
+    max_decision,
+    initial_guess;
+    solver = () -> IPNewton(),  # See https://github.com/jump-dev/Convex.jl/issues/346
+)
     (; m) = network
     obj(u) = network(x, u)[1]
     if isnothing(min_decision)
@@ -135,14 +156,21 @@ function _minimise(network::AbstractApproximator, x::AbstractVector, min_decisio
     end
     if isnothing(initial_guess)
         if min_decision != Float64[] && max_decision != Float64[]
-            initial_guess = (min_decision+eps()*ones(m)) + ((max_decision-eps()*ones(m)) - (min_decision+eps()*ones(m))) .* rand(size(min_decision)...)
+            initial_guess =
+                (min_decision + eps() * ones(m)) +
+                ((max_decision - eps() * ones(m)) - (min_decision + eps() * ones(m))) .*
+                rand(size(min_decision)...)
         else
             initial_guess = randn(m)
             if min_decision != Float64[]
-                initial_guess = maximum(hcat(min_decision, initial_guess); dims=2)[:] + eps()*ones(m)  # make it an interior point
+                initial_guess =
+                    maximum(hcat(min_decision, initial_guess); dims = 2)[:] +
+                    eps() * ones(m)  # make it an interior point
             end
             if max_decision != Float64[]
-                initial_guess = minimum(hcat(max_decision, initial_guess); dims=2)[:] - eps()*ones(m)  # make it an interior point
+                initial_guess =
+                    minimum(hcat(max_decision, initial_guess); dims = 2)[:] -
+                    eps() * ones(m)  # make it an interior point
             end
         end
     end
@@ -154,7 +182,13 @@ function _minimise(network::AbstractApproximator, x::AbstractVector, min_decisio
 end
 
 
-function _minimise(nn::NormalisedApproximator, x::AbstractVector, min_decision, max_decision, initial_guess)
+function _minimise(
+    nn::NormalisedApproximator,
+    x::AbstractVector,
+    min_decision,
+    max_decision,
+    initial_guess,
+)
     # x = normalise(nn, x, :condition)
     # min_decision = min_decision != nothing ? normalise(nn, min_decision, :decision) : min_decision
     # max_decision = max_decision != nothing ? normalise(nn, max_decision, :decision) : max_decision
@@ -172,9 +206,13 @@ function _minimise(nn::NormalisedApproximator, x::AbstractVector, min_decision, 
 end
 
 
-function minimise(network::AbstractApproximator, x::AbstractVector;
-        min_decision=nothing, max_decision=nothing, initial_guess=nothing
-    )
+function minimise(
+    network::AbstractApproximator,
+    x::AbstractVector;
+    min_decision = nothing,
+    max_decision = nothing,
+    initial_guess = nothing,
+)
     minimiser = _minimise(network, x, min_decision, max_decision, initial_guess)
     if minimiser == nothing
         (; m) = network
@@ -191,17 +229,29 @@ end
 Find a minimiser of `network::AbstractApproximator` for given
 data point `x::AbstractMatrix` using pmap.
 """
-function minimise(network::AbstractApproximator, x::AbstractMatrix;
-        min_decision=nothing, max_decision=nothing,
-        multithreading=true,
-        initial_guess=nothing,
-    )
+function minimise(
+    network::AbstractApproximator,
+    x::AbstractMatrix;
+    min_decision = nothing,
+    max_decision = nothing,
+    multithreading = true,
+    initial_guess = nothing,
+)
     _map = multithreading ? pmap : map
     d = size(x)[2]
     # initial guess
     initial_guess = _map(i -> initial_guess == nothing ? nothing : initial_guess[:, i], 1:d)
     # optimisation
-    minimisers = _map(i -> minimise(network, x[:, i]; min_decision, max_decision, initial_guess=initial_guess[i]), 1:d)
+    minimisers = _map(
+        i -> minimise(
+            network,
+            x[:, i];
+            min_decision,
+            max_decision,
+            initial_guess = initial_guess[i],
+        ),
+        1:d,
+    )
     minimiser_matrix = hcat(minimisers...)
     return minimiser_matrix
 end

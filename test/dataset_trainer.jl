@@ -10,73 +10,71 @@ h_array = [64, 64]
 act = Flux.leakyrelu
 N = 1_000  # The result may be poor if it's too low
 seed = 2022
-min_condition = -2*ones(n)
-max_condition = +2*ones(n)
-min_decision = -2*ones(m)
-max_decision = +2*ones(m)
+min_condition = -2 * ones(n)
+max_condition = +2 * ones(n)
+min_decision = -2 * ones(m)
+max_decision = +2 * ones(m)
 ratio1 = 0.7
 ratio2 = 0.2
 
 
 function test_split_data2()
     dataset = []
-    for i in 1:N
+    for i = 1:N
         push!(dataset, rand(n))
     end
     dataset_train, dataset_test = split_data2(dataset, ratio1)
     @test length(dataset_train) == round(N * ratio1)
-    @test length(dataset_test) == round(N * (1-ratio1))
+    @test length(dataset_test) == round(N * (1 - ratio1))
 end
 
 
 function test_split_data3()
     dataset = []
-    for i in 1:N
+    for i = 1:N
         push!(dataset, rand(n))
     end
     dataset_train, dataset_validate, dataset_test = split_data3(dataset, ratio1, ratio2)
     @test length(dataset_train) == round(N * ratio1)
     @test length(dataset_validate) == round(N * ratio2)
-    @test length(dataset_test) == round(N * (1-(ratio1+ratio2)))
+    @test length(dataset_test) == round(N * (1 - (ratio1 + ratio2)))
 end
 
 
 function test_DecisionMakingDataset(name, split)
     target_function = example_target_function(name)
     conditions, decisions, costs, metadata = generate_dataset(
-                                                              target_function;
-                                                              N=100,
-                                                              min_condition=min_condition,
-                                                              max_condition=max_condition,
-                                                              min_decision=min_decision,
-                                                              max_decision=max_decision,
-                                                             )
+        target_function;
+        N = 100,
+        min_condition = min_condition,
+        max_condition = max_condition,
+        min_decision = min_decision,
+        max_decision = max_decision,
+    )
     dataset = DecisionMakingDataset(
-        conditions, decisions, costs;
-        metadata=metadata,
-        name=name,
-        seed=seed,
-   )
+        conditions,
+        decisions,
+        costs;
+        metadata = metadata,
+        name = name,
+        seed = seed,
+    )
     return dataset[split]
 end
 
 
-function test_SupervisedLearningTrainer(dataset, network; epochs=2)
+function test_SupervisedLearningTrainer(dataset, network; epochs = 2)
     trainer = SupervisedLearningTrainer(dataset, network)
     @show get_loss(trainer.network, trainer.dataset[:train], trainer.loss)
     @show get_loss(trainer.network, trainer.dataset[:validate], trainer.loss)
-    best_network, info = Flux.train!(trainer; epochs=epochs)
+    best_network, info = Flux.train!(trainer; epochs = epochs)
     @show get_loss(best_network, trainer.dataset[:test], trainer.loss)
     return best_network
 end
 
 
 function test_dataset()
-    for name in [
-                 :quadratic,
-                 :parameterized_convex_basic,
-                 :quadratic_sin_sum,
-                ]
+    for name in [:quadratic, :parameterized_convex_basic, :quadratic_sin_sum]
         for split in [:train, :validate, :test]
             target_function = example_target_function(name)
             test_DecisionMakingDataset(name, split)

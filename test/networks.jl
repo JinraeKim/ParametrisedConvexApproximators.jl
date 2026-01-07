@@ -35,28 +35,25 @@ function generate_networks()
     pma = PMA(n, m, i_max, h_array, act)
     plse = PLSE(n, m, i_max, T, h_array, act)
     plse_plus = PLSEplus(n, m, i_max, T, h_array, act)
-    dlse = DLSE(
-                LSE(n, m, i_max, T),
-                LSE(n, m, i_max, T),
-               )
+    dlse = DLSE(LSE(n, m, i_max, T), LSE(n, m, i_max, T))
     eplse = EPLSE(
-                  PLSEplus(n, m, i_max, T, h_array, act),
-                  FNN(n, m, h_array, act),
-                  min_decision,
-                  max_decision,
-                 )
+        PLSEplus(n, m, i_max, T, h_array, act),
+        FNN(n, m, h_array, act),
+        min_decision,
+        max_decision,
+    )
 
     networks = Dict(
-                    "FNN" => fnn,
-                    "MA" => ma,
-                    "LSE" => lse,
-                    "PICNN" => picnn,
-                    "PMA" => pma,
-                    "PLSE" => plse,
-                    "PLSEPlus" => plse_plus,
-                    "DLSE" => dlse,
-                    "EPLSE" => eplse,
-                   )
+        "FNN" => fnn,
+        "MA" => ma,
+        "LSE" => lse,
+        "PICNN" => picnn,
+        "PMA" => pma,
+        "PLSE" => plse,
+        "PLSEPlus" => plse_plus,
+        "DLSE" => dlse,
+        "EPLSE" => eplse,
+    )
     return networks
 end
 
@@ -73,7 +70,8 @@ end
 function test_minimise(network)
     println("test_minimise")
     x = xs[:, 1]
-    minimiser = minimise(network, x; min_decision=min_decision, max_decision=max_decision)
+    minimiser =
+        minimise(network, x; min_decision = min_decision, max_decision = max_decision)
     @test size(minimiser) == (m,)
     @test size(network(x, minimiser)) == (1,)
 end
@@ -81,7 +79,8 @@ end
 
 function test_minimise_multiple(network)
     println("test_minimise_multiple")
-    minimisers = minimise(network, xs; min_decision=min_decision, max_decision=max_decision)
+    minimisers =
+        minimise(network, xs; min_decision = min_decision, max_decision = max_decision)
     @test size(minimisers) == (m, d)
     @test size(network(xs, minimisers)) == (1, d)
 end
@@ -105,21 +104,30 @@ end
 
 function test_max_abs_normalised_network(network)
     println("normalised network")
-    normalised_network = MaxAbsNormalisedApproximator(
-                             deepcopy(network),
-                             x_max_abs,
-                             u_max_abs,
-                             f_max_abs,
-                         )
+    normalised_network =
+        MaxAbsNormalisedApproximator(deepcopy(network), x_max_abs, u_max_abs, f_max_abs)
     # inference
     fs_normalised = network(xs ./ x_max_abs, us ./ u_max_abs)
     fs = normalised_network(xs, us)
     @test fs_normalised .* f_max_abs == fs
     # optimization
-    minimiser = minimise(network, xs ./ x_max_abs; min_decision=min_decision ./ u_max_abs, max_decision=max_decision ./ u_max_abs, initial_guess=initial_guess ./ u_max_abs)
-    minimizer_normalized = minimise(normalised_network, xs; min_decision=min_decision, max_decision=max_decision, initial_guess=initial_guess)
+    minimiser = minimise(
+        network,
+        xs ./ x_max_abs;
+        min_decision = min_decision ./ u_max_abs,
+        max_decision = max_decision ./ u_max_abs,
+        initial_guess = initial_guess ./ u_max_abs,
+    )
+    minimizer_normalized = minimise(
+        normalised_network,
+        xs;
+        min_decision = min_decision,
+        max_decision = max_decision,
+        initial_guess = initial_guess,
+    )
     @test minimiser .* u_max_abs ≈ minimizer_normalized
-    @test network(xs ./ x_max_abs, minimiser) .* f_max_abs ≈ normalised_network(xs, minimizer_normalized)
+    @test network(xs ./ x_max_abs, minimiser) .* f_max_abs ≈
+          normalised_network(xs, minimizer_normalized)
 end
 
 
