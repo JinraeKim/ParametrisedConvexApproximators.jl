@@ -90,9 +90,6 @@ function Flux.train!(
         if epoch != 0
             eta, _ = iterate(scheduler)
             Flux.Optimisers.adjust!(opt_state, eta)
-            if !isnothing(callback)
-                callback(network |> cpu, epoch)
-            end
             loss_train = 0.0
             batch_size = 0
             @showprogress for xuf_cpu in data_train
@@ -126,6 +123,10 @@ function Flux.train!(
             println("Best network found!")
             minimum_loss_validate = loss_validate
             best_network = deepcopy(network |> cpu)
+        end
+        # Call callback after training (or after evaluation for epoch 0)
+        if !isnothing(callback)
+            callback(network |> cpu, epoch)
         end
     end
     loss_test = get_loss(best_network, trainer.dataset[:test], trainer.loss)
